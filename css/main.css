@@ -3,10 +3,6 @@
 	height: 650px;
 }
 
-.container > svg {
-	border: solid 1px #000000;
-}
-
 .scene-map {
 	fill: none;
 	stroke: #0038b8;
@@ -37,5 +33,9 @@
 }
 
 .leaflet-pane > svg {
+    pointer-events: auto ;
+}
+
+.leaflet-pane > svg path, svg circle{
     pointer-events: auto ;
 }

@@ -7,11 +7,11 @@
  * Add tile layer and controls 
  */
 var mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
-var leafletMap = L.map('tviz-container').setView([31.77, 35.21], 8);
+var leafletMap = L.map('partner-viz-container').setView([31.77, 35.21], 8);
 L.tileLayer(
     'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; ' + mapLink + ' Contributors',
-        maxZoom: 18,
+        maxZoom: 15,
     }).addTo(leafletMap);
 
 L.control
@@ -47,6 +47,10 @@ var leafletPath = d3.geoPath().projection(d3.geoTransform({point: projectPoint})
 
 // Create D3 Mercator projection
 var projection = d3.geoMercator();
+//var projection = d3.geoProjection(function (x, y) {
+//    var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
+//    return [point.x, point.y];
+//});
 
 /*
  * Create main component for drawing and 
@@ -56,35 +60,31 @@ var projection = d3.geoMercator();
  * 
  * In order to build and render transport network
  * the following datasets need to be loaded:
- *     1) region boundaries;
- *     2) collection of GeoJSON features representing stop nodes;
- *     3) collection of GeoJSON features representing all nodes of transport network;  
- *     4) collection of GeoJSON features representing existing paths between nodes.
+ *     1) collection of GeoJSON features representing statistical areas boundaries;
+ *     2) collection of GeoJSON features representing statistical areas centroids;
+ *     3) OD matrices.
  */
-var tvizMap = new TvizFlowMap(g, svg.attr('width'), svg.attr('height'));
+var vizMap = new VizFlowMap(g, svg.attr('width'), svg.attr('height'));
 
-var tvizRailwayModel = new TvizModel();
-tvizRailwayModel.projection = projection;
-tvizRailwayModel.load([
-        'json!data/israel.geojson',
-        'json!data/stops.geojson',
-        'json!data/stations.geojson',
-        'json!data/links.geojson',
-        'json!data/loads.json'])
+var vizModel = new VizModel();
+vizModel.projection = projection;
+vizModel.load([
+        'json!data/stat-areas.geojson',
+        'json!data/stat-areas-centers.geojson'])
     .done(function() {
-        tvizMap.projection = projection;
-        tvizMap.data({
-            network: tvizRailwayModel.network, 
-            map: tvizRailwayModel.map
+        vizMap.projection = projection;
+        vizMap.data({            
+            map: vizModel.areas,
+            centers: vizModel.centers
         });       
-        tvizMap.render();
+        vizMap.render();
 
         // Bind Leaflet map's event handlers
         leafletMap.on("viewreset", function(event) {
-            tvizMap.update(event, leafletMap, leafletPath);
+            vizMap.update(event, leafletMap, leafletPath);
         });
         leafletMap.on("moveend",  function(event) {
-            tvizMap.update(event, leafletMap, leafletPath);
+            vizMap.update(event, leafletMap, leafletPath);
         });
-        tvizMap.update(false, leafletMap, leafletPath);       
+        vizMap.update(false, leafletMap, leafletPath);       
    });
