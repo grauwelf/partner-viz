@@ -1,0 +1,16 @@
+{
+  "name": "partner-viz",
+  "version": "1.0.0",
+  "description": "Data-driven visualization of transport traffic based on Partner mobile phones network",
+  "main": "ja/app.js",
+  "author": "grauwelf <grauwelf@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "d3": "^5.9.2",
+    "d3-tip": "^0.9.1",
+    "jquery": "^3.3.1",
+    "leaflet": "^1.4.0",
+    "moment": "^2.24.0",
+    "underscore": "^1.9.1"
+  }
+}
