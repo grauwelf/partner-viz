@@ -141,8 +141,8 @@ VizFlowMap.prototype.render = function (time) {
     }
   */  
     var tooltip = d3.tip().html(function(d) {
-        return d.type == 'node' ? '<em>' + 'צומת' + '</em></br>' + d.id : d.name + '</br>' + d.id;
-    }).attr('class', 'scene-node-tooltip').style('opacity', 1);
+        return d.name + '</br># ' + d.id;
+    }).attr('class', 'scene-node-tooltip').style("z-index", "999");;
     
     var stations = this.container.selectAll('.scene-node')
         .data(Object.values(centers.nodes), function (d) { return d.name; })
