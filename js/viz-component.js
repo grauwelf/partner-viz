@@ -50,14 +50,15 @@ function VizFlowMap(container, width, height) {
 
 VizFlowMap.prototype = Object.create(VizComponent.prototype);
 
-VizFlowMap.prototype.render = function (time) {
+VizFlowMap.prototype.render = function (day, time) {
     if (arguments.length == 0) {
-        time = moment().hour();
+        day = 'weekday';
+        time = moment().hour() + 1;
     }
 
     var centers = this.data().centers.nodes;
     var map = this.data().map;
-    var OD = this.data().OD.weekday[time];
+    var OD = this.data().OD[day][time];
 
     var smoothPath = d3.geoPath().projection(this.projection);
 
