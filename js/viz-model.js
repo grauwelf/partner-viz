@@ -6,7 +6,7 @@
  */
 
 "use strict";
-        
+
 function VizDataLoader(files) {
     var self = this;
     self.files = files;
@@ -20,8 +20,8 @@ function VizDataLoader(files) {
         throw "duplicate file name " + file;
       }
       self.amountLoaded[file] = 0;
-    });        
-   
+    });
+
     var promises = [];
 
     files.forEach(function (file) {
@@ -30,7 +30,7 @@ function VizDataLoader(files) {
         var name = parts[1];
         promises.push(d3[type](name));
     });
-    
+
     Promise.all(promises).then(function(data) {
         files.forEach(function (file, index) {
             self.fileDone(file, data[index]);
@@ -69,36 +69,72 @@ VizDataLoader.prototype.fileDone = function (file, data) {
 function VizModel() {
     this.areas = {};
     this.centers = {};
-    this.OD = {};
+    this.OD = {'weekday': [], 'friday': [], 'saturday': []};
     this.projection = {};
     this.files = {};
-    
+
     var self = this;
 
     self.projection = function(coordinates) {
         return coordinates;
     };
-    
+
     self.load = function (value) {
         self.files = value;
         return new VizDataLoader(self.files)
-            .done(function(areasData, centersData) {      
+            .done(function(areasData, centersData, flowsData) {
                 self.areas = areasData;
-                
                 var nodes = [];
                 centersData.features.forEach(function (data) {
                     data.id = data.properties.OBJECTID;
-                    data.sta = data.properties.YISHUV_STA;
+                    data.sta = data.properties.YISHUV_STA.toString().padStart(8, '0');
                     data.name = data.properties.SHEM_YISHU;
                     data.x = data.geometry.coordinates[0];
                     data.y = data.geometry.coordinates[1];
                     data.latlng = new L.LatLng(data.y, data.x);
-                    nodes[data.id] = data;
-                });                
+                    data.stay = 0;
+                    nodes[data.sta] = data;
+                });
                 self.centers.nodes = nodes;
+
+                flowsData.forEach(function(row) {
+                    var flow = {};
+                    var origin = row.origin_code.padStart(4, '0') +
+                        row.origin_sta_code.padStart(4, '0');
+                    var destination = row.destination_code.padStart(4, '0') +
+                        row.destination_sta_code.padStart(4, '0');
+                    var load = row.load;
+                    if (row.day == 'weekday') {
+                        load  = load / 20;
+                    } else {
+                        load  = load / 4;
+                    }
+
+                    if (origin == destination) {
+                        self.centers.nodes[origin].stay = load;
+                    }
+
+                    var hour = parseInt(row.time_end.substr(0,2));
+                    if (origin != destination) {
+                        if (self.OD.weekday[hour] === undefined) {
+                            self.OD.weekday[hour] = new Object();
+                        }
+                        var forwardKey = origin + '-' + destination;
+                        var backwardKey = destination + '-' + origin;
+                        if (self.OD.weekday[hour][forwardKey] === undefined &&
+                                self.OD.weekday[hour][backwardKey] === undefined) {
+                            flow.forwardLoad = load;
+                            self.OD.weekday[hour][forwardKey] = flow;
+                        } else if (self.OD.weekday[hour][forwardKey] === undefined) {
+                            self.OD.weekday[hour][backwardKey].backwardLoad = load;
+                        } else {
+                            self.OD.weekday[hour][forwardKey].forwardLoad = load;
+                        }
+                    }
+                });
             });
 
     };
-    
+
     return self;
 };

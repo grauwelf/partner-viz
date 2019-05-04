@@ -4,10 +4,18 @@
 
 /*
  * Initialize Leaflet map
- * Add tile layer and controls 
+ * Add tile layer and controls
  */
 var mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
 var leafletMap = L.map('partner-viz-container').setView([31.77, 35.21], 8);
+
+var mapBounds = L.latLngBounds([
+    [32.062791783472406, 34.91180419921876],
+    [31.96818267111348, 34.682121276855476]
+]);
+
+leafletMap.fitBounds(mapBounds);
+
 L.tileLayer(
     'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; ' + mapLink + ' Contributors',
@@ -33,10 +41,10 @@ svgLayer.addTo(leafletMap);
  */
 
 var svg = d3.select('.container').select('svg');
-var g = svg.select('g'); 
+var g = svg.select('g');
 
 /*
- * Create D3 projection from (lat, lng) CRS to Leaflet map 
+ * Create D3 projection from (lat, lng) CRS to Leaflet map
  */
 function projectPoint(x, y) {
     var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
@@ -47,17 +55,13 @@ var leafletPath = d3.geoPath().projection(d3.geoTransform({point: projectPoint})
 
 // Create D3 Mercator projection
 var projection = d3.geoMercator();
-//var projection = d3.geoProjection(function (x, y) {
-//    var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
-//    return [point.x, point.y];
-//});
 
 /*
- * Create main component for drawing and 
+ * Create main component for drawing and
  * load data to main data model object.
- * Data loads asynchronously and render 
- * starts when all data have been loaded.  
- * 
+ * Data loads asynchronously and render
+ * starts when all data have been loaded.
+ *
  * In order to build and render transport network
  * the following datasets need to be loaded:
  *     1) collection of GeoJSON features representing statistical areas boundaries;
@@ -69,14 +73,16 @@ var vizMap = new VizFlowMap(g, svg.attr('width'), svg.attr('height'));
 var vizModel = new VizModel();
 vizModel.projection = projection;
 vizModel.load([
-        'json!data/stat-areas.geojson',
-        'json!data/stat-areas-centers.geojson'])
+        'json!data/stat-areas-simplified-0.0005.geojson',
+        'json!data/stat-areas-centers.geojson',
+        'csv!data/od_bat_yam_2018_nov_1h_valuable.csv'])
     .done(function() {
         vizMap.projection = projection;
-        vizMap.data({            
+        vizMap.data({
             map: vizModel.areas,
-            centers: vizModel.centers
-        });       
+            centers: vizModel.centers,
+            OD: vizModel.OD
+        });
         vizMap.render();
 
         // Bind Leaflet map's event handlers
@@ -86,5 +92,5 @@ vizModel.load([
         leafletMap.on("moveend",  function(event) {
             vizMap.update(event, leafletMap, leafletPath);
         });
-        vizMap.update(false, leafletMap, leafletPath);       
+        vizMap.update(false, leafletMap, leafletPath);
    });
