@@ -10,12 +10,6 @@
 	stroke-width: 1;
 }
 
-.scene-edge {
-	fill: none;
-	stroke: #2e3436;
-	stroke-width: 2;
-}
-
 .scene-stop {
     fill: #009933;
 }
@@ -24,6 +18,10 @@
 	fill: #ffff00;
 	stroke: #000000;
 	stroke-width: 1;
+}
+
+.scene-flow-particle {
+	fill: #ff0000;
 }
 
 .scene-node-tooltip {
@@ -47,12 +45,19 @@
     pointer-events: auto ;
 }
 
-.arc {
+.scene-edge {
 	opacity: 1;
-	z-index: 999;
+	/*z-index: 999;*/
     fill: none;
     stroke: red;
     stroke-width: 2px;
     stroke-linecap: round;
-    stroke-opacity: .5;
+    stroke-opacity: 0.0;
 }
+
+/*.scene-arc {
+    fill: none;
+    stroke: #2e3436;
+    stroke-width: 2;
+    opacity: 0;
+}*/
