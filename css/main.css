@@ -6,8 +6,8 @@
 .scene-map {
 	fill: none;
 	/*stroke: #0038b8;*/
-	stroke: #7da5ff;
-	stroke-width: 0.5;
+	stroke: #3465a4;
+	stroke-width: 1;
 }
 
 .scene-edge {
