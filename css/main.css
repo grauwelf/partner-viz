@@ -18,6 +18,7 @@
 	fill: #ffff00;
 	stroke: #000000;
 	stroke-width: 1;
+	opacity: 1; 
 }
 
 .scene-flow-particle {

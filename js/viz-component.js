@@ -50,6 +50,64 @@ function VizFlowMap(container, width, height) {
 
 VizFlowMap.prototype = Object.create(VizComponent.prototype);
 
+function edgesInit(lines) {
+    d3.selectAll('.scene-flow-particle').remove();
+    lines.each(function(element, idx) {
+        var simulationRate = 5;
+        var p1 = d3.select(this).node().getPointAtLength(0);
+        var p2 = d3.select(this).node().getPointAtLength(0 + 1);
+        var angleTo = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI + 90;
+        var angleFrom = angleTo - 180;
+        for (var i = 0; i < Math.log(d3.select(this).data()[0].forwardLoad); i++) {
+            var particleTo = g.append('path')
+                .attr('class', 'scene-flow-particle')
+                .attr('d', function(d) {
+                    return d3.symbol().type(d3.symbolTriangle).size('24')();
+                });
+            moveAlong(d3.select(this), particleTo, i+1, simulationRate, 1, angleTo);
+        }
+        for (var i = 0; i < Math.log(d3.select(this).data()[0].backwardLoad); i++) {
+            var particleFrom = g.append('path')
+                .attr('class', 'scene-flow-particle')
+                .attr('d', function(d) {
+                    return d3.symbol().type(d3.symbolTriangle).size('24')();
+                });
+            moveAlong(d3.select(this), particleFrom, i+1, simulationRate, -1, angleFrom);
+        }
+    });
+}
+
+function moveAlong(path, element, number, rate, direction, angle) {
+    if (path === undefined) {
+        return true;
+    }
+    var offset = 10*(number - 1);
+    var duration = 1000 * path.node().getTotalLength() / rate;
+    var pathLength = path.node().getTotalLength();
+    var start = direction === 1 ? path.node().getPointAtLength(offset) : path.node().getPointAtLength(pathLength);
+    var end = direction === 1 ? path.node().getPointAtLength(pathLength) : path.node().getPointAtLength(offset);
+    element
+        .attr('transform', 'translate(' + start.x + ',' + start.y + ')rotate(' + angle + ')');
+    element.transition()
+        .attr('transform', 'translate(' + end.x + ',' + end.y + ')rotate(' + angle + ')')
+        .duration(duration)
+        .ease(d3.easeLinear)
+        .on('end', function() {
+            moveAlong(path, element, number, rate, direction, angle);
+        });
+}
+
+function translateAlong(path, offset, direction, angle) {
+  var l = path.getTotalLength();
+  return function(d, i, a) {
+    return function(t) {
+        atLength = direction === 1 ? (t * l) - offset : (l - (t * l)) + offset;
+        var p = path.getPointAtLength(atLength);
+        return 'translate(' + p.x + ',' + p.y + ')rotate(' + angle + ')';
+    };
+  };
+}
+
 VizFlowMap.prototype.render = function (day, time) {
     if (arguments.length == 0) {
         day = 'weekday';
@@ -91,60 +149,9 @@ VizFlowMap.prototype.render = function (day, time) {
       .enter().append('path')
         .attr('class', 'scene-edge')
         .attr('d', leafletPath)
-        .style('opacity', 1);
+        .style('opacity', 0);
 
-    edges.each(function(element, idx) {
-        var simulationRate = 16;
-        var p1 = d3.select(this).node().getPointAtLength(0);
-        var p2 = d3.select(this).node().getPointAtLength(0 + 1);
-        var angleTo = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI + 90;
-        var angleFrom = angleTo - 180;
-        for (var i = 0; i < Math.log(d3.select(this).data()[0].forwardLoad); i++) {
-            var particleTo = g.append('path')
-                .attr('class', 'scene-flow-particle')
-                .attr('d', function(d) {
-                    return d3.symbol().type(d3.symbolTriangle).size('24')();
-                });
-            moveAlong(d3.select(this), particleTo, i+1, simulationRate, 1, angleTo);
-        }
-        for (var i = 0; i < Math.log(d3.select(this).data()[0].backwardLoad); i++) {
-            var particleFrom = g.append('path')
-                .attr('class', 'scene-flow-particle')
-                .attr('d', function(d) {
-                    return d3.symbol().type(d3.symbolTriangle).size('24')();
-                });
-            moveAlong(d3.select(this), particleFrom, i+1, simulationRate, -1, angleFrom);
-        }
-    });
-
-    function moveAlong(path, element, number, rate, direction, angle) {
-        if (path === undefined) {
-            return true;
-        }
-        var offset = 10*(number - 1);
-        var duration = 1000 * path.node().getTotalLength() / rate;
-        var p = path.node().getPointAtLength(offset);
-        element.transition()
-            .attr('transform', 'translate(' + p.x + ',' + p.y + ')');
-        element.transition()
-            .duration(duration)
-            .ease(d3.easeLinear)
-            .attrTween('transform', translateAlong(path.node(), offset, direction, angle))
-            .on('end', function() {
-                moveAlong(path, element, number, rate, direction, angle);
-            });
-    }
-
-    function translateAlong(path, offset, direction, angle) {
-      var l = path.getTotalLength();
-      return function(d, i, a) {
-        return function(t) {
-            atLength = direction === 1 ? (t * l) - offset : (l - (t * l)) + offset;
-            var p = path.getPointAtLength(atLength);
-            return 'translate(' + p.x + ',' + p.y + ')rotate(' + angle + ')';
-        };
-      };
-    }
+    edgesInit(edges);
 
     var tooltip = d3.tip().html(function(d) {
         return d.name + '</br># ' + d.sta;
@@ -161,7 +168,7 @@ VizFlowMap.prototype.render = function (day, time) {
         .on('mouseover', tooltip.show)
         .on('mouseout', tooltip.hide);
     nodes.call(tooltip);
-
+/*
     setInterval(function(){
         nodes
             .transition().duration(400).attr('r', function(d) {
@@ -172,7 +179,7 @@ VizFlowMap.prototype.render = function (day, time) {
                 return d.stay > 0 ? Math.log(d.stay) : 1;
             });
     }, 800);
-
+*/
 }
 
 VizFlowMap.prototype.update = function (event, leaflet, path) {
@@ -183,8 +190,7 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
     this.zoom = leaflet.getZoom();
     this.container.selectAll('.scene-map')
         .attr('d', path);
-    this.container.selectAll('.scene-edge')
-        .attr('d', path);
+
     this.container.selectAll('.scene-node')
         .attr('cx', function(d){
             return leaflet.latLngToLayerPoint(d.latlng).x;
@@ -192,6 +198,11 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         .attr('cy', function(d){
             return leaflet.latLngToLayerPoint(d.latlng).y;
         });
+
+    this.container.selectAll('.scene-edge')
+        .attr('d', path);
+
+    edgesInit(this.container.selectAll('.scene-edge'));
 
     var zoomDiff = this.zoom - previousZoom;
     g.selectAll('.scene-node')

@@ -19,7 +19,6 @@ leafletMap.fitBounds(mapBounds);
 L.tileLayer(
     'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; ' + mapLink + ' Contributors',
-        maxZoom: 15,
     }).addTo(leafletMap);
 
 L.control
