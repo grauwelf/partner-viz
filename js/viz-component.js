@@ -58,7 +58,7 @@ function edgesInit(lines) {
         var p2 = d3.select(this).node().getPointAtLength(0 + 1);
         var angleTo = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI + 90;
         var angleFrom = angleTo - 180;
-        for (var i = 0; i < Math.log(d3.select(this).data()[0].forwardLoad); i++) {
+        for (var i = 0; i < Math.floor(d3.select(this).data()[0].forwardLoad / 10); i++) {
             var particleTo = g.append('path')
                 .attr('class', 'scene-flow-particle')
                 .attr('d', function(d) {
@@ -66,7 +66,7 @@ function edgesInit(lines) {
                 });
             moveAlong(d3.select(this), particleTo, i+1, simulationRate, 1, angleTo);
         }
-        for (var i = 0; i < Math.log(d3.select(this).data()[0].backwardLoad); i++) {
+        for (var i = 0; i < Math.floor(d3.select(this).data()[0].backwardLoad / 10); i++) {
             var particleFrom = g.append('path')
                 .attr('class', 'scene-flow-particle')
                 .attr('d', function(d) {
@@ -108,10 +108,13 @@ function translateAlong(path, offset, direction, angle) {
   };
 }
 
-VizFlowMap.prototype.render = function (day, time) {
+VizFlowMap.prototype.render = function (day, time, loadRange) {
     if (arguments.length == 0) {
         day = 'weekday';
         time = moment().hour() + 1;
+    }
+    if (loadRange === undefined) {
+        loadRange = [0, 10000000];
     }
 
     var centers = this.data().centers.nodes;
@@ -127,23 +130,26 @@ VizFlowMap.prototype.render = function (day, time) {
         .attr('class', 'scene-map')
         .attr('d', smoothPath);
 
-
     var linestring_data = [];
     _.each(OD, function(od, key) {
         var pair = key.split('-');
         var origin = centers[pair[0]];
         var destination = centers[pair[1]];
-        linestring_data.push({
-            type: 'LineString',
-            coordinates: [[origin.latlng.lng, origin.latlng.lat],
-                          [destination.latlng.lng, destination.latlng.lat]],
-            o: pair[0],
-            d: pair[1],
-            forwardLoad: od.forwardLoad,
-            backwardLoad: od.backwardLoad
-        })
+        if ((od.forwardLoad - loadRange[0]) * (od.forwardLoad - loadRange[1]) <= 0 ||
+           (od.backwardLoad - loadRange[0]) * (od.backwardLoad - loadRange[1]) <= 0) {
+            linestring_data.push({
+                type: 'LineString',
+                coordinates: [[origin.latlng.lng, origin.latlng.lat],
+                              [destination.latlng.lng, destination.latlng.lat]],
+                o: pair[0],
+                d: pair[1],
+                forwardLoad: od.forwardLoad,
+                backwardLoad: od.backwardLoad
+            })
+        }
     });
 
+    this.container.selectAll('.scene-edge').remove();
     var edges =  this.container.selectAll('.scene-edge')
         .data(linestring_data)
       .enter().append('path')
