@@ -68,8 +68,9 @@ var projection = d3.geoMercator();
  *     3) OD matrices.
  */
 var vizMap = new VizFlowMap(g, svg.attr('width'), svg.attr('height'));
-
 var vizModel = new VizModel();
+var vizOptions = Object({});
+
 vizModel.projection = projection;
 vizModel.load([
         'json!data/stat-areas-simplified-0.0005.geojson',
@@ -83,40 +84,18 @@ vizModel.load([
             OD: vizModel.OD
         });
         vizMap.render();
+        vizMap.update(false, leafletMap, leafletPath);
+
+        vizOptions = initializeControls(vizModel, vizMap, leafletMap, leafletPath);
 
         // Bind Leaflet map's event handlers
         leafletMap.on("viewreset", function(event) {
+            vizMap.render(vizOptions.selectedDay, vizOptions.selectedHour, vizOptions.loadRange);
             vizMap.update(event, leafletMap, leafletPath);
         });
         leafletMap.on("moveend",  function(event) {
+            vizMap.render(vizOptions.selectedDay, vizOptions.selectedHour, vizOptions.loadRange);
             vizMap.update(event, leafletMap, leafletPath);
         });
-        vizMap.update(false, leafletMap, leafletPath);
-
-        initializeControls(vizModel, vizMap, leafletMap, leafletPath);
 
    });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

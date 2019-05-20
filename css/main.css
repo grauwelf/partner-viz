@@ -48,10 +48,9 @@
 
 .scene-edge {
 	opacity: 1;
-	/*z-index: 999;*/
     fill: none;
-    stroke: red;
-    stroke-width: 2px;
+    stroke: #202020;
+    stroke-width: 1px;
     stroke-linecap: round;
     stroke-opacity: 0.0;
 }

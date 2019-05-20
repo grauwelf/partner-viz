@@ -82,7 +82,10 @@ function moveAlong(path, element, number, rate, direction, angle) {
         return true;
     }
     var offset = 10*(number - 1);
-    var duration = 1000 * path.node().getTotalLength() / rate;
+    if (path.node().getTotalLength() - offset <= 0) {
+        return true;
+    }
+    var duration = 1000 * (path.node().getTotalLength() - offset) / rate;
     var pathLength = path.node().getTotalLength();
     var start = direction === 1 ? path.node().getPointAtLength(offset) : path.node().getPointAtLength(pathLength);
     var end = direction === 1 ? path.node().getPointAtLength(pathLength) : path.node().getPointAtLength(offset);
@@ -129,6 +132,21 @@ VizFlowMap.prototype.render = function (day, time, loadRange) {
       .append('path')
         .attr('class', 'scene-map')
         .attr('d', smoothPath);
+    var tooltip = d3.tip().html(function(d) {
+        return d.name + '</br># ' + d.sta;
+    }).attr('class', 'scene-node-tooltip').style("z-index", "999");
+
+    var nodes = this.container.selectAll('.scene-node')
+        .data(Object.values(centers))
+      .enter()
+      .append('circle')
+        .attr('class', 'scene-node')
+        .attr('cx', function (d) { return d.x; })
+        .attr('cy', function (d) { return d.y; })
+        .attr('r', function(d) {return d.stay > 0 ? Math.log(d.stay) : 1;})
+        .on('mouseover', tooltip.show)
+        .on('mouseout', tooltip.hide);
+    nodes.call(tooltip);
 
     var linestring_data = [];
     _.each(OD, function(od, key) {
@@ -159,21 +177,6 @@ VizFlowMap.prototype.render = function (day, time, loadRange) {
 
     edgesInit(edges);
 
-    var tooltip = d3.tip().html(function(d) {
-        return d.name + '</br># ' + d.sta;
-    }).attr('class', 'scene-node-tooltip').style("z-index", "999");
-
-    var nodes = this.container.selectAll('.scene-node')
-        .data(Object.values(centers))
-      .enter()
-      .append('circle')
-        .attr('class', 'scene-node')
-        .attr('cx', function (d) { return d.x; })
-        .attr('cy', function (d) { return d.y; })
-        .attr('r', function(d) {return d.stay > 0 ? Math.log(d.stay) : 1;})
-        .on('mouseover', tooltip.show)
-        .on('mouseout', tooltip.hide);
-    nodes.call(tooltip);
 /*
     setInterval(function(){
         nodes
@@ -194,24 +197,32 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         previousZoom = leaflet.getZoom();
     }
     this.zoom = leaflet.getZoom();
+    var zoomDiff = this.zoom - previousZoom;
+
     this.container.selectAll('.scene-map')
         .attr('d', path);
-
-    this.container.selectAll('.scene-node')
-        .attr('cx', function(d){
-            return leaflet.latLngToLayerPoint(d.latlng).x;
-        })
-        .attr('cy', function(d){
-            return leaflet.latLngToLayerPoint(d.latlng).y;
-        });
 
     this.container.selectAll('.scene-edge')
         .attr('d', path);
 
+    var edgeOpacity = (this.zoom >= 14) ? 0.75 : 0.0;
+    g.selectAll('.scene-edge')
+        .style('stroke-width', function(d) {
+            var currentWidth = Number.parseFloat(d3.select(this).style('stroke-width'));
+            var multiplier = 1;
+/*            if (zoomDiff > 0) {
+                multiplier = 1.1;
+            } else if (zoomDiff < 0) {
+                multiplier = 0.9;
+            }*/
+            return currentWidth * multiplier;
+        })
+        .style('stroke-opacity', edgeOpacity)
+        .style('opacity', edgeOpacity);
+
     edgesInit(this.container.selectAll('.scene-edge'));
 
-    var zoomDiff = this.zoom - previousZoom;
-    g.selectAll('.scene-node')
+    g.selectAll('.scene-node').raise()
         .attr('r', function(d) {
             var currentRadius = Number.parseFloat(d3.select(this).attr('r'));
             var radiusMultiplier = 1;
@@ -221,16 +232,12 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
                 radiusMultiplier = 0.7;
             }
             return Math.max(currentRadius * radiusMultiplier, 1);
+        })
+        .attr('cx', function(d){
+            return leaflet.latLngToLayerPoint(d.latlng).x;
+        })
+        .attr('cy', function(d){
+            return leaflet.latLngToLayerPoint(d.latlng).y;
         });
-    g.selectAll('.scene-edge')
-        .style('stroke-width', function(d) {
-            var currentWidth = Number.parseFloat(d3.select(this).style('stroke-width'));
-            var multiplier = 1;
-            if (zoomDiff > 0) {
-                multiplier = 1.1;
-            } else if (zoomDiff < 0) {
-                multiplier = 0.9;
-            }
-            return currentWidth * multiplier;
-        });
+
 }

@@ -46,6 +46,7 @@ function initializeControls (model, map, leafletMap, leafletPath) {
         if (selectedDay !== undefined && selectedHour !== undefined) {
             map.render(selectedDay, selectedHour);
             map.update(false, leafletMap, leafletPath);
+            vizOptions = getOptions();
         }
     });
 
@@ -55,6 +56,7 @@ function initializeControls (model, map, leafletMap, leafletPath) {
         if (selectedDay !== undefined && selectedHour !== undefined) {
             map.render(selectedDay, selectedHour);
             map.update(false, leafletMap, leafletPath);
+            vizOptions = getOptions();
         }
     });
 
@@ -65,6 +67,7 @@ function initializeControls (model, map, leafletMap, leafletPath) {
         $('[name="choose-hour"]').val(selectedHour);
         map.render(selectedDay, selectedHour);
         map.update(false, leafletMap, leafletPath);
+        vizOptions = getOptions();
     });
 
     $('button#prev-hour').on('click', function(event){
@@ -76,6 +79,7 @@ function initializeControls (model, map, leafletMap, leafletPath) {
         $('[name="choose-hour"]').val(selectedHour - 1);
         map.render(selectedDay, selectedHour - 1);
         map.update(false, leafletMap, leafletPath);
+        vizOptions = getOptions();
     });
 
     // Load range slider
@@ -121,8 +125,25 @@ function initializeControls (model, map, leafletMap, leafletPath) {
             var selectedHour = parseInt($('[name="choose-hour"] option:selected').val());
             map.render(selectedDay, selectedHour, ui.values);
             map.update(false, leafletMap, leafletPath);
+            vizOptions = getOptions();
         },
       });
     $('#load-filter').append('<span id="load-range-low">' + loadLow + '</span>');
     $('#load-range-low').css('position', 'relative').css('left', lowMarkerPosition + '%');
+
+    var currentOptions = {
+            selectedDay : $('[name="choose-day"]:checked').val(),
+            selectedHour : parseInt($('[name="choose-hour"] option:selected').val()),
+            loadRange : $('#load-slider').slider('values')
+    };
+    return currentOptions;
+}
+
+function getOptions() {
+    var currentOptions = {
+        selectedDay : $('[name="choose-day"]:checked').val(),
+        selectedHour : parseInt($('[name="choose-hour"] option:selected').val()),
+        loadRange : $('#load-slider').slider('values')
+    };
+    return currentOptions;
 }
