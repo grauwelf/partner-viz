@@ -83,6 +83,7 @@ function moveAlong(path, element, number, rate, direction, angle) {
     }
     var offset = 10*(number - 1);
     if (path.node().getTotalLength() - offset <= 0) {
+        // Here is a problem: too small path to place all particles with fixed offsets
         return true;
     }
     var duration = 1000 * (path.node().getTotalLength() - offset) / rate;
@@ -132,6 +133,7 @@ VizFlowMap.prototype.render = function (day, time, loadRange) {
       .append('path')
         .attr('class', 'scene-map')
         .attr('d', smoothPath);
+
     var tooltip = d3.tip().html(function(d) {
         return d.name + '</br># ' + d.sta;
     }).attr('class', 'scene-node-tooltip').style("z-index", "999");
@@ -143,19 +145,28 @@ VizFlowMap.prototype.render = function (day, time, loadRange) {
         .attr('class', 'scene-node')
         .attr('cx', function (d) { return d.x; })
         .attr('cy', function (d) { return d.y; })
-        .attr('r', function(d) {return d.stay > 0 ? Math.log(d.stay) : 1;})
+        .attr('r', 3)
         .on('mouseover', tooltip.show)
         .on('mouseout', tooltip.hide);
     nodes.call(tooltip);
 
-    var linestring_data = [];
+    /*var standingParticles = this.container.selectAll('.scene-standing-particle')
+        .data(Object.values(centers))
+      .enter()
+      .append('circle')
+        .attr('class', '.scene-standing-particle')
+        .attr('cx', function (d) { return d.x; })
+        .attr('cy', function (d) { return d.y; })
+        .attr('r', 3);
+*/
+    var linestringData = [];
     _.each(OD, function(od, key) {
         var pair = key.split('-');
         var origin = centers[pair[0]];
         var destination = centers[pair[1]];
         if ((od.forwardLoad - loadRange[0]) * (od.forwardLoad - loadRange[1]) <= 0 ||
            (od.backwardLoad - loadRange[0]) * (od.backwardLoad - loadRange[1]) <= 0) {
-            linestring_data.push({
+            linestringData.push({
                 type: 'LineString',
                 coordinates: [[origin.latlng.lng, origin.latlng.lat],
                               [destination.latlng.lng, destination.latlng.lat]],
@@ -169,7 +180,7 @@ VizFlowMap.prototype.render = function (day, time, loadRange) {
 
     this.container.selectAll('.scene-edge').remove();
     var edges =  this.container.selectAll('.scene-edge')
-        .data(linestring_data)
+        .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge')
         .attr('d', leafletPath)
@@ -207,16 +218,6 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
 
     var edgeOpacity = (this.zoom >= 14) ? 0.75 : 0.0;
     g.selectAll('.scene-edge')
-        .style('stroke-width', function(d) {
-            var currentWidth = Number.parseFloat(d3.select(this).style('stroke-width'));
-            var multiplier = 1;
-/*            if (zoomDiff > 0) {
-                multiplier = 1.1;
-            } else if (zoomDiff < 0) {
-                multiplier = 0.9;
-            }*/
-            return currentWidth * multiplier;
-        })
         .style('stroke-opacity', edgeOpacity)
         .style('opacity', edgeOpacity);
 
@@ -238,6 +239,6 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         })
         .attr('cy', function(d){
             return leaflet.latLngToLayerPoint(d.latlng).y;
-        });
+    });
 
 }

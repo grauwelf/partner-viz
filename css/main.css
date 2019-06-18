@@ -21,6 +21,10 @@
 	opacity: 1; 
 }
 
+.scene-standing-particle {
+    fill: #3465a4;
+}
+
 .scene-flow-particle {
 	fill: #ff0000;
 }
@@ -44,6 +48,13 @@
 
 .leaflet-pane > svg path, svg circle{
     pointer-events: auto ;
+}
+
+.leaflet-top.leaflet-left {
+    background-color: lightyellow;
+    border-radius: 16px;
+    margin: 8px;
+    padding: 8px;
 }
 
 .scene-edge {

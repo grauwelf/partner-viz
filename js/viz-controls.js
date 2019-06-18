@@ -102,7 +102,7 @@ function initializeControls (model, map, leafletMap, leafletPath) {
         $('#load-range-low').text(loadLow);
     }
 
-    controls.append('<div id="load-filter" class="leaflet-control" style="pointer-events: auto; width: 100%"></div>');
+    controls.append('<div id="load-filter" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
     $('#load-filter').append('<span>Load filter</span><br/>');
     $('#load-filter').append('<span id="load-range-high">' + loadHigh + '</span>');
     $('#load-range-high').css('position', 'relative').css('left', highMarkerPosition + '%');
