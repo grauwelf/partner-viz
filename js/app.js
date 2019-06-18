@@ -83,18 +83,26 @@ vizModel.load([
             centers: vizModel.centers,
             OD: vizModel.OD
         });
-        vizMap.render();
+        vizMap.render({dataChanged: true});
         vizMap.update(false, leafletMap, leafletPath);
 
         vizOptions = initializeControls(vizModel, vizMap, leafletMap, leafletPath);
 
         // Bind Leaflet map's event handlers
         leafletMap.on("viewreset", function(event) {
-            vizMap.render(vizOptions.selectedDay, vizOptions.selectedHour, vizOptions.loadRange);
+            vizMap.render(vizOptions);
             vizMap.update(event, leafletMap, leafletPath);
         });
+
+        leafletMap.on("zoomend", function(event) {
+            vizModel.update();
+            vizMap.data.map = vizModel.areas;
+            vizMap.render(vizOptions);
+            vizMap.update(event, leafletMap, leafletPath);
+        });
+
         leafletMap.on("moveend",  function(event) {
-            vizMap.render(vizOptions.selectedDay, vizOptions.selectedHour, vizOptions.loadRange);
+            vizMap.render(vizOptions);
             vizMap.update(event, leafletMap, leafletPath);
         });
 

@@ -112,18 +112,26 @@ function translateAlong(path, offset, direction, angle) {
   };
 }
 
-VizFlowMap.prototype.render = function (day, time, loadRange) {
-    if (arguments.length == 0) {
-        day = 'weekday';
-        time = moment().hour() + 1;
+VizFlowMap.prototype.render = function (options) {
+    if (!options) {
+        options = {};
     }
-    if (loadRange === undefined) {
-        loadRange = [0, 10000000];
+    if (!options.selectedDay) {
+        options.selectedDay = 'weekday';
+    }
+    if (!options.selectedHour) {
+        options.selectedHour = moment().hour() + 1;
+    }
+    if (!options.loadRange) {
+        options.loadRange = [0, 10000000];
+    }
+    if (!options.dataChanged) {
+        options.dataChanged = false;
     }
 
     var centers = this.data().centers.nodes;
     var map = this.data().map;
-    var OD = this.data().OD[day][time];
+    var OD = this.data().OD[options.selectedDay][options.selectedHour];
 
     var smoothPath = d3.geoPath().projection(this.projection);
 
@@ -133,6 +141,41 @@ VizFlowMap.prototype.render = function (day, time, loadRange) {
       .append('path')
         .attr('class', 'scene-map')
         .attr('d', smoothPath);
+
+
+    var standingPoints = [];
+    _.each(map.features, function(area) {
+        if (options.dataChanged) {
+            d3.selectAll('.scene-standing-particle').remove();
+            const sta = area.properties.YISHUV_STA.toString().padStart(8, '0');
+            const center = centers[sta];
+            const m = Math.round(center.stay / 25);
+            for(var i = 0; i < m; i++) {
+                var p = [NaN, NaN];
+                while (!d3.polygonContains(area.polygon, p) ||
+                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 300)) {
+                    p = [
+                        _.random(area.xlim[0], area.xlim[1]),
+                        _.random(area.ylim[0], area.ylim[1])
+                    ];
+                }
+                //console.log(leafletMap.layerPointToLatLng(p).distanceTo(center.latlng));
+                standingPoints.push(Object({
+                    point: p,
+                    latlng: leafletMap.layerPointToLatLng(p)
+                }));
+            }
+        }
+    });
+
+    var standingParticles = this.container.selectAll('.scene-standing-particle')
+        .data(standingPoints)
+      .enter()
+      .append('circle')
+        .attr('class', 'scene-standing-particle')
+        .attr('cx', function (d) { return d.point[0]; })
+        .attr('cy', function (d) { return d.point[1]; })
+        .attr('r', 2);
 
     var tooltip = d3.tip().html(function(d) {
         return d.name + '</br># ' + d.sta;
@@ -150,22 +193,13 @@ VizFlowMap.prototype.render = function (day, time, loadRange) {
         .on('mouseout', tooltip.hide);
     nodes.call(tooltip);
 
-    /*var standingParticles = this.container.selectAll('.scene-standing-particle')
-        .data(Object.values(centers))
-      .enter()
-      .append('circle')
-        .attr('class', '.scene-standing-particle')
-        .attr('cx', function (d) { return d.x; })
-        .attr('cy', function (d) { return d.y; })
-        .attr('r', 3);
-*/
     var linestringData = [];
     _.each(OD, function(od, key) {
         var pair = key.split('-');
         var origin = centers[pair[0]];
         var destination = centers[pair[1]];
-        if ((od.forwardLoad - loadRange[0]) * (od.forwardLoad - loadRange[1]) <= 0 ||
-           (od.backwardLoad - loadRange[0]) * (od.backwardLoad - loadRange[1]) <= 0) {
+        if ((od.forwardLoad - options.loadRange[0]) * (od.forwardLoad - options.loadRange[1]) <= 0 ||
+           (od.backwardLoad - options.loadRange[0]) * (od.backwardLoad - options.loadRange[1]) <= 0) {
             linestringData.push({
                 type: 'LineString',
                 coordinates: [[origin.latlng.lng, origin.latlng.lat],
@@ -223,6 +257,24 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
 
     edgesInit(this.container.selectAll('.scene-edge'));
 
+    g.selectAll('.scene-standing-particle').raise()
+        .attr('r', function(d) {
+            var currentRadius = Number.parseFloat(d3.select(this).attr('r'));
+            var radiusMultiplier = 1;
+            if (zoomDiff > 0) {
+                radiusMultiplier = 1.3;
+            } else if (zoomDiff < 0) {
+                radiusMultiplier = 0.7;
+            }
+            return Math.max(currentRadius * radiusMultiplier, 1);
+        })
+        .attr('cx', function(d){
+            return leaflet.latLngToLayerPoint(d.latlng).x;
+        })
+        .attr('cy', function(d){
+            return leaflet.latLngToLayerPoint(d.latlng).y;
+        });
+
     g.selectAll('.scene-node').raise()
         .attr('r', function(d) {
             var currentRadius = Number.parseFloat(d3.select(this).attr('r'));
@@ -239,6 +291,6 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         })
         .attr('cy', function(d){
             return leaflet.latLngToLayerPoint(d.latlng).y;
-    });
+        });
 
 }

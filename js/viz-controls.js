@@ -44,9 +44,11 @@ function initializeControls (model, map, leafletMap, leafletPath) {
         var selectedDay = $('[name="choose-day"]:checked').val();
         var selectedHour = parseInt($('[name="choose-hour"] option:selected').val());
         if (selectedDay !== undefined && selectedHour !== undefined) {
-            map.render(selectedDay, selectedHour);
-            map.update(false, leafletMap, leafletPath);
             vizOptions = getOptions();
+            vizOptions.dataChanged = true;
+            map.render(vizOptions);
+            map.update(false, leafletMap, leafletPath);
+
         }
     });
 
@@ -54,9 +56,10 @@ function initializeControls (model, map, leafletMap, leafletPath) {
         var selectedDay = $('[name="choose-day"]:checked').val();
         var selectedHour = parseInt($('[name="choose-hour"] option:selected').val());
         if (selectedDay !== undefined && selectedHour !== undefined) {
-            map.render(selectedDay, selectedHour);
-            map.update(false, leafletMap, leafletPath);
             vizOptions = getOptions();
+            vizOptions.dataChanged = true;
+            map.render(vizOptions);
+            map.update(false, leafletMap, leafletPath);
         }
     });
 
@@ -65,9 +68,11 @@ function initializeControls (model, map, leafletMap, leafletPath) {
         var selectedHour = parseInt($('[name="choose-hour"] option:selected').val());
         selectedHour = (selectedHour + 1) % 24;
         $('[name="choose-hour"]').val(selectedHour);
-        map.render(selectedDay, selectedHour);
-        map.update(false, leafletMap, leafletPath);
+        //map.render(selectedDay, selectedHour);
         vizOptions = getOptions();
+        vizOptions.dataChanged = true;
+        map.render(vizOptions);
+        map.update(false, leafletMap, leafletPath);
     });
 
     $('button#prev-hour').on('click', function(event){
@@ -77,9 +82,11 @@ function initializeControls (model, map, leafletMap, leafletPath) {
             selectedHour = 24 + selectedHour;
         }
         $('[name="choose-hour"]').val(selectedHour - 1);
-        map.render(selectedDay, selectedHour - 1);
-        map.update(false, leafletMap, leafletPath);
+//        map.render(selectedDay, selectedHour - 1);
         vizOptions = getOptions();
+        vizOptions.dataChanged = true;
+        map.render(vizOptions);
+        map.update(false, leafletMap, leafletPath);
     });
 
     // Load range slider
@@ -123,9 +130,11 @@ function initializeControls (model, map, leafletMap, leafletPath) {
             leafletMap.dragging.enable();
             var selectedDay = $('[name="choose-day"]:checked').val();
             var selectedHour = parseInt($('[name="choose-hour"] option:selected').val());
-            map.render(selectedDay, selectedHour, ui.values);
-            map.update(false, leafletMap, leafletPath);
             vizOptions = getOptions();
+            vizOptions.dataChanged = false;
+            map.render(vizOptions);
+            map.update(false, leafletMap, leafletPath);
+
         },
       });
     $('#load-filter').append('<span id="load-range-low">' + loadLow + '</span>');
@@ -134,7 +143,8 @@ function initializeControls (model, map, leafletMap, leafletPath) {
     var currentOptions = {
             selectedDay : $('[name="choose-day"]:checked').val(),
             selectedHour : parseInt($('[name="choose-hour"] option:selected').val()),
-            loadRange : $('#load-slider').slider('values')
+            loadRange : $('#load-slider').slider('values'),
+            dataChange: true
     };
     return currentOptions;
 }

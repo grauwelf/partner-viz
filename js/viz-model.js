@@ -79,11 +79,45 @@ function VizModel() {
         return coordinates;
     };
 
+    self.update = function() {
+        if (self.areas === undefined) {
+            return;
+        }
+        self.areas.features.forEach(function(area) {
+            var latlngPolygon = area.geometry.coordinates[0][0];
+            var polygon = [];
+            var xlim = [];
+            var ylim = [];
+            latlngPolygon.forEach(function(point) {
+                var xyPoint = leafletMap.latLngToLayerPoint(new L.LatLng(point[1], point[0]));
+                polygon.push([xyPoint.x, xyPoint.y]);
+                if (xlim.length == 0) {
+                    xlim = [xyPoint.x, xyPoint.x];
+                } else {
+                    xlim[0] = Math.min(xlim[0], xyPoint.x);
+                    xlim[1] = Math.max(xlim[1], xyPoint.x);
+                }
+                if (ylim.length == 0) {
+                    ylim = [xyPoint.y, xyPoint.y];
+                } else {
+                    ylim[0] = Math.min(ylim[0], xyPoint.y);
+                    ylim[1] = Math.max(ylim[1], xyPoint.y);
+                }
+            })
+            area.polygon = polygon;
+            area.xlim = xlim;
+            area.ylim = ylim;
+        });
+    }
+
     self.load = function (value) {
         self.files = value;
         return new VizDataLoader(self.files)
             .done(function(areasData, centersData, flowsData) {
+
                 self.areas = areasData;
+                self.update();
+
                 var nodes = [];
                 centersData.features.forEach(function (data) {
                     data.id = data.properties.OBJECTID;
