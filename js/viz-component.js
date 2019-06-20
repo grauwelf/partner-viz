@@ -53,26 +53,32 @@ VizFlowMap.prototype = Object.create(VizComponent.prototype);
 function edgesInit(lines) {
     d3.selectAll('.scene-flow-particle').remove();
     lines.each(function(element, idx) {
-        var simulationRate = 5;
-        var p1 = d3.select(this).node().getPointAtLength(0);
-        var p2 = d3.select(this).node().getPointAtLength(0 + 1);
-        var angleTo = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI + 90;
-        var angleFrom = angleTo - 180;
-        for (var i = 0; i < Math.floor(d3.select(this).data()[0].forwardLoad / 10); i++) {
-            var particleTo = g.append('path')
-                .attr('class', 'scene-flow-particle')
-                .attr('d', function(d) {
-                    return d3.symbol().type(d3.symbolTriangle).size('24')();
-                });
-            moveAlong(d3.select(this), particleTo, i+1, simulationRate, 1, angleTo);
-        }
-        for (var i = 0; i < Math.floor(d3.select(this).data()[0].backwardLoad / 10); i++) {
-            var particleFrom = g.append('path')
-                .attr('class', 'scene-flow-particle')
-                .attr('d', function(d) {
-                    return d3.symbol().type(d3.symbolTriangle).size('24')();
-                });
-            moveAlong(d3.select(this), particleFrom, i+1, simulationRate, -1, angleFrom);
+        const simulationRate = 5;
+        const devicesPerParticle = 10;
+        const p1 = d3.select(this).node().getPointAtLength(0);
+        const p2 = d3.select(this).node().getPointAtLength(0 + 1);
+        const angleTo = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI + 90;
+        const angleFrom = angleTo - 180;
+
+        const pathClass = d3.select(this).attr('class');
+        if (pathClass.indexOf('-to') >= 0) {
+            for (var i = 0; i < Math.floor(d3.select(this).data()[0].forwardLoad / devicesPerParticle); i++) {
+                const particleTo = g.append('path')
+                    .attr('class', 'scene-flow-particle')
+                    .attr('d', function(d) {
+                        return d3.symbol().type(d3.symbolTriangle).size('24')();
+                    });
+                moveAlong(d3.select(this), particleTo, i+1, simulationRate, 1, angleTo);
+            }
+        } else {
+            for (var i = 0; i < Math.floor(d3.select(this).data()[0].backwardLoad / devicesPerParticle); i++) {
+                const particleFrom = g.append('path')
+                    .attr('class', 'scene-flow-particle')
+                    .attr('d', function(d) {
+                        return d3.symbol().type(d3.symbolTriangle).size('24')();
+                    });
+                moveAlong(d3.select(this), particleFrom, i+1, simulationRate, -1, angleFrom);
+            }
         }
     });
 }
@@ -81,19 +87,24 @@ function moveAlong(path, element, number, rate, direction, angle) {
     if (path === undefined) {
         return true;
     }
-    var offset = 10*(number - 1);
-    if (path.node().getTotalLength() - offset <= 0) {
+    const offset = 10*(number - 1);
+    const pathLength = path.node().getTotalLength();
+    if (pathLength - offset <= 0) {
         // Here is a problem: too small path to place all particles with fixed offsets
         return true;
     }
-    var duration = 1000 * (path.node().getTotalLength() - offset) / rate;
-    var pathLength = path.node().getTotalLength();
-    var start = direction === 1 ? path.node().getPointAtLength(offset) : path.node().getPointAtLength(pathLength);
-    var end = direction === 1 ? path.node().getPointAtLength(pathLength) : path.node().getPointAtLength(offset);
+    const duration = 1000 * (pathLength - offset) / rate;
+    const start = direction === 1 ? path.node().getPointAtLength(offset) : path.node().getPointAtLength(pathLength);
+    const end = direction === 1 ? path.node().getPointAtLength(pathLength) : path.node().getPointAtLength(offset);
+
+//    if ((path.data()[0].o ==  "66000113") && (path.data()[0].d == "66000114")) {
+//        console.log(start, end, offset, pathLength);
+//    }
     element
         .attr('transform', 'translate(' + start.x + ',' + start.y + ')rotate(' + angle + ')');
     element.transition()
-        .attr('transform', 'translate(' + end.x + ',' + end.y + ')rotate(' + angle + ')')
+        //.attr('transform', 'translate(' + end.x + ',' + end.y + ')rotate(' + angle + ')')
+        .attrTween('transform', translateAlong(path.node(), offset, direction, angle))
         .duration(duration)
         .ease(d3.easeLinear)
         .on('end', function() {
@@ -102,11 +113,11 @@ function moveAlong(path, element, number, rate, direction, angle) {
 }
 
 function translateAlong(path, offset, direction, angle) {
-  var l = path.getTotalLength();
+  const l = path.getTotalLength();
   return function(d, i, a) {
     return function(t) {
-        atLength = direction === 1 ? (t * l) - offset : (l - (t * l)) + offset;
-        var p = path.getPointAtLength(atLength);
+        const atLength = direction === 1 ? (t * l) - offset : (l - (t * l)) + offset;
+        const p = path.getPointAtLength(atLength);
         return 'translate(' + p.x + ',' + p.y + ')rotate(' + angle + ')';
     };
   };
@@ -144,8 +155,8 @@ VizFlowMap.prototype.render = function (options) {
 
 
     var standingPoints = [];
-    _.each(map.features, function(area) {
-        if (options.dataChanged) {
+    if (options.dataChanged) {
+        _.each(map.features, function(area) {
             d3.selectAll('.scene-standing-particle').remove();
             const sta = area.properties.YISHUV_STA.toString().padStart(8, '0');
             const center = centers[sta];
@@ -153,20 +164,20 @@ VizFlowMap.prototype.render = function (options) {
             for(var i = 0; i < m; i++) {
                 var p = [NaN, NaN];
                 while (!d3.polygonContains(area.polygon, p) ||
-                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 300)) {
+                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 300) ||
+                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) < 75)) {
                     p = [
                         _.random(area.xlim[0], area.xlim[1]),
                         _.random(area.ylim[0], area.ylim[1])
                     ];
                 }
-                //console.log(leafletMap.layerPointToLatLng(p).distanceTo(center.latlng));
                 standingPoints.push(Object({
                     point: p,
                     latlng: leafletMap.layerPointToLatLng(p)
                 }));
             }
-        }
-    });
+        });
+    }
 
     var standingParticles = this.container.selectAll('.scene-standing-particle')
         .data(standingPoints)
@@ -212,15 +223,59 @@ VizFlowMap.prototype.render = function (options) {
         }
     });
 
-    this.container.selectAll('.scene-edge').remove();
-    var edges =  this.container.selectAll('.scene-edge')
+    this.container.selectAll('.scene-edge-to').remove();
+    var arcsTo =  this.container.selectAll('.scene-edge-to')
         .data(linestringData)
       .enter().append('path')
-        .attr('class', 'scene-edge')
-        .attr('d', leafletPath)
+        .attr('class', 'scene-edge-to')
+        .attr('d', function(d) {
+            const leafletLineString = leafletPath(d);
+            const coords = leafletLineString.replace(/M|Z/, '').split('L').map((d) => d.split(','));
+            const length = Math.sqrt(
+                    Math.pow(Number(coords[1][0]) - Number(coords[0][0]), 2) +
+                    Math.pow(Number(coords[1][1]) - Number(coords[0][1]), 2)
+            );
+            const L = 0.15 * length;
+            var angleTo = Math.atan(
+                    (Number(coords[1][1]) - Number(coords[0][1])) /
+                    (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
+            const deltaX = L * Math.cos(angleTo);
+            const deltaY = L * Math.sin(angleTo);
+            const midpointL = [
+                Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) + deltaX,
+                Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY
+            ];
+            return arcGenerator([coords[0], midpointL, coords[1]]);
+        })
         .style('opacity', 0);
 
-    edgesInit(edges);
+    this.container.selectAll('.scene-edge-from').remove();
+    var arcsFrom =  this.container.selectAll('.scene-edge-from')
+        .data(linestringData)
+      .enter().append('path')
+        .attr('class', 'scene-edge-from')
+        .attr('d', function(d) {
+            const leafletLineString = leafletPath(d);
+            const coords = leafletLineString.replace(/M|Z/, '').split('L').map((d) => d.split(','));
+            const length = Math.sqrt(
+                    Math.pow(Number(coords[1][0]) - Number(coords[0][0]), 2) +
+                    Math.pow(Number(coords[1][1]) - Number(coords[0][1]), 2)
+            );
+            const L = 0.15 * length;
+            var angleTo = Math.atan(
+                    (Number(coords[1][1]) - Number(coords[0][1])) /
+                    (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
+            const deltaX = L * Math.cos(angleTo);
+            const deltaY = L * Math.sin(angleTo);
+            const midpointL = [
+                Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) - deltaX,
+                Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) - deltaY
+            ];
+            return arcGenerator([coords[0], midpointL, coords[1]]);
+        })
+        .style('opacity', 0);
+
+    edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'));
 
 /*
     setInterval(function(){
@@ -247,15 +302,67 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
     this.container.selectAll('.scene-map')
         .attr('d', path);
 
-    this.container.selectAll('.scene-edge')
-        .attr('d', path);
+    this.container.selectAll('.scene-edge-to')
+        .attr('d', function(d) {
+              const leafletLineString = leafletPath(d);
+              const coords = leafletLineString.replace(/M|Z/, '').split('L').map((d) => d.split(','));
+              var multiplier = 1;
+              if (zoomDiff > 0) {
+                  multiplier = 1.3;
+              } else if (zoomDiff < 0) {
+                  multiplier = 0.7;
+              }
+              const length = Math.sqrt(
+                      Math.pow(Number(coords[1][0]) - Number(coords[0][0]), 2) +
+                      Math.pow(Number(coords[1][1]) - Number(coords[0][1]), 2)
+              );
+              const L = 0.15 * length;
+              var angleTo = Math.atan(
+                      (Number(coords[1][1]) - Number(coords[0][1])) /
+                      (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
+              const deltaX = L * Math.cos(angleTo);
+              const deltaY = L * Math.sin(angleTo);
+              const midpointL = [
+                  Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) + deltaX,
+                  Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY
+              ];
+              return arcGenerator([coords[0], midpointL, coords[1]]);
+        })
+
+    this.container.selectAll('.scene-edge-from')
+        .attr('d', function(d) {
+              const leafletLineString = leafletPath(d);
+              const coords = leafletLineString.replace(/M|Z/, '').split('L').map((d) => d.split(','));
+              var multiplier = 1;
+              if (zoomDiff > 0) {
+                  multiplier = 1.3;
+              } else if (zoomDiff < 0) {
+                  multiplier = 0.7;
+              }
+              const length = Math.sqrt(
+                      Math.pow(Number(coords[1][0]) - Number(coords[0][0]), 2) +
+                      Math.pow(Number(coords[1][1]) - Number(coords[0][1]), 2)
+              );
+              const L = 0.15 * length;
+              var angleTo = Math.atan(
+                      (Number(coords[1][1]) - Number(coords[0][1])) /
+                      (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
+              const deltaX = L * Math.cos(angleTo);
+              const deltaY = L * Math.sin(angleTo);
+              const midpointL = [
+                  Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) - deltaX,
+                  Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) - deltaY
+              ];
+              return arcGenerator([coords[0], midpointL, coords[1]]);
+        })
+
 
     var edgeOpacity = (this.zoom >= 14) ? 0.75 : 0.0;
-    g.selectAll('.scene-edge')
+    g.selectAll('.scene-edge-to,.scene-edge-from')
         .style('stroke-opacity', edgeOpacity)
         .style('opacity', edgeOpacity);
 
-    edgesInit(this.container.selectAll('.scene-edge'));
+    edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'));
 
     g.selectAll('.scene-standing-particle').raise()
         .attr('r', function(d) {
@@ -292,5 +399,4 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         .attr('cy', function(d){
             return leaflet.latLngToLayerPoint(d.latlng).y;
         });
-
 }

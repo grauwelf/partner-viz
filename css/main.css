@@ -57,7 +57,7 @@
     padding: 8px;
 }
 
-.scene-edge {
+.scene-edge, .scene-edge-to, .scene-edge-from {
 	opacity: 1;
     fill: none;
     stroke: #202020;

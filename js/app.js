@@ -50,7 +50,9 @@ function projectPoint(x, y) {
     this.stream.point(point.x, point.y);
 }
 
-var leafletPath = d3.geoPath().projection(d3.geoTransform({point: projectPoint}));
+const leafletPath = d3.geoPath().projection(d3.geoTransform({point: projectPoint}));
+
+const arcGenerator = d3.line().curve(d3.curveBasis);
 
 // Create D3 Mercator projection
 var projection = d3.geoMercator();
