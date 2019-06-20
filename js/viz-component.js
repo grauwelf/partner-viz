@@ -53,7 +53,7 @@ VizFlowMap.prototype = Object.create(VizComponent.prototype);
 function edgesInit(lines) {
     d3.selectAll('.scene-flow-particle').remove();
     lines.each(function(element, idx) {
-        const simulationRate = 5;
+        const simulationRate = 7;
         const devicesPerParticle = 10;
         const p1 = d3.select(this).node().getPointAtLength(0);
         const p2 = d3.select(this).node().getPointAtLength(0 + 1);
@@ -95,15 +95,9 @@ function moveAlong(path, element, number, rate, direction, angle) {
     }
     const duration = 1000 * (pathLength - offset) / rate;
     const start = direction === 1 ? path.node().getPointAtLength(offset) : path.node().getPointAtLength(pathLength);
-    const end = direction === 1 ? path.node().getPointAtLength(pathLength) : path.node().getPointAtLength(offset);
-
-//    if ((path.data()[0].o ==  "66000113") && (path.data()[0].d == "66000114")) {
-//        console.log(start, end, offset, pathLength);
-//    }
     element
         .attr('transform', 'translate(' + start.x + ',' + start.y + ')rotate(' + angle + ')');
     element.transition()
-        //.attr('transform', 'translate(' + end.x + ',' + end.y + ')rotate(' + angle + ')')
         .attrTween('transform', translateAlong(path.node(), offset, direction, angle))
         .duration(duration)
         .ease(d3.easeLinear)
@@ -121,6 +115,26 @@ function translateAlong(path, offset, direction, angle) {
         return 'translate(' + p.x + ',' + p.y + ')rotate(' + angle + ')';
     };
   };
+}
+
+function buildArc(edge, direction) {
+    const leafletLineString = leafletPath(edge);
+    const coords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
+    const length = Math.sqrt(
+            Math.pow(Number(coords[1][0]) - Number(coords[0][0]), 2) +
+            Math.pow(Number(coords[1][1]) - Number(coords[0][1]), 2)
+    );
+    const L = 0.10 * length;
+    var angleTo = Math.atan(
+            (Number(coords[1][1]) - Number(coords[0][1])) /
+            (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
+    const deltaX = L * Math.cos(angleTo);
+    const deltaY = L * Math.sin(angleTo);
+    const midpointL = [
+        Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) + deltaX * direction,
+        Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY * direction
+    ];
+    return arcGenerator([coords[0], midpointL, coords[1]]);
 }
 
 VizFlowMap.prototype.render = function (options) {
@@ -228,25 +242,7 @@ VizFlowMap.prototype.render = function (options) {
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-to')
-        .attr('d', function(d) {
-            const leafletLineString = leafletPath(d);
-            const coords = leafletLineString.replace(/M|Z/, '').split('L').map((d) => d.split(','));
-            const length = Math.sqrt(
-                    Math.pow(Number(coords[1][0]) - Number(coords[0][0]), 2) +
-                    Math.pow(Number(coords[1][1]) - Number(coords[0][1]), 2)
-            );
-            const L = 0.15 * length;
-            var angleTo = Math.atan(
-                    (Number(coords[1][1]) - Number(coords[0][1])) /
-                    (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
-            const deltaX = L * Math.cos(angleTo);
-            const deltaY = L * Math.sin(angleTo);
-            const midpointL = [
-                Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) + deltaX,
-                Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY
-            ];
-            return arcGenerator([coords[0], midpointL, coords[1]]);
-        })
+        .attr('d', (d) => buildArc(d, 1))
         .style('opacity', 0);
 
     this.container.selectAll('.scene-edge-from').remove();
@@ -254,25 +250,7 @@ VizFlowMap.prototype.render = function (options) {
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-from')
-        .attr('d', function(d) {
-            const leafletLineString = leafletPath(d);
-            const coords = leafletLineString.replace(/M|Z/, '').split('L').map((d) => d.split(','));
-            const length = Math.sqrt(
-                    Math.pow(Number(coords[1][0]) - Number(coords[0][0]), 2) +
-                    Math.pow(Number(coords[1][1]) - Number(coords[0][1]), 2)
-            );
-            const L = 0.15 * length;
-            var angleTo = Math.atan(
-                    (Number(coords[1][1]) - Number(coords[0][1])) /
-                    (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
-            const deltaX = L * Math.cos(angleTo);
-            const deltaY = L * Math.sin(angleTo);
-            const midpointL = [
-                Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) - deltaX,
-                Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) - deltaY
-            ];
-            return arcGenerator([coords[0], midpointL, coords[1]]);
-        })
+        .attr('d', (d) => buildArc(d, -1))
         .style('opacity', 0);
 
     edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'));
@@ -302,60 +280,11 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
     this.container.selectAll('.scene-map')
         .attr('d', path);
 
-    this.container.selectAll('.scene-edge-to')
-        .attr('d', function(d) {
-              const leafletLineString = leafletPath(d);
-              const coords = leafletLineString.replace(/M|Z/, '').split('L').map((d) => d.split(','));
-              var multiplier = 1;
-              if (zoomDiff > 0) {
-                  multiplier = 1.3;
-              } else if (zoomDiff < 0) {
-                  multiplier = 0.7;
-              }
-              const length = Math.sqrt(
-                      Math.pow(Number(coords[1][0]) - Number(coords[0][0]), 2) +
-                      Math.pow(Number(coords[1][1]) - Number(coords[0][1]), 2)
-              );
-              const L = 0.15 * length;
-              var angleTo = Math.atan(
-                      (Number(coords[1][1]) - Number(coords[0][1])) /
-                      (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
-              const deltaX = L * Math.cos(angleTo);
-              const deltaY = L * Math.sin(angleTo);
-              const midpointL = [
-                  Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) + deltaX,
-                  Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY
-              ];
-              return arcGenerator([coords[0], midpointL, coords[1]]);
-        })
-
     this.container.selectAll('.scene-edge-from')
-        .attr('d', function(d) {
-              const leafletLineString = leafletPath(d);
-              const coords = leafletLineString.replace(/M|Z/, '').split('L').map((d) => d.split(','));
-              var multiplier = 1;
-              if (zoomDiff > 0) {
-                  multiplier = 1.3;
-              } else if (zoomDiff < 0) {
-                  multiplier = 0.7;
-              }
-              const length = Math.sqrt(
-                      Math.pow(Number(coords[1][0]) - Number(coords[0][0]), 2) +
-                      Math.pow(Number(coords[1][1]) - Number(coords[0][1]), 2)
-              );
-              const L = 0.15 * length;
-              var angleTo = Math.atan(
-                      (Number(coords[1][1]) - Number(coords[0][1])) /
-                      (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
-              const deltaX = L * Math.cos(angleTo);
-              const deltaY = L * Math.sin(angleTo);
-              const midpointL = [
-                  Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) - deltaX,
-                  Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) - deltaY
-              ];
-              return arcGenerator([coords[0], midpointL, coords[1]]);
-        })
+    .attr('d', (d) => buildArc(d, 1));
 
+    this.container.selectAll('.scene-edge-to')
+        .attr('d', (d) => buildArc(d, -1));
 
     var edgeOpacity = (this.zoom >= 14) ? 0.75 : 0.0;
     g.selectAll('.scene-edge-to,.scene-edge-from')
@@ -364,7 +293,7 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
 
     edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'));
 
-    g.selectAll('.scene-standing-particle').raise()
+    g.selectAll('.scene-standing-particle,.scene-node').raise()
         .attr('r', function(d) {
             var currentRadius = Number.parseFloat(d3.select(this).attr('r'));
             var radiusMultiplier = 1;
@@ -382,21 +311,4 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
             return leaflet.latLngToLayerPoint(d.latlng).y;
         });
 
-    g.selectAll('.scene-node').raise()
-        .attr('r', function(d) {
-            var currentRadius = Number.parseFloat(d3.select(this).attr('r'));
-            var radiusMultiplier = 1;
-            if (zoomDiff > 0) {
-                radiusMultiplier = 1.3;
-            } else if (zoomDiff < 0) {
-                radiusMultiplier = 0.7;
-            }
-            return Math.max(currentRadius * radiusMultiplier, 1);
-        })
-        .attr('cx', function(d){
-            return leaflet.latLngToLayerPoint(d.latlng).x;
-        })
-        .attr('cy', function(d){
-            return leaflet.latLngToLayerPoint(d.latlng).y;
-        });
 }
