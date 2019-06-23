@@ -4,10 +4,11 @@
 }
 
 .scene-map {
-	fill: none;
-	/*stroke: #0038b8;*/
-	stroke: #3465a4;
-	stroke-width: 1;
+	fill: a0a59e;
+    opacity: 0.25;
+	stroke: #ffffff;
+	stroke-width: 4;
+	stroke-opacity: 1;
 }
 
 .scene-stop {
@@ -16,13 +17,12 @@
 
 .scene-node {
 	fill: #ffff00;
-	stroke: #000000;
-	stroke-width: 1;
+	stroke: none;
 	opacity: 1; 
 }
 
 .scene-standing-particle {
-    fill: #3465a4;
+    fill: #343538;
 }
 
 .scene-flow-particle {
@@ -65,10 +65,3 @@
     stroke-linecap: round;
     stroke-opacity: 0.0;
 }
-
-/*.scene-arc {
-    fill: none;
-    stroke: #2e3436;
-    stroke-width: 2;
-    opacity: 0;
-}*/
