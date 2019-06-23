@@ -51,67 +51,70 @@ function VizFlowMap(container, width, height) {
 VizFlowMap.prototype = Object.create(VizComponent.prototype);
 
 function edgesInit(lines) {
+    d3.selectAll('.scene-flow-particle').transition();
     d3.selectAll('.scene-flow-particle').remove();
-    lines.each(function(element, idx) {
+    lines.each(function(line, idx) {
         const simulationRate = 7;
         const devicesPerParticle = 10;
         const p1 = d3.select(this).node().getPointAtLength(0);
-        const p2 = d3.select(this).node().getPointAtLength(0 + 1);
+        const p2 = d3.select(this).node().getPointAtLength(0 + 5);
         const angleTo = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI + 90;
         const angleFrom = angleTo - 180;
 
         const pathClass = d3.select(this).attr('class');
         if (pathClass.indexOf('-to') >= 0) {
-            for (var i = 0; i < Math.floor(d3.select(this).data()[0].forwardLoad / devicesPerParticle); i++) {
+            const particlesCount = Math.floor(d3.select(this).data()[0].forwardLoad / devicesPerParticle);
+            for (var i = 1; i <= particlesCount; i++) {
                 const particleTo = g.append('path')
                     .attr('class', 'scene-flow-particle')
                     .attr('d', function(d) {
                         return d3.symbol().type(d3.symbolTriangle).size('24')();
                     });
-                moveAlong(d3.select(this), particleTo, i+1, simulationRate, 1, angleTo);
+                moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, 1, angleTo);
             }
         } else {
-            for (var i = 0; i < Math.floor(d3.select(this).data()[0].backwardLoad / devicesPerParticle); i++) {
-                const particleFrom = g.append('path')
+            const particlesCount = Math.floor(d3.select(this).data()[0].forwardLoad / devicesPerParticle);
+            for (var i = 1; i <= particlesCount; i++) {
+                const particleTo = g.append('path')
                     .attr('class', 'scene-flow-particle')
                     .attr('d', function(d) {
                         return d3.symbol().type(d3.symbolTriangle).size('24')();
                     });
-                moveAlong(d3.select(this), particleFrom, i+1, simulationRate, -1, angleFrom);
+                moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, -1, angleFrom);
             }
         }
     });
 }
 
-function moveAlong(path, element, number, rate, direction, angle) {
+function moveAlong(path, element, count, index, rate, direction, angle) {
     if (path === undefined) {
         return true;
     }
-    const offset = 10*(number - 1);
     const pathLength = path.node().getTotalLength();
-    if (pathLength - offset <= 0) {
-        // Here is a problem: too small path to place all particles with fixed offsets
-        return true;
-    }
-    const duration = 1000 * (pathLength - offset) / rate;
-    const start = direction === 1 ? path.node().getPointAtLength(offset) : path.node().getPointAtLength(pathLength);
+    const offset = pathLength / count * (index - 1);
+    const duration = Math.floor(1000 * (pathLength - offset) / rate);
+    const start = direction === 1 ? path.node().getPointAtLength(offset) : path.node().getPointAtLength(pathLength - offset);
+
     element
-        .attr('transform', 'translate(' + start.x + ',' + start.y + ')rotate(' + angle + ')');
-    element.transition()
-        .attrTween('transform', translateAlong(path.node(), offset, direction, angle))
+        .attr('transform', 'translate(' + start.x + ',' + start.y + ')rotate(' + angle + ')')
+        .transition();
+    element
+        .transition()
         .duration(duration)
         .ease(d3.easeLinear)
-        .on('end', function() {
-            moveAlong(path, element, number, rate, direction, angle);
+        .attrTween('transform', translateAlong(path, offset, direction, angle))
+        .on('end', function(d, i, a) {
+            moveAlong(path, element, count, 1, rate, direction, angle);
         });
 }
 
 function translateAlong(path, offset, direction, angle) {
-  const l = path.getTotalLength();
+  const l = path.node().getTotalLength();
   return function(d, i, a) {
     return function(t) {
-        const atLength = direction === 1 ? (t * l) - offset : (l - (t * l)) + offset;
-        const p = path.getPointAtLength(atLength);
+        t = t * (l - offset) / l;
+        const atLength = (direction === 1) ? (t * l) + offset : (l - (t * l)) - offset;
+        const p = path.node().getPointAtLength(atLength);
         return 'translate(' + p.x + ',' + p.y + ')rotate(' + angle + ')';
     };
   };
@@ -253,20 +256,18 @@ VizFlowMap.prototype.render = function (options) {
         .attr('d', (d) => buildArc(d, -1))
         .style('opacity', 0);
 
-    edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'));
-
-/*
-    setInterval(function(){
-        nodes
-            .transition().duration(400).attr('r', function(d) {
-                return d.stay > 0 ? Math.log(d.stay)*1.1 : 1.1;
-            })
-            .delay(400)
-            .transition().duration(400).attr('r', function(d) {
-                return d.stay > 0 ? Math.log(d.stay) : 1;
-            });
-    }, 800);
-*/
+//    setInterval(function(){
+//        standingParticles
+//            .transition()
+//            .duration(200)
+//            .ease(d3.easeLinear)
+//            .attr('transform', function(d) {
+//                var p = d.point;
+//                p[0] = p[0] + 3 * (2 * Math.random() - 1);
+//                p[1] = p[1] + 3 * (2 * Math.random() - 1);
+//                return 'translate(' + p[0] + ',' + p[1] + ')';
+//            });
+//    }, 800);
 }
 
 VizFlowMap.prototype.update = function (event, leaflet, path) {
@@ -281,7 +282,7 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         .attr('d', path);
 
     this.container.selectAll('.scene-edge-from')
-    .attr('d', (d) => buildArc(d, 1));
+        .attr('d', (d) => buildArc(d, 1));
 
     this.container.selectAll('.scene-edge-to')
         .attr('d', (d) => buildArc(d, -1));
