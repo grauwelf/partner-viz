@@ -3,43 +3,8 @@
 	height: 650px;
 }
 
-.scene-map {
-	fill: a0a59e;
-    opacity: 0.25;
-	stroke: #ffffff;
-	stroke-width: 4;
-	stroke-opacity: 1;
-}
-
-.scene-stop {
-    fill: #009933;
-}
-
-.scene-node {
-	fill: #ffff00;
-	stroke: none;
-	opacity: 1; 
-}
-
-.scene-standing-particle {
-    fill: #343538;
-}
-
-.scene-flow-particle {
-	fill: #ff0000;
-}
-
-.scene-node-tooltip {
-    font-family: sans-serif;
-    font-size: 16px;
-    background-color: #ffffff;
-    padding: 4px 8px;
-    border-radius: 10px;
-    border: 1px solid #888a85;
-}
-
 .leaflet-tile-pane {
-	opacity: 0.75;
+    opacity: 0.75;
 }
 
 .leaflet-pane > svg {
@@ -57,8 +22,43 @@
     padding: 8px;
 }
 
+.scene-map {
+	fill: #555753;
+    fill-opacity: 0.3;
+	stroke: #ffffff;
+	stroke-width: 3;
+	stroke-opacity: 1;
+}
+
+.scene-stop {
+    fill: #009933;
+}
+
+.scene-node {
+	fill: #ffff00;
+	stroke: none;
+	opacity: 1; 
+}
+
+.scene-standing-particle {
+    fill: #ffff00;
+}
+
+.scene-flow-particle {
+	fill: #ff0000;
+}
+
+.scene-node-tooltip {
+    font-family: sans-serif;
+    font-size: 16px;
+    background-color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 10px;
+    border: 1px solid #888a85;
+}
+
 .scene-edge, .scene-edge-to, .scene-edge-from {
-	opacity: 1;
+    opacity: 1;
     fill: none;
     stroke: #202020;
     stroke-width: 1px;

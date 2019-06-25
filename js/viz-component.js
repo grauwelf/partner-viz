@@ -215,7 +215,7 @@ VizFlowMap.prototype.render = function (options) {
         .attr('class', 'scene-node')
         .attr('cx', function (d) { return d.x; })
         .attr('cy', function (d) { return d.y; })
-        .attr('r', 3)
+        .attr('r', 2)
         .on('mouseover', tooltip.show)
         .on('mouseout', tooltip.hide);
     nodes.call(tooltip);
@@ -293,17 +293,14 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         .style('stroke-opacity', edgeOpacity)
         .style('opacity', edgeOpacity);
 
-    edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'),
-            this.simulationRate, this.devicesPerParticle);
-
     g.selectAll('.scene-standing-particle,.scene-node').raise()
         .attr('r', function(d) {
             var currentRadius = Number.parseFloat(d3.select(this).attr('r'));
             var radiusMultiplier = 1;
             if (zoomDiff > 0) {
-                radiusMultiplier = 1.3;
+                radiusMultiplier = 1.2;
             } else if (zoomDiff < 0) {
-                radiusMultiplier = 0.7;
+                radiusMultiplier = 0.8;
             }
             return Math.max(currentRadius * radiusMultiplier, 1);
         })
@@ -313,5 +310,8 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         .attr('cy', function(d){
             return leaflet.latLngToLayerPoint(d.latlng).y;
         });
+
+    edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'),
+            this.simulationRate, this.devicesPerParticle);
 
 }
