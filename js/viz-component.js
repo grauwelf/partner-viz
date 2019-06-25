@@ -11,6 +11,10 @@ function VizComponent(container, width, height) {
     this.container = container;
     this.zoom = null;
     this._data = {centers: {}, map: {}};
+    this.maxDifference = 10;
+    this.simulationRate = 7;
+    this.devicesPerParticle = 10;
+    this.standingPerMarker = 25;
 }
 
 VizComponent.prototype.render = function() {
@@ -50,12 +54,10 @@ function VizFlowMap(container, width, height) {
 
 VizFlowMap.prototype = Object.create(VizComponent.prototype);
 
-function edgesInit(lines) {
+function edgesInit(lines, simulationRate, devicesPerParticle) {
     d3.selectAll('.scene-flow-particle').transition();
     d3.selectAll('.scene-flow-particle').remove();
     lines.each(function(line, idx) {
-        const simulationRate = 7;
-        const devicesPerParticle = 10;
         const p1 = d3.select(this).node().getPointAtLength(0);
         const p2 = d3.select(this).node().getPointAtLength(0 + 5);
         const angleTo = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI + 90;
@@ -120,19 +122,14 @@ function translateAlong(path, offset, direction, angle) {
   };
 }
 
-function buildArc(edge, direction) {
+function buildArc(edge, direction, maxDifference) {
     const leafletLineString = leafletPath(edge);
     const coords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
-    const length = Math.sqrt(
-            Math.pow(Number(coords[1][0]) - Number(coords[0][0]), 2) +
-            Math.pow(Number(coords[1][1]) - Number(coords[0][1]), 2)
-    );
-    const L = 0.10 * length;
     var angleTo = Math.atan(
             (Number(coords[1][1]) - Number(coords[0][1])) /
             (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
-    const deltaX = L * Math.cos(angleTo);
-    const deltaY = L * Math.sin(angleTo);
+    const deltaX = maxDifference * Math.cos(angleTo);
+    const deltaY = maxDifference * Math.sin(angleTo);
     const midpointL = [
         Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) + deltaX * direction,
         Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY * direction
@@ -162,6 +159,7 @@ VizFlowMap.prototype.render = function (options) {
     var OD = this.data().OD[options.selectedDay][options.selectedHour];
 
     var smoothPath = d3.geoPath().projection(this.projection);
+    const maxDifference = this.maxDifference;
 
     this.container.selectAll('.scene-map')
         .data(map.features)
@@ -173,11 +171,12 @@ VizFlowMap.prototype.render = function (options) {
 
     var standingPoints = [];
     if (options.dataChanged) {
+        const standingPerMarker = this.standingPerMarker;
         _.each(map.features, function(area) {
             d3.selectAll('.scene-standing-particle').remove();
             const sta = area.properties.YISHUV_STA.toString().padStart(8, '0');
             const center = centers[sta];
-            const m = Math.round(center.stay / 25);
+            const m = Math.round(center.stay / standingPerMarker);
             for(var i = 0; i < m; i++) {
                 var p = [NaN, NaN];
                 while (!d3.polygonContains(area.polygon, p) ||
@@ -245,7 +244,7 @@ VizFlowMap.prototype.render = function (options) {
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-to')
-        .attr('d', (d) => buildArc(d, 1))
+        .attr('d', (d) => buildArc(d, 1, maxDifference))
         .style('opacity', 0);
 
     this.container.selectAll('.scene-edge-from').remove();
@@ -253,7 +252,7 @@ VizFlowMap.prototype.render = function (options) {
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-from')
-        .attr('d', (d) => buildArc(d, -1))
+        .attr('d', (d) => buildArc(d, -1, maxDifference))
         .style('opacity', 0);
 
 //    setInterval(function(){
@@ -278,21 +277,24 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
     this.zoom = leaflet.getZoom();
     var zoomDiff = this.zoom - previousZoom;
 
+    const maxDifference = this.maxDifference;
+
     this.container.selectAll('.scene-map')
         .attr('d', path);
 
     this.container.selectAll('.scene-edge-from')
-        .attr('d', (d) => buildArc(d, 1));
+        .attr('d', (d) => buildArc(d, 1, maxDifference));
 
     this.container.selectAll('.scene-edge-to')
-        .attr('d', (d) => buildArc(d, -1));
+        .attr('d', (d) => buildArc(d, -1, maxDifference));
 
     var edgeOpacity = (this.zoom >= 14) ? 0.75 : 0.0;
     g.selectAll('.scene-edge-to,.scene-edge-from')
         .style('stroke-opacity', edgeOpacity)
         .style('opacity', edgeOpacity);
 
-    edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'));
+    edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'),
+            this.simulationRate, this.devicesPerParticle);
 
     g.selectAll('.scene-standing-particle,.scene-node').raise()
         .attr('r', function(d) {
