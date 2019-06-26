@@ -11,7 +11,9 @@ function VizComponent(container, width, height) {
     this.container = container;
     this.zoom = null;
     this._data = {centers: {}, map: {}};
-    this.maxDifference = 10;
+    this.maxDifference = 6;
+    this.dashWidth = 4;
+    this.particleSize = 16;
     this.simulationRate = 7;
     this.devicesPerParticle = 10;
     this.standingPerMarker = 25;
@@ -54,7 +56,7 @@ function VizFlowMap(container, width, height) {
 
 VizFlowMap.prototype = Object.create(VizComponent.prototype);
 
-function edgesInit(lines, simulationRate, devicesPerParticle) {
+function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
     d3.selectAll('.scene-flow-particle').transition();
     d3.selectAll('.scene-flow-particle').remove();
     lines.each(function(line, idx) {
@@ -70,7 +72,7 @@ function edgesInit(lines, simulationRate, devicesPerParticle) {
                 const particleTo = g.append('path')
                     .attr('class', 'scene-flow-particle')
                     .attr('d', function(d) {
-                        return d3.symbol().type(d3.symbolTriangle).size('24')();
+                        return d3.symbol().type(d3.symbolTriangle).size(particleSize.toString())();
                     });
                 moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, 1, angleTo);
             }
@@ -80,7 +82,7 @@ function edgesInit(lines, simulationRate, devicesPerParticle) {
                 const particleTo = g.append('path')
                     .attr('class', 'scene-flow-particle')
                     .attr('d', function(d) {
-                        return d3.symbol().type(d3.symbolTriangle).size('24')();
+                        return d3.symbol().type(d3.symbolTriangle).size(particleSize.toString())();
                     });
                 moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, -1, angleFrom);
             }
@@ -180,7 +182,7 @@ VizFlowMap.prototype.render = function (options) {
             for(var i = 0; i < m; i++) {
                 var p = [NaN, NaN];
                 while (!d3.polygonContains(area.polygon, p) ||
-                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 300) ||
+                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 150) ||
                       (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) < 75)) {
                     p = [
                         _.random(area.xlim[0], area.xlim[1]),
@@ -244,6 +246,7 @@ VizFlowMap.prototype.render = function (options) {
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-to')
+        .style("stroke-dasharray", (this.dashWidth.toString() + ", " + this.dashWidth.toString()))
         .attr('d', (d) => buildArc(d, 1, maxDifference))
         .style('opacity', 0);
 
@@ -252,6 +255,7 @@ VizFlowMap.prototype.render = function (options) {
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-from')
+        .style("stroke-dasharray", (this.dashWidth.toString() + ", " + this.dashWidth.toString()))
         .attr('d', (d) => buildArc(d, -1, maxDifference))
         .style('opacity', 0);
 
@@ -312,6 +316,8 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         });
 
     edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'),
-            this.simulationRate, this.devicesPerParticle);
+            this.simulationRate,
+            this.devicesPerParticle,
+            this.particleSize);
 
 }

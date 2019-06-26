@@ -34,18 +34,18 @@
     fill: #009933;
 }
 
-.scene-node {
-	fill: #ffff00;
-	stroke: none;
-	opacity: 1; 
-}
-
-.scene-standing-particle {
+.scene-node, .scene-standing-particle {
     fill: #ffff00;
+    stroke: #000;
+    stroke-width: 1;
+    stroke-opacity: 0.75;
 }
 
 .scene-flow-particle {
-	fill: #ff0000;
+    fill: #ffff00;
+    stroke-width: 1;
+    stroke-opacity: 0.75;
+    stroke: #000;
 }
 
 .scene-node-tooltip {
