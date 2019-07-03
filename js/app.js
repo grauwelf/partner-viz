@@ -52,7 +52,7 @@ function projectPoint(x, y) {
 
 const leafletPath = d3.geoPath().projection(d3.geoTransform({point: projectPoint}));
 
-const arcGenerator = d3.line().curve(d3.curveBasis);
+const arcGenerator = d3.line().curve(d3.curveNatural);
 
 // Create D3 Mercator projection
 var projection = d3.geoMercator();

@@ -106,20 +106,54 @@ function moveAlong(path, element, count, index, rate, direction, angle) {
         .transition()
         .duration(duration)
         .ease(d3.easeLinear)
-        .attrTween('transform', translateAlong(path, offset, direction, angle))
+        .attrTween('transform', translateAlong(path, pathLength, offset, direction, angle))
         .on('end', function(d, i, a) {
             moveAlong(path, element, count, 1, rate, direction, angle);
         });
 }
 
-function translateAlong(path, offset, direction, angle) {
-  const l = path.node().getTotalLength();
+function parseSVGPathNatural(pathString) {
+    const parts = pathString.match(/^M(.*?)C(.*?)C(.*?)$/);
+    const start = _.map(parts[1].split(','), parseFloat);
+    const curve1 = start.concat(_.map(parts[2].split(','), parseFloat));
+    const curve2 = [curve1[6], curve1[7]].concat(_.map(parts[3].split(','), parseFloat));
+    return {startCurve: curve1, endCurve: curve2};
+}
+
+function pointAtLengthOnCubicCurve(C, t) {
+    const q1 = (1 - t) * (1 - t) * (1 - t);
+    const q2 = 3 * (1 - t) * (1 - t) * t;
+    const q3 = 3 * (1 - t) * t * t;
+    const q4 = t * t * t;
+    return [
+        q1 * C[0] + q2 * C[2] + q3 * C[4] + q4 * C[6],
+        q1 * C[1] + q2 * C[3] + q3 * C[5] + q4 * C[7]
+    ];
+}
+
+function translateAlong(path, pathLength, offset, direction, angle) {
+  const l = pathLength;
+  const curves = parseSVGPathNatural(path.node().attributes.d.value);
+
   return function(d, i, a) {
     return function(t) {
+        const r = 1 - (l - offset) / l;
         t = t * (l - offset) / l;
-        const atLength = (direction === 1) ? (t * l) + offset : (l - (t * l)) - offset;
-        const p = path.node().getPointAtLength(atLength);
-        return 'translate(' + p.x + ',' + p.y + ')rotate(' + angle + ')';
+        var p = [0, 0];
+        if (direction == 1) {
+            if (t <= 0.5) {
+                p = pointAtLengthOnCubicCurve(curves.startCurve, 2 * (t + r));
+            } else {
+                p = pointAtLengthOnCubicCurve(curves.endCurve, 2 * ((t - 0.5) + r));
+            }
+        } else {
+            if (t <= 0.5) {
+                p = pointAtLengthOnCubicCurve(curves.endCurve, 1 - 2 * (t + r));
+            } else {
+                p = pointAtLengthOnCubicCurve(curves.startCurve, 1 - 2 * ((t - 0.5) + r));
+            }
+        }
+        return 'translate(' + p[0] + ',' + p[1] + ')rotate(' + angle + ')';
     };
   };
 }
@@ -182,8 +216,8 @@ VizFlowMap.prototype.render = function (options) {
             for(var i = 0; i < m; i++) {
                 var p = [NaN, NaN];
                 while (!d3.polygonContains(area.polygon, p) ||
-                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 150) ||
-                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) < 75)) {
+                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 50) ||
+                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) < 20)) {
                     p = [
                         _.random(area.xlim[0], area.xlim[1]),
                         _.random(area.ylim[0], area.ylim[1])
