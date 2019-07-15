@@ -13,9 +13,9 @@ function VizComponent(container, width, height) {
     this._data = {centers: {}, map: {}};
     this.maxDifference = 6;
     this.dashWidth = 4;
-    this.particleSize = 16;
+    this.particleSize = 10;
     this.simulationRate = 7;
-    this.devicesPerParticle = 10;
+    this.devicesPerParticle = 5;
     this.standingPerMarker = 25;
 }
 
@@ -72,7 +72,7 @@ function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
                 const particleTo = g.append('path')
                     .attr('class', 'scene-flow-particle')
                     .attr('d', function(d) {
-                        return d3.symbol().type(d3.symbolTriangle).size(particleSize.toString())();
+                        return d3.symbol().type(d3.symbolCircle).size(particleSize.toString())();
                     });
                 moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, 1, angleTo);
             }
@@ -82,7 +82,7 @@ function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
                 const particleTo = g.append('path')
                     .attr('class', 'scene-flow-particle')
                     .attr('d', function(d) {
-                        return d3.symbol().type(d3.symbolTriangle).size(particleSize.toString())();
+                        return d3.symbol().type(d3.symbolCircle).size(particleSize.toString())();
                     });
                 moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, -1, angleFrom);
             }
@@ -202,7 +202,10 @@ VizFlowMap.prototype.render = function (options) {
       .enter()
       .append('path')
         .attr('class', 'scene-map')
-        .attr('d', smoothPath);
+        .attr('d', smoothPath)
+        .on('click', function(event) {
+            console.log(d3.select(this).data());
+        });
 
 
     var standingPoints = [];
