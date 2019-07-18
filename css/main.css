@@ -60,8 +60,17 @@
 .scene-edge, .scene-edge-to, .scene-edge-from {
     opacity: 1;
     fill: none;
-    stroke: #202020;
-    stroke-width: 1px;
+    /*stroke: #202020;*/
+    stroke: #ffff00;
+    stroke-width: 3px;
     stroke-linecap: round;
-    stroke-opacity: 0.0;
+    /*stroke-opacity: 0.0;*/
+}
+
+.scene-bar-to, .scene-bar-from {
+    opacity: 1;
+    fill: none;
+    stroke: #ffff00;
+    stroke-width: 4px;
+    stroke-linecap: round;
 }

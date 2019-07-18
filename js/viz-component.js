@@ -12,7 +12,7 @@ function VizComponent(container, width, height) {
     this.zoom = null;
     this._data = {centers: {}, map: {}};
     this.maxDifference = 6;
-    this.dashWidth = 4;
+    this.dashWidth = 2;
     this.particleSize = 10;
     this.simulationRate = 7;
     this.devicesPerParticle = 5;
@@ -60,7 +60,18 @@ function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
     d3.selectAll('.scene-flow-particle').transition();
     d3.selectAll('.scene-flow-particle').remove();
     lines.each(function(line, idx) {
-        const p1 = d3.select(this).node().getPointAtLength(0);
+
+        const pathLength = d3.select(this).node().getTotalLength();
+        const transitionDuration = 1000 * Math.floor(pathLength / 7);
+
+        if (d3.select(this).attr('class').indexOf('-to') >= 0) {
+            runDottedEdge(d3.select(this), pathLength, transitionDuration, -1);
+        }
+        else {
+            runDottedEdge(d3.select(this), pathLength, transitionDuration, 1);
+        }
+        return;
+/*        const p1 = d3.select(this).node().getPointAtLength(0);
         const p2 = d3.select(this).node().getPointAtLength(0 + 5);
         const angleTo = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI + 90;
         const angleFrom = angleTo - 180;
@@ -74,7 +85,7 @@ function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
                     .attr('d', function(d) {
                         return d3.symbol().type(d3.symbolCircle).size(particleSize.toString())();
                     });
-                moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, 1, angleTo);
+                //moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, 1, angleTo);
             }
         } else {
             const particlesCount = Math.floor(d3.select(this).data()[0].forwardLoad / devicesPerParticle);
@@ -84,10 +95,24 @@ function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
                     .attr('d', function(d) {
                         return d3.symbol().type(d3.symbolCircle).size(particleSize.toString())();
                     });
-                moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, -1, angleFrom);
+                //moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, -1, angleFrom);
             }
-        }
+        }*/
     });
+}
+
+function runDottedEdge(path, pathLength, duration, direction) {
+    const startDashOffset = direction == 1 ? 0 : pathLength;
+    const endDashOffset = direction == 1 ? pathLength : 0;
+    path
+        .attr("stroke-dashoffset", startDashOffset)
+        .transition()
+        .duration(duration)
+        .ease(d3.easeLinear)
+        .attr("stroke-dashoffset", endDashOffset)
+        .on('end', function(d, i, a) {
+            runDottedEdge(path, pathLength, duration, direction);
+        });
 }
 
 function moveAlong(path, element, count, index, rate, direction, angle) {
@@ -100,7 +125,7 @@ function moveAlong(path, element, count, index, rate, direction, angle) {
     const start = direction === 1 ? path.node().getPointAtLength(offset) : path.node().getPointAtLength(pathLength - offset);
 
     element
-        .attr('transform', 'translate(' + start.x + ',' + start.y + ')rotate(' + angle + ')')
+        .attr('transform', 'translate(' + start.x + ',' + start.y + ')')
         .transition();
     element
         .transition()
@@ -121,10 +146,10 @@ function parseSVGPathNatural(pathString) {
 }
 
 function pointAtLengthOnCubicCurve(C, t) {
-    const q1 = (1 - t) * (1 - t) * (1 - t);
-    const q2 = 3 * (1 - t) * (1 - t) * t;
-    const q3 = 3 * (1 - t) * t * t;
-    const q4 = t * t * t;
+    const q1 = 1.0 * (1 - t) * (1 - t) * (1 - t);
+    const q2 = 3.0 * (1 - t) * (1 - t) * t;
+    const q3 = 3.0 * (1 - t) * t * t;
+    const q4 = 1.0 * t * t * t;
     return [
         q1 * C[0] + q2 * C[2] + q3 * C[4] + q4 * C[6],
         q1 * C[1] + q2 * C[3] + q3 * C[5] + q4 * C[7]
@@ -153,7 +178,7 @@ function translateAlong(path, pathLength, offset, direction, angle) {
                 p = pointAtLengthOnCubicCurve(curves.startCurve, 1 - 2 * ((t - 0.5) + r));
             }
         }
-        return 'translate(' + p[0] + ',' + p[1] + ')rotate(' + angle + ')';
+        return 'translate(' + p[0] + ',' + p[1] + ')';
     };
   };
 }
@@ -171,6 +196,36 @@ function buildArc(edge, direction, maxDifference) {
         Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY * direction
     ];
     return arcGenerator([coords[0], midpointL, coords[1]]);
+}
+
+function buildArcBar(edge, direction, maxDifference) {
+    const leafletLineString = leafletPath(edge);
+
+    const coords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
+    var angleTo = Math.atan(
+            (Number(coords[1][1]) - Number(coords[0][1])) /
+            (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
+    const deltaX = maxDifference * Math.cos(angleTo);
+    const deltaY = maxDifference * Math.sin(angleTo);
+    const midpointL = [
+        Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) + deltaX * direction,
+        Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY * direction
+    ];
+
+    var arc = null;
+    if (direction == -1) {
+        arc = arcGenerator([coords[0], midpointL, coords[1]]);
+    } else {
+        arc = arcGenerator([coords[1], midpointL, coords[0]]);
+    }
+    const curves = parseSVGPathNatural(arc);
+    const arcLength = Math.sqrt(Math.pow(midpointL[0] - parseFloat(coords[0][0]), 2) +
+            Math.pow(midpointL[1] - parseFloat(coords[0][1]), 2));
+    const load = (direction == 1) ? edge.forwardLoad : edge.backwardLoad;
+    return arcGenerator([
+        [parseFloat(curves.startCurve[0]), parseFloat(curves.startCurve[1])],
+        pointAtLengthOnCubicCurve(curves.startCurve, load / arcLength)
+    ]);
 }
 
 VizFlowMap.prototype.render = function (options) {
@@ -204,7 +259,7 @@ VizFlowMap.prototype.render = function (options) {
         .attr('class', 'scene-map')
         .attr('d', smoothPath)
         .on('click', function(event) {
-            console.log(d3.select(this).data());
+            //console.log(d3.select(this).data());
         });
 
 
@@ -283,18 +338,36 @@ VizFlowMap.prototype.render = function (options) {
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-to')
-        .style("stroke-dasharray", (this.dashWidth.toString() + ", " + this.dashWidth.toString()))
-        .attr('d', (d) => buildArc(d, 1, maxDifference))
-        .style('opacity', 0);
+        //.style("stroke-dasharray", (this.dashWidth.toString() + ", " + this.dashWidth.toString()))
+        .style("stroke-dasharray", (this.dashWidth.toString() + ", " + (10 * this.dashWidth).toString()))
+        .attr('d', (d) => buildArc(d, 1, maxDifference));
+        //.style('opacity', 0);
 
     this.container.selectAll('.scene-edge-from').remove();
     var arcsFrom =  this.container.selectAll('.scene-edge-from')
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-from')
-        .style("stroke-dasharray", (this.dashWidth.toString() + ", " + this.dashWidth.toString()))
-        .attr('d', (d) => buildArc(d, -1, maxDifference))
-        .style('opacity', 0);
+        //.style("stroke-dasharray", (this.dashWidth.toString() + ", " + this.dashWidth.toString()))
+        .style("stroke-dasharray", (this.dashWidth.toString() + ", " + (10 * this.dashWidth).toString()))
+        .attr('d', (d) => buildArc(d, -1, maxDifference));
+        //.style('opacity', 0);
+
+    this.container.selectAll('.scene-bar-to').remove();
+    var barsTo =  this.container.selectAll('.scene-bar-to')
+        .data(linestringData)
+      .enter().append('path')
+        .attr('class', 'scene-bar-to')
+        .attr('d', (d) => buildArcBar(d, 1, maxDifference));
+        //.style('opacity', 0);
+
+    this.container.selectAll('.scene-bar-from').remove();
+    var barsTo =  this.container.selectAll('.scene-bar-from')
+        .data(linestringData)
+      .enter().append('path')
+        .attr('class', 'scene-bar-from')
+        .attr('d', (d) => buildArcBar(d, -1, maxDifference));
+        //.style('opacity', 0);
 
 //    setInterval(function(){
 //        standingParticles
@@ -329,10 +402,16 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
     this.container.selectAll('.scene-edge-to')
         .attr('d', (d) => buildArc(d, -1, maxDifference));
 
+    this.container.selectAll('.scene-bar-to')
+        .attr('d', (d) => buildArcBar(d, 1, maxDifference));
+
+    this.container.selectAll('.scene-bar-from')
+        .attr('d', (d) => buildArcBar(d, -1, maxDifference));
+
     var edgeOpacity = (this.zoom >= 14) ? 0.75 : 0.0;
-    g.selectAll('.scene-edge-to,.scene-edge-from')
-        .style('stroke-opacity', edgeOpacity)
-        .style('opacity', edgeOpacity);
+    //g.selectAll('.scene-edge-to,.scene-edge-from')
+    //    .style('stroke-opacity', edgeOpacity)
+    //    .style('opacity', edgeOpacity);
 
     g.selectAll('.scene-standing-particle,.scene-node').raise()
         .attr('r', function(d) {
