@@ -38,7 +38,7 @@
     fill: #ffff00;
     stroke: #000;
     stroke-width: 1;
-    stroke-opacity: 0.75;
+    stroke-opacity: 0.25;
 }
 
 .scene-flow-particle {
@@ -63,30 +63,24 @@
     stroke: #202020;
     stroke-width: 1px;
     stroke-linecap: round;
-    /*stroke-opacity: 0.0;*/
+    stroke-opacity: 0.0;
 }
 
-.scene-bar-to, .scene-bar-from {
-    opacity: 1;
-    fill: none;
-    stroke: #ffff00;
-    stroke-width: 4px;
-    stroke-linecap: round;
+.scene-bar-destination-to, .scene-bar-origin-to {
+    opacity: 0.75;
+    fill: #ff0000;
 }
 
-.scene-bar-back-to, .scene-bar-back-from {
-    opacity: 0.5;
-    fill: none;
-    stroke: #ffff00;
-    stroke-width: 4px;
-    stroke-linecap: round;
+.scene-bar-destination-from, .scene-bar-origin-from {
+    opacity: 0.75;
+    fill: #0000ff;
 }
 
 .scene-bar-destination-shadow-to, .scene-bar-origin-shadow-to {
     opacity: 1;
     fill: none;
-    stroke: #ff0000;
-    stroke-opacity: 1;
+    stroke: #000000;
+    stroke-opacity: 0.5;
     stroke-width: 1px;
     stroke-linecap: round;
 }
@@ -94,8 +88,8 @@
 .scene-bar-destination-shadow-from, .scene-bar-origin-shadow-from {
     opacity: 1;
     fill: none;
-    stroke: #0000ff;
-    stroke-opacity: 1;
+    stroke: #000000;
+    stroke-opacity: 0.5;
     stroke-width: 1px;
     stroke-linecap: round;
 }

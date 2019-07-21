@@ -132,7 +132,9 @@ function VizModel() {
                 self.centers.nodes = nodes;
 
                 flowsData.forEach(function(row) {
-                    var flow = {};
+                    var flow = {
+                            forwardLoad: 0,
+                            backwardLoad: 0};
                     var origin = row.origin_code.padStart(4, '0') +
                         row.origin_sta_code.padStart(4, '0');
                     var destination = row.destination_code.padStart(4, '0') +
