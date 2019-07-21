@@ -36,7 +36,7 @@
 
 .scene-node, .scene-standing-particle {
     fill: #ffff00;
-    stroke: #000;
+    stroke: none;
     stroke-width: 1;
     stroke-opacity: 0.75;
 }
@@ -44,7 +44,7 @@
 .scene-flow-particle {
     fill: #ffff00;
     stroke-width: 1;
-    stroke-opacity: 0.75;
+    stroke-opacity: 0.55;
     stroke: #000;
 }
 

@@ -339,9 +339,9 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
             var currentRadius = Number.parseFloat(d3.select(this).attr('r'));
             var radiusMultiplier = 1;
             if (zoomDiff > 0) {
-                radiusMultiplier = 1.2;
+                radiusMultiplier = 1.4;
             } else if (zoomDiff < 0) {
-                radiusMultiplier = 0.8;
+                radiusMultiplier = 0.7;
             }
             return Math.max(currentRadius * radiusMultiplier, 1);
         })
