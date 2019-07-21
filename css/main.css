@@ -60,9 +60,8 @@
 .scene-edge, .scene-edge-to, .scene-edge-from {
     opacity: 1;
     fill: none;
-    /*stroke: #202020;*/
-    stroke: #ffff00;
-    stroke-width: 3px;
+    stroke: #202020;
+    stroke-width: 1px;
     stroke-linecap: round;
     /*stroke-opacity: 0.0;*/
 }
@@ -72,5 +71,31 @@
     fill: none;
     stroke: #ffff00;
     stroke-width: 4px;
+    stroke-linecap: round;
+}
+
+.scene-bar-back-to, .scene-bar-back-from {
+    opacity: 0.5;
+    fill: none;
+    stroke: #ffff00;
+    stroke-width: 4px;
+    stroke-linecap: round;
+}
+
+.scene-bar-destination-shadow-to, .scene-bar-origin-shadow-to {
+    opacity: 1;
+    fill: none;
+    stroke: #ff0000;
+    stroke-opacity: 1;
+    stroke-width: 1px;
+    stroke-linecap: round;
+}
+
+.scene-bar-destination-shadow-from, .scene-bar-origin-shadow-from {
+    opacity: 1;
+    fill: none;
+    stroke: #0000ff;
+    stroke-opacity: 1;
+    stroke-width: 1px;
     stroke-linecap: round;
 }

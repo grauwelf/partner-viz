@@ -12,9 +12,9 @@ function VizComponent(container, width, height) {
     this.zoom = null;
     this._data = {centers: {}, map: {}};
     this.maxDifference = 6;
-    this.dashWidth = 2;
+    this.dashWidth = 4;
     this.particleSize = 10;
-    this.simulationRate = 7;
+    this.simulationRate = 10;
     this.devicesPerParticle = 5;
     this.standingPerMarker = 25;
 }
@@ -60,18 +60,7 @@ function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
     d3.selectAll('.scene-flow-particle').transition();
     d3.selectAll('.scene-flow-particle').remove();
     lines.each(function(line, idx) {
-
-        const pathLength = d3.select(this).node().getTotalLength();
-        const transitionDuration = 1000 * Math.floor(pathLength / 7);
-
-        if (d3.select(this).attr('class').indexOf('-to') >= 0) {
-            runDottedEdge(d3.select(this), pathLength, transitionDuration, -1);
-        }
-        else {
-            runDottedEdge(d3.select(this), pathLength, transitionDuration, 1);
-        }
-        return;
-/*        const p1 = d3.select(this).node().getPointAtLength(0);
+        const p1 = d3.select(this).node().getPointAtLength(0);
         const p2 = d3.select(this).node().getPointAtLength(0 + 5);
         const angleTo = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI + 90;
         const angleFrom = angleTo - 180;
@@ -85,7 +74,7 @@ function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
                     .attr('d', function(d) {
                         return d3.symbol().type(d3.symbolCircle).size(particleSize.toString())();
                     });
-                //moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, 1, angleTo);
+                moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, 1, angleTo);
             }
         } else {
             const particlesCount = Math.floor(d3.select(this).data()[0].forwardLoad / devicesPerParticle);
@@ -95,10 +84,178 @@ function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
                     .attr('d', function(d) {
                         return d3.symbol().type(d3.symbolCircle).size(particleSize.toString())();
                     });
-                //moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, -1, angleFrom);
+                moveAlong(d3.select(this), particleTo, particlesCount, i, simulationRate, -1, angleFrom);
             }
-        }*/
+        }
     });
+}
+
+function barsTransformation(point, angle, sgn, slope, slopeSqrt, radius) {
+    angle = (sgn < 0) ? angle + 180 : angle;
+    var p = [point[0], point[1] + sgn * radius];
+    if (isFinite(slope)) {
+        p = [
+            point[0] + sgn * radius / slopeSqrt,
+            point[1] + sgn * slope * radius / slopeSqrt
+        ];
+    }
+    return 'rotate(' + angle + ' ' + p.join(' ') + ')';
+}
+
+function barsOriginX(point, sgn, slope, slopeSqrt, radius) {
+    if (isFinite(slope)) {
+        return point[0] + sgn * radius / slopeSqrt;
+    } else {
+        return point[0];
+    }
+}
+
+function barsOriginY(point, sgn, slope, slopeSqrt, radius) {
+    if (isFinite(slope)) {
+        return point[1] + sgn * radius * slope / slopeSqrt;
+    } else {
+        return point[1] + sgn * radius;
+    }
+}
+
+function barsInit(container, maxDifference) {
+
+    const rectWidth = 6;
+    const rectGap = 2;
+    const loadMultiplier = 2.0;
+    const offsetRadius = 10.0;
+
+    var linestringData = container.selectAll('.scene-edge-from').data();
+
+    container.selectAll('.scene-bar-origin-shadow-to').remove();
+    container.selectAll('.scene-bar-origin-shadow-from').remove();
+    container.selectAll('.scene-bar-destination-shadow-to').remove();
+    container.selectAll('.scene-bar-destination-shadow-from').remove();
+
+    var originBarsTo =  container.selectAll('.scene-bar-origin-shadow-to')
+        .data(linestringData)
+      .enter().append('rect')
+        .attr('class', 'scene-bar-origin-shadow-to')
+        .attr('x', (d) => barsOriginX(d.xyCoords[0], d.sgn, d.slope, d.slopeSqrt, offsetRadius))
+        .attr('y', (d) => barsOriginY(d.xyCoords[0], d.sgn, d.slope, d.slopeSqrt, offsetRadius))
+        .attr('width', (d) => loadMultiplier * d.backwardLoad)
+        .attr('height', rectWidth)
+        .attr('transform', (d) => barsTransformation(d.xyCoords[0], d.angle, d.sgn, d.slope, d.slopeSqrt, offsetRadius));
+
+    var originBarsFrom =  container.selectAll('.scene-bar-origin-shadow-from')
+        .data(linestringData)
+      .enter().append('rect')
+        .attr('class', 'scene-bar-origin-shadow-from')
+        .attr('x', (d) => barsOriginX(d.xyCoords[0], d.sgn, d.slope, d.slopeSqrt, offsetRadius))
+        .attr('y', (d) => barsOriginY(d.xyCoords[0], d.sgn, d.slope, d.slopeSqrt, offsetRadius) - rectWidth - rectGap)
+        .attr('width', (d) => loadMultiplier * d.forwardLoad)
+        .attr('height', rectWidth)
+        .attr('transform', (d) => barsTransformation(d.xyCoords[0], d.angle, d.sgn, d.slope, d.slopeSqrt, offsetRadius));
+
+    var destinationBarsTo =  container.selectAll('.scene-bar-destination-shadow-to')
+        .data(linestringData)
+      .enter().append('rect')
+        .attr('class', 'scene-bar-destination-shadow-to')
+        .attr('x', (d) => barsOriginX(d.xyCoords[1], -d.sgn, d.slope, d.slopeSqrt, offsetRadius))
+        .attr('y', (d) => barsOriginY(d.xyCoords[1], -d.sgn, d.slope, d.slopeSqrt, offsetRadius))
+        .attr('width', (d) => loadMultiplier * d.forwardLoad)
+        .attr('height', rectWidth)
+        .attr('transform', (d) => barsTransformation(d.xyCoords[1], d.angle, -d.sgn, d.slope, d.slopeSqrt, offsetRadius));
+
+    var destinationBarsFrom =  container.selectAll('.scene-bar-destination-shadow-from')
+        .data(linestringData)
+      .enter().append('rect')
+        .attr('class', 'scene-bar-destination-shadow-from')
+        .attr('x', (d) => barsOriginX(d.xyCoords[1], -d.sgn, d.slope, d.slopeSqrt, offsetRadius))
+        .attr('y', (d) => barsOriginY(d.xyCoords[1], -d.sgn, d.slope, d.slopeSqrt, offsetRadius) - rectWidth - rectGap)
+        .attr('width', (d) => loadMultiplier * d.backwardLoad)
+        .attr('height', rectWidth)
+        .attr('transform', (d) => barsTransformation(d.xyCoords[1], d.angle, -d.sgn, d.slope, d.slopeSqrt, offsetRadius));
+
+    /*container.selectAll('.scene-bar-shadow-from').remove();
+    var barsFrom =  container.selectAll('.scene-bar-shadow-from')
+        .data(linestringData)
+      .enter().append('rect')
+        .attr('class', 'scene-bar-shadow-from')
+        .attr('x', function(d) {
+            const leafletLineString = leafletPath(d);
+            const coords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
+            return coords[1][0];
+        })
+        .attr('y', function(d) {
+            const leafletLineString = leafletPath(d);
+            const coords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
+            return coords[1][1];
+        })
+        .attr('width', 25)
+        .attr('height', 6)
+        .attr('transform', function(d) {
+            const leafletLineString = leafletPath(d);
+            const coords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
+            var angleTo = Math.atan(
+                    (Number(coords[1][1]) - Number(coords[0][1])) /
+                    (Number(coords[1][0]) - Number(coords[0][0]))) * 180 / Math.PI;
+            if (Number(coords[1][0]) > Number(coords[0][0])) {
+                angleTo = angleTo + 180;
+            }
+            return 'rotate(' + angleTo + ' ' + coords[1].join(' ') + ')';
+        });*/
+    return;
+
+    container.selectAll('.scene-bar-shadow-to').remove();
+    var barsTo =  container.selectAll('.scene-bar-shadow-to')
+        .data(linestringData)
+      .enter().append('path')
+        .attr('class', 'scene-bar-shadow-to')
+        .attr('d', (d) => buildArcBar(d, 1, maxDifference));
+
+    container.selectAll('.scene-bar-shadow-from').remove();
+    var barsTo =  container.selectAll('.scene-bar-shadow-from')
+        .data(linestringData)
+      .enter().append('path')
+        .attr('class', 'scene-bar-shadow-from')
+        .attr('d', (d) => buildArcBar(d, -1, maxDifference));
+
+    container.selectAll('.scene-bar-back-from').remove();
+    var barsTo =  container.selectAll('.scene-bar-back-from')
+        .data(linestringData)
+      .enter().append('path')
+        .attr('class', 'scene-bar-back-from')
+        .attr('d', (d) => buildArcBar(d, -1, maxDifference));
+
+    container.selectAll('.scene-bar-to').remove();
+    var barsTo =  container.selectAll('.scene-bar-to')
+        .data(linestringData)
+      .enter().append('path')
+        .attr('class', 'scene-bar-to')
+        .attr('d', (d) => buildArcBar(d, 1, maxDifference))
+        .transition()
+        .duration(function(d){
+            return 1000 * this.getTotalLength() / 10;
+        })
+        .ease(d3.easeLinear)
+        .attr('d', function(d) {
+            const leafletLineString = leafletPath(d);
+            const coords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
+            return 'M' + coords[1].join(',') + 'L' + coords[1].join(',');
+        });
+
+    container.selectAll('.scene-bar-from').remove();
+    var barsTo =  container.selectAll('.scene-bar-from')
+        .data(linestringData)
+      .enter().append('path')
+        .attr('class', 'scene-bar-from')
+        .attr('d', (d) => buildArcBar(d, -1, maxDifference))
+        .transition()
+        .duration(function(d){
+            return 1000 * this.getTotalLength() / 10;
+        })
+        .ease(d3.easeLinear)
+        .attr('d', function(d) {
+            const leafletLineString = leafletPath(d);
+            const coords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
+            return 'M' + coords[0].join(',') + 'L' + coords[0].join(',');
+        });
 }
 
 function runDottedEdge(path, pathLength, duration, direction) {
@@ -165,19 +322,20 @@ function translateAlong(path, pathLength, offset, direction, angle) {
         const r = 1 - (l - offset) / l;
         t = t * (l - offset) / l;
         var p = [0, 0];
-        if (direction == 1) {
+//        if (direction == 1 || true) {
             if (t <= 0.5) {
                 p = pointAtLengthOnCubicCurve(curves.startCurve, 2 * (t + r));
             } else {
                 p = pointAtLengthOnCubicCurve(curves.endCurve, 2 * ((t - 0.5) + r));
             }
-        } else {
+/*        } else {
             if (t <= 0.5) {
                 p = pointAtLengthOnCubicCurve(curves.endCurve, 1 - 2 * (t + r));
             } else {
                 p = pointAtLengthOnCubicCurve(curves.startCurve, 1 - 2 * ((t - 0.5) + r));
             }
         }
+*/
         return 'translate(' + p[0] + ',' + p[1] + ')';
     };
   };
@@ -195,7 +353,11 @@ function buildArc(edge, direction, maxDifference) {
         Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) + deltaX * direction,
         Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY * direction
     ];
-    return arcGenerator([coords[0], midpointL, coords[1]]);
+    if (direction == -1) {
+        return arcGenerator([coords[0], midpointL, coords[1]]);
+    } else {
+        return arcGenerator([coords[1], midpointL, coords[0]]);
+    }
 }
 
 function buildArcBar(edge, direction, maxDifference) {
@@ -321,6 +483,20 @@ VizFlowMap.prototype.render = function (options) {
         var destination = centers[pair[1]];
         if ((od.forwardLoad - options.loadRange[0]) * (od.forwardLoad - options.loadRange[1]) <= 0 ||
            (od.backwardLoad - options.loadRange[0]) * (od.backwardLoad - options.loadRange[1]) <= 0) {
+            const leafletLineString = leafletPath({
+                type: 'LineString',
+                coordinates: [[origin.latlng.lng, origin.latlng.lat],
+                              [destination.latlng.lng, destination.latlng.lat]]
+            });
+            var xyCoords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
+            xyCoords[0][0] = Number(xyCoords[0][0]);
+            xyCoords[0][1] = Number(xyCoords[0][1]);
+            xyCoords[1][0] = Number(xyCoords[1][0]);
+            xyCoords[1][1] = Number(xyCoords[1][1]);
+            const slope = (xyCoords[1][1] - xyCoords[0][1]) / (xyCoords[1][0] - xyCoords[0][0]);
+            const slopeSqrt = Math.sqrt(1 + slope * slope);
+            const angle = Math.atan(slope) * 180 / Math.PI;
+
             linestringData.push({
                 type: 'LineString',
                 coordinates: [[origin.latlng.lng, origin.latlng.lat],
@@ -328,7 +504,12 @@ VizFlowMap.prototype.render = function (options) {
                 o: pair[0],
                 d: pair[1],
                 forwardLoad: od.forwardLoad,
-                backwardLoad: od.backwardLoad
+                backwardLoad: od.backwardLoad,
+                xyCoords: xyCoords,
+                slope: slope,
+                slopeSqrt: slopeSqrt,
+                angle: angle,
+                sgn: Math.sign(xyCoords[1][0] - xyCoords[0][0])
             })
         }
     });
@@ -338,8 +519,7 @@ VizFlowMap.prototype.render = function (options) {
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-to')
-        //.style("stroke-dasharray", (this.dashWidth.toString() + ", " + this.dashWidth.toString()))
-        .style("stroke-dasharray", (this.dashWidth.toString() + ", " + (10 * this.dashWidth).toString()))
+        .style("stroke-dasharray", (this.dashWidth.toString() + ", " + this.dashWidth.toString()))
         .attr('d', (d) => buildArc(d, 1, maxDifference));
         //.style('opacity', 0);
 
@@ -348,25 +528,8 @@ VizFlowMap.prototype.render = function (options) {
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-from')
-        //.style("stroke-dasharray", (this.dashWidth.toString() + ", " + this.dashWidth.toString()))
-        .style("stroke-dasharray", (this.dashWidth.toString() + ", " + (10 * this.dashWidth).toString()))
+        .style("stroke-dasharray", (this.dashWidth.toString() + ", " + this.dashWidth.toString()))
         .attr('d', (d) => buildArc(d, -1, maxDifference));
-        //.style('opacity', 0);
-
-    this.container.selectAll('.scene-bar-to').remove();
-    var barsTo =  this.container.selectAll('.scene-bar-to')
-        .data(linestringData)
-      .enter().append('path')
-        .attr('class', 'scene-bar-to')
-        .attr('d', (d) => buildArcBar(d, 1, maxDifference));
-        //.style('opacity', 0);
-
-    this.container.selectAll('.scene-bar-from').remove();
-    var barsTo =  this.container.selectAll('.scene-bar-from')
-        .data(linestringData)
-      .enter().append('path')
-        .attr('class', 'scene-bar-from')
-        .attr('d', (d) => buildArcBar(d, -1, maxDifference));
         //.style('opacity', 0);
 
 //    setInterval(function(){
@@ -435,5 +598,7 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
             this.simulationRate,
             this.devicesPerParticle,
             this.particleSize);
+
+    barsInit(this.container, this.maxDifference);
 
 }
