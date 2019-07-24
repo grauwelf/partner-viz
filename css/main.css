@@ -42,10 +42,10 @@
 }
 
 .scene-flow-particle {
-    fill: #ffff00;
+    fill: #fffe9f;
     stroke-width: 1;
     stroke-opacity: 0.55;
-    stroke: #000;
+    stroke: none;
 }
 
 .scene-node-tooltip {

@@ -15,7 +15,7 @@ function VizComponent(container, width, height) {
     this.dashWidth = 4;
     this.particleSize = 10;
     this.simulationRate = 7;
-    this.devicesPerParticle = 5;
+    this.devicesPerParticle = 1;
     this.standingPerMarker = 25;
 }
 
