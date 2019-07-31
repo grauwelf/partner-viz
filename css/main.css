@@ -22,6 +22,10 @@
     padding: 8px;
 }
 
+#load-slider > .ui-slider-range {
+    background: rgba(0, 0, 0, 0) linear-gradient(to right, blue, red) repeat scroll 0% 0%;	
+}
+
 .scene-map {
 	fill: #555753;
     fill-opacity: 0.3;
@@ -60,8 +64,8 @@
 .scene-edge, .scene-edge-to, .scene-edge-from {
     opacity: 1;
     fill: none;
-    stroke: #202020;
-    stroke-width: 1px;
+    fill-opacity: 0.25;
+    stroke: none;
+    stroke-width: 3px;
     stroke-linecap: round;
-    stroke-opacity: 0.0;
 }
