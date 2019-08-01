@@ -92,19 +92,19 @@ vizModel.load([
 
         // Bind Leaflet map's event handlers
         leafletMap.on("viewreset", function(event) {
-            vizMap.render(vizOptions);
+            vizMap.render(getOptions());
             vizMap.update(event, leafletMap, leafletPath);
         });
 
         leafletMap.on("zoomend", function(event) {
             vizModel.update();
             vizMap.data.map = vizModel.areas;
-            vizMap.render(vizOptions);
+            vizMap.render(getOptions());
             vizMap.update(event, leafletMap, leafletPath);
         });
 
         leafletMap.on("moveend",  function(event) {
-            vizMap.render(vizOptions);
+            vizMap.render(getOptions());
             vizMap.update(event, leafletMap, leafletPath);
         });
 

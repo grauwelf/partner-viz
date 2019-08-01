@@ -22,8 +22,12 @@
     padding: 8px;
 }
 
-#load-slider > .ui-slider-range {
+#load-slider {
     background: rgba(0, 0, 0, 0) linear-gradient(to right, blue, red) repeat scroll 0% 0%;	
+}
+
+#load-slider > .ui-slider-range {
+    opacity: 0;  
 }
 
 .scene-map {

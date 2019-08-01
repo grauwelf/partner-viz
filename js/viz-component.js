@@ -110,6 +110,8 @@ function getGradientColor (start_color, end_color, percent) {
 };
 
 function scaleToRange(range, value) {
+    range[0] = 0;
+    range[1] = 100;
     var ratio = (value - range[0]) / (range[1] - range[0]);
     if (ratio < 0) {
         ratio = 0;
