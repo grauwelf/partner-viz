@@ -12,7 +12,7 @@ function VizComponent(container, width, height) {
     this.zoom = null;
     this._data = {centers: {}, map: {}};
     this.maxDifference = 4;
-    this.dashWidth = 3;
+    this.dashWidth = 1.5;
     this.particleSize = 10;
     this.simulationRate = 7;
     this.devicesPerParticle = 3;
@@ -304,11 +304,11 @@ VizFlowMap.prototype.render = function (options) {
         .style("stroke-dasharray",
                 (d) => buildDashArray(d, this.dashWidth, Math.ceil(d.backwardLoad / this.devicesPerParticle)))
         .style("stroke", function(d) {
-            const color = getGradientColor('#0000ff', '#ff0000', scaleToRange(options.loadRange, d.backwardLoad));
+            const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
             return color;
         })
         .style("fill", function(d) {
-            const color = getGradientColor('#0000ff', '#ff0000', scaleToRange(options.loadRange, d.backwardLoad));
+            const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
             return color;
         })
         .attr('d', (d) => buildArc(d, 1, maxDifference));
@@ -321,11 +321,11 @@ VizFlowMap.prototype.render = function (options) {
         .style("stroke-dasharray",
                 (d) => buildDashArray(d, this.dashWidth, Math.ceil(d.forwardLoad / this.devicesPerParticle)))
         .style("stroke", function(d) {
-            const color = getGradientColor('#0000ff', '#ff0000', scaleToRange(options.loadRange, d.forwardLoad));
+            const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.forwardLoad));
             return color;
         })
         .style("fill", function(d) {
-            const color = getGradientColor('#0000ff', '#ff0000', scaleToRange(options.loadRange, d.forwardLoad));
+            const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.forwardLoad));
             return color;
         })
         .attr('d', (d) => buildArc(d, -1, maxDifference));
@@ -360,11 +360,11 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         .attr('r', function(d) {
             var currentRadius = Number.parseFloat(d3.select(this).attr('r'));
             var radiusMultiplier = 1;
-            if (zoomDiff > 0) {
+            /*if (zoomDiff > 0) {
                 radiusMultiplier = 1.4;
             } else if (zoomDiff < 0) {
                 radiusMultiplier = 0.7;
-            }
+            }*/
             return Math.max(currentRadius * radiusMultiplier, 1);
         })
         .attr('cx', function(d){

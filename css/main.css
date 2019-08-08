@@ -1,10 +1,10 @@
 .container {
-	width: 100%;
-	height: 650px;
+    width: 100%;
+    height: 650px;
 }
 
 .leaflet-tile-pane {
-    opacity: 0.75;
+    opacity: 0.60;
 }
 
 .leaflet-pane > svg {
@@ -16,14 +16,14 @@
 }
 
 .leaflet-top.leaflet-left {
-    background-color: lightyellow;
-    border-radius: 16px;
+    background-color: white;
+    border-radius: 5px;
     margin: 8px;
-    padding: 8px;
+    padding: 18px;
 }
 
 #load-slider {
-    background: rgba(0, 0, 0, 0) linear-gradient(to right, blue, red) repeat scroll 0% 0%;	
+    background: rgba(0, 0, 0, 0) linear-gradient(to right, #ffa700, #ff3500) repeat scroll 0% 0%;   
 }
 
 #load-slider > .ui-slider-range {
@@ -31,22 +31,22 @@
 }
 
 .scene-map {
-	fill: #555753;
+    fill: #ffffff;
     fill-opacity: 0.3;
-	stroke: #ffffff;
-	stroke-width: 3;
-	stroke-opacity: 1;
+    stroke: #6f6f6f;
+    stroke-width: 1;
+    stroke-opacity: 1;
 }
 
 .scene-stop {
-    fill: #009933;
+    fill: #d2007e;
 }
 
 .scene-node, .scene-standing-particle {
-    fill: #ffff00;
+    fill: rgba(105, 105, 105, 0.2);
     stroke: none;
-    stroke-width: 1;
-    stroke-opacity: 0.75;
+    stroke-width: 5;
+    stroke-opacity: 0.3;
 }
 
 .scene-flow-particle {
@@ -68,8 +68,8 @@
 .scene-edge, .scene-edge-to, .scene-edge-from {
     opacity: 1;
     fill: none;
-    fill-opacity: 0.25;
+    fill-opacity: 0.1;
     stroke: none;
-    stroke-width: 3px;
+    stroke-width: 1.5px;
     stroke-linecap: round;
 }
