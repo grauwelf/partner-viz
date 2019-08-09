@@ -65,10 +65,10 @@ function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
         const transitionDuration = 1000 * Math.floor(pathLength / 7);
 
         if (d3.select(this).attr('class').indexOf('-to') >= 0) {
-            runDottedEdge(d3.select(this), pathLength, transitionDuration, -1);
+            runDottedEdge(d3.select(this), pathLength, transitionDuration, 1);
         }
         else {
-            runDottedEdge(d3.select(this), pathLength, transitionDuration, 1);
+            runDottedEdge(d3.select(this), pathLength, transitionDuration, -1);
         }
         return;
     });
