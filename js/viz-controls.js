@@ -92,7 +92,7 @@ function initializeControls (model, map, leafletMap, leafletPath) {
     // Load range slider
     var minLoad = 0;
     var maxLoad = 100;
-    var step = 10;
+    var step = 2;
     var loadLow = 10;
     var loadHigh = maxLoad;
     var lowMarkerPosition = Math.floor(100 * (loadLow - minLoad) / (maxLoad - minLoad));
