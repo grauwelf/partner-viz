@@ -228,21 +228,23 @@ VizFlowMap.prototype.render = function (options) {
             d3.selectAll('.scene-standing-particle').remove();
             const sta = area.properties.YISHUV_STA.toString().padStart(8, '0');
             const center = centers[sta];
-            const m = Math.round(center.stay / standingPerMarker);
-            for(var i = 0; i < m; i++) {
-                var p = [NaN, NaN];
-                while (!d3.polygonContains(area.polygon, p) ||
-                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 50) ||
-                      (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) < 20)) {
-                    p = [
-                        _.random(area.xlim[0], area.xlim[1]),
-                        _.random(area.ylim[0], area.ylim[1])
-                    ];
+            if (center !== undefined) {
+                const m = Math.round(center.stay / standingPerMarker);
+                for(var i = 0; i < m; i++) {
+                    var p = [NaN, NaN];
+                    while (!d3.polygonContains(area.polygon, p) ||
+                          (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 50) ||
+                          (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) < 20)) {
+                        p = [
+                            _.random(area.xlim[0], area.xlim[1]),
+                            _.random(area.ylim[0], area.ylim[1])
+                        ];
+                    }
+                    standingPoints.push(Object({
+                        point: p,
+                        latlng: leafletMap.layerPointToLatLng(p)
+                    }));
                 }
-                standingPoints.push(Object({
-                    point: p,
-                    latlng: leafletMap.layerPointToLatLng(p)
-                }));
             }
         });
     }

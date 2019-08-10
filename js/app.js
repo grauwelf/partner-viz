@@ -75,7 +75,8 @@ var vizOptions = Object({});
 
 vizModel.projection = projection;
 vizModel.load([
-        'json!data/stat-areas-simplified-0.0005.geojson',
+//        'json!data/stat-areas-simplified-0.0005.geojson',
+        'json!data/simplified-statareas.geojson',
         'json!data/stat-areas-centers.geojson',
 //        'csv!data/od_bat_yam_2018_nov_1h_valuable.csv'
         'csv!data/flows_from_bat_yam.csv'

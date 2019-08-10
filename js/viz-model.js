@@ -84,7 +84,7 @@ function VizModel() {
             return;
         }
         self.areas.features.forEach(function(area) {
-            var latlngPolygon = area.geometry.coordinates[0][0];
+            var latlngPolygon = area.geometry.coordinates[0];
             var polygon = [];
             var xlim = [];
             var ylim = [];
