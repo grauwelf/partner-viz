@@ -27,8 +27,6 @@ VizComponent.prototype.projection = function(coordinates) {
     return coordinates;
 };
 
-VizComponent.prototype.scale = d3.scaleLinear();
-
 VizComponent.prototype.data = function(values) {
     if(!arguments.length) {
         return this._data;

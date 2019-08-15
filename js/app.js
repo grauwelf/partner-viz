@@ -70,16 +70,30 @@ var projection = d3.geoMercator();
  *     3) OD matrices.
  */
 var vizMap = new VizFlowMap(g, svg.attr('width'), svg.attr('height'));
-var vizModel = new VizModel();
-var vizOptions = Object({});
 
+var vizModel = new VizModel();
 vizModel.projection = projection;
+
+var vizControls = new VizControls(vizMap, leafletMap, leafletPath);
+var vizOptions =  vizControls.initialize(vizModel);
+
+// Bind Leaflet map's event handlers
+leafletMap.on(["viewreset", "moveend"], function(event) {
+    vizMap.render(vizControls.getOptions());
+    vizMap.update(event, leafletMap, leafletPath);
+});
+
+leafletMap.on("zoomend", function(event) {
+    vizModel.update();
+    vizMap.data.map = vizModel.areas;
+    vizMap.render(vizControls.getOptions());
+    vizMap.update(event, leafletMap, leafletPath);
+});
+
 vizModel.load([
-//        'json!data/stat-areas-simplified-0.0005.geojson',
         'json!data/simplified-statareas.geojson',
         'json!data/stat-areas-centers.geojson',
-//        'csv!data/od_bat_yam_2018_nov_1h_valuable.csv'
-        'csv!data/flows_from_bat_yam.csv'
+        'csv!data/flows_bat_yam_tel_aviv.csv'
     ])
     .done(function() {
         vizMap.projection = projection;
@@ -88,27 +102,8 @@ vizModel.load([
             centers: vizModel.centers,
             OD: vizModel.OD
         });
+
         vizMap.render({dataChanged: true});
         vizMap.update(false, leafletMap, leafletPath);
-
-        vizOptions = initializeControls(vizModel, vizMap, leafletMap, leafletPath);
-
-        // Bind Leaflet map's event handlers
-        leafletMap.on("viewreset", function(event) {
-            vizMap.render(getOptions());
-            vizMap.update(event, leafletMap, leafletPath);
-        });
-
-        leafletMap.on("zoomend", function(event) {
-            vizModel.update();
-            vizMap.data.map = vizModel.areas;
-            vizMap.render(getOptions());
-            vizMap.update(event, leafletMap, leafletPath);
-        });
-
-        leafletMap.on("moveend",  function(event) {
-            vizMap.render(getOptions());
-            vizMap.update(event, leafletMap, leafletPath);
-        });
 
    });
