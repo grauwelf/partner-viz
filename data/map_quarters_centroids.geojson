@@ -1,0 +1,21 @@
+{
+"type": "FeatureCollection",
+"name": "bat_yam_tel_aviv_quarters_centroids",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "SHEM_YISHU": "בת ים", "MIN_Quarte": 1, "MIN_MIN_SE": 6200, "MIN_MIN_SH": "בת ים", "Unit_ID": 620001, "STA": "62000001" }, "geometry": { "type": "Point", "coordinates": [ 34.744241582932133, 32.027162017525626 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "בת ים", "MIN_Quarte": 2, "MIN_MIN_SE": 6200, "MIN_MIN_SH": "בת ים", "Unit_ID": 620002, "STA": "62000002" }, "geometry": { "type": "Point", "coordinates": [ 34.745413686689062, 32.007323834187112 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "בת ים", "MIN_Quarte": 3, "MIN_MIN_SE": 6200, "MIN_MIN_SH": "בת ים", "Unit_ID": 620003, "STA": "62000003" }, "geometry": { "type": "Point", "coordinates": [ 34.750518786362164, 32.020501152278868 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "בת ים", "MIN_Quarte": 4, "MIN_MIN_SE": 6200, "MIN_MIN_SH": "בת ים", "Unit_ID": 620004, "STA": "62000004" }, "geometry": { "type": "Point", "coordinates": [ 34.756786419794423, 32.02457001902949 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "בת ים", "MIN_Quarte": 5, "MIN_MIN_SE": 6200, "MIN_MIN_SH": "בת ים", "Unit_ID": 620005, "STA": "62000005" }, "geometry": { "type": "Point", "coordinates": [ 34.755578106430491, 32.009618525338965 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "תל אביב -יפו", "MIN_Quarte": 1, "MIN_MIN_SE": 5000, "MIN_MIN_SH": "תל אביב -יפו", "Unit_ID": 500001, "STA": "50000001" }, "geometry": { "type": "Point", "coordinates": [ 34.796407879338261, 32.115307778057286 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "תל אביב -יפו", "MIN_Quarte": 2, "MIN_MIN_SE": 5000, "MIN_MIN_SH": "תל אביב -יפו", "Unit_ID": 500002, "STA": "50000002" }, "geometry": { "type": "Point", "coordinates": [ 34.829339917947955, 32.116234992791028 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "תל אביב -יפו", "MIN_Quarte": 3, "MIN_MIN_SE": 5000, "MIN_MIN_SH": "תל אביב -יפו", "Unit_ID": 500003, "STA": "50000003" }, "geometry": { "type": "Point", "coordinates": [ 34.775628842501732, 32.086225424409236 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "תל אביב -יפו", "MIN_Quarte": 4, "MIN_MIN_SE": 5000, "MIN_MIN_SH": "תל אביב -יפו", "Unit_ID": 500004, "STA": "50000004" }, "geometry": { "type": "Point", "coordinates": [ 34.793382350003768, 32.089103079920299 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "תל אביב -יפו", "MIN_Quarte": 5, "MIN_MIN_SE": 5000, "MIN_MIN_SH": "תל אביב -יפו", "Unit_ID": 500005, "STA": "50000005" }, "geometry": { "type": "Point", "coordinates": [ 34.769376108184872, 32.067286862846473 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "תל אביב -יפו", "MIN_Quarte": 6, "MIN_MIN_SE": 5000, "MIN_MIN_SH": "תל אביב -יפו", "Unit_ID": 500006, "STA": "50000006" }, "geometry": { "type": "Point", "coordinates": [ 34.787004706566499, 32.069497612733819 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "תל אביב -יפו", "MIN_Quarte": 7, "MIN_MIN_SE": 5000, "MIN_MIN_SH": "תל אביב -יפו", "Unit_ID": 500007, "STA": "50000007" }, "geometry": { "type": "Point", "coordinates": [ 34.758637805776452, 32.043772748969516 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "תל אביב -יפו", "MIN_Quarte": 8, "MIN_MIN_SE": 5000, "MIN_MIN_SH": "תל אביב -יפו", "Unit_ID": 500008, "STA": "50000008" }, "geometry": { "type": "Point", "coordinates": [ 34.777223747855231, 32.051383970538119 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "תל אביב -יפו", "MIN_Quarte": 9, "MIN_MIN_SE": 5000, "MIN_MIN_SH": "תל אביב -יפו", "Unit_ID": 500009, "STA": "50000009" }, "geometry": { "type": "Point", "coordinates": [ 34.799487341716713, 32.054497303420455 ] } }
+]
+}

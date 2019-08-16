@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "bat_yam_tel_aviv_cities_centroids",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "SHEM_YISHU": "בת ים", "MIN_MIN_MI": 6200, "MIN_MIN__1": "בת ים", "Unit_ID": 62000, "STA": 62000000 }, "geometry": { "type": "Point", "coordinates": [ 34.749313530587827, 32.013975279143551 ] } },
+{ "type": "Feature", "properties": { "SHEM_YISHU": "תל אביב -יפו", "MIN_MIN_MI": 5000, "MIN_MIN__1": "תל אביב -יפו", "Unit_ID": 50000, "STA": 50000000 }, "geometry": { "type": "Point", "coordinates": [ 34.792496874276999, 32.084423666022388 ] } }
+]
+}

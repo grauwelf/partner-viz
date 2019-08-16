@@ -84,7 +84,7 @@ function VizModel() {
             return;
         }
         self.areas.features.forEach(function(area) {
-            var latlngPolygon = area.geometry.coordinates[0];
+            var latlngPolygon = area.geometry.coordinates[0][0];
             var polygon = [];
             var xlim = [];
             var ylim = [];
@@ -120,8 +120,7 @@ function VizModel() {
 
                 var nodes = [];
                 centersData.features.forEach(function (data) {
-                    data.id = data.properties.OBJECTID;
-                    data.sta = data.properties.YISHUV_STA.toString().padStart(8, '0');
+                    data.sta = data.properties.STA.toString().padStart(8, '0');
                     data.name = data.properties.SHEM_YISHU;
                     data.x = data.geometry.coordinates[0];
                     data.y = data.geometry.coordinates[1];
@@ -131,18 +130,22 @@ function VizModel() {
                 });
                 self.centers.nodes = nodes;
 
+                self.OD = {'weekday': [], 'friday': [], 'saturday': []};
                 flowsData.forEach(function(row) {
                     var flow = {};
-                    var origin = row.origin_code.padStart(4, '0') +
-                        row.origin_sta_code.padStart(4, '0');
-                    var destination = row.destination_code.padStart(4, '0') +
-                        row.destination_sta_code.padStart(4, '0');
+//                    var origin = row.origin_code.padStart(4, '0') +
+//                        row.origin_sta_code.padStart(4, '0');
+//                    var destination = row.destination_code.padStart(4, '0') +
+//                        row.destination_sta_code.padStart(4, '0');
+//                    var load = row.load;
+//                    if (row.day == 'weekday') {
+//                        load  = load / 20;
+//                    } else {
+//                        load  = load / 4;
+//                    }
+                    var origin = row.origin_sta;
+                    var destination = row.destination_sta;
                     var load = row.load;
-                    if (row.day == 'weekday') {
-                        load  = load / 20;
-                    } else {
-                        load  = load / 4;
-                    }
 
                     if (origin == destination) {
                         self.centers.nodes[origin].stay = load;

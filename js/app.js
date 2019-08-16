@@ -7,19 +7,81 @@
  * Add tile layer and controls
  */
 var mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
-var leafletMap = L.map('partner-viz-container').setView([31.77, 35.21], 8);
+var leafletMap = L.map('partner-viz-container', {
+        zoomControl: false,
+        minZoom: 8,
+        maxZoom: 17
+    }).setView([32.08, 34.8], 12);
 
-var mapBounds = L.latLngBounds([
-    [32.062791783472406, 34.91180419921876],
-    [31.96818267111348, 34.682121276855476]
-]);
-
-leafletMap.fitBounds(mapBounds);
+//var mapBounds = L.latLngBounds([
+//    [32.062791783472406, 34.91180419921876],
+//    [31.96818267111348, 34.682121276855476]
+//]);
+//leafletMap.fitBounds(mapBounds);
 
 L.tileLayer(
     'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; ' + mapLink + ' Contributors',
+        attribution: '&copy; ' + mapLink + ' Contributors' +
+            '<br/>I. Benenson, A. Ogulenko, A. Rotem' +
+            '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>',
     }).addTo(leafletMap);
+
+var ZoomViewer = L.Control.extend({
+    onAdd: function() {
+        var container = L.DomUtil.create('div',
+                'leaflet-control-zoom' + ' leaflet-bar leaflet-control');
+        const zoomInButton = this._createButton('+', 'Zoom In',
+                'leaflet-control-zoom-in',  container, this._zoomIn,  this);
+
+        var gauge = L.DomUtil.create('a', 'leaflet-control-zoom', container);
+        gauge.title = 'Current zoom level';
+        gauge.style.textAlign = 'center';
+        gauge.style.fontSize = '14px';
+        gauge.innerHTML = 'Z' + leafletMap.getZoom().toString().padStart(2, '0');
+        leafletMap.on('zoomend', function(ev) {
+            gauge.innerHTML = 'Z' + leafletMap.getZoom().toString().padStart(2, '0');
+        });
+
+        const zoomOutButton = this._createButton('-', 'Zoom Out',
+                'leaflet-control-zoom-out',  container, this._zoomOut,  this);
+
+        return container;
+    },
+
+    _zoomIn: function(e){
+        this._map.zoomIn(e.shiftKey ? 3 : 1);
+    },
+
+    _zoomOut: function(e){
+        this._map.zoomOut(e.shiftKey ? 3 : 1);
+    },
+
+    _createButton: function(html, title, className, container, callback, context)
+    {
+        var link = L.DomUtil.create('a', className, container);
+        link.innerHTML = html;
+        link.href = '#';
+        link.title = title;
+        link.role = 'button';
+
+        const stop = L.DomEvent.stopPropagation;
+
+        L.DomEvent
+            .on(link, 'click', stop)
+            .on(link, 'mousedown', stop)
+            .on(link, 'dblclick', stop)
+            .on(link, 'click', L.DomEvent.preventDefault)
+            .on(link, 'click', callback, context);
+
+        return link;
+    }
+});
+
+L.control.zoomviewer = function(opts) {
+    return new ZoomViewer(opts);
+}
+
+L.control.zoomviewer({ position: 'topleft' }).addTo(leafletMap);
 
 L.control
     .scale({
@@ -70,6 +132,7 @@ var projection = d3.geoMercator();
  *     3) OD matrices.
  */
 var vizMap = new VizFlowMap(g, svg.attr('width'), svg.attr('height'));
+vizMap.projection = projection;
 
 var vizModel = new VizModel();
 vizModel.projection = projection;
@@ -83,27 +146,51 @@ leafletMap.on(["viewreset", "moveend"], function(event) {
     vizMap.update(event, leafletMap, leafletPath);
 });
 
+function changeFlowsData(areaFile, centersFile, flowsFile) {
+    vizModel
+        .load([areaFile, centersFile, flowsFile])
+        .done(function() {
+            vizMap.data({
+                map: vizModel.areas,
+                centers: vizModel.centers,
+                OD: vizModel.OD
+            });
+            vizMap.render({dataChanged: true});
+            vizMap.update(false, leafletMap, leafletPath);
+       });
+}
+
 leafletMap.on("zoomend", function(event) {
-    vizModel.update();
-    vizMap.data.map = vizModel.areas;
-    vizMap.render(vizControls.getOptions());
-    vizMap.update(event, leafletMap, leafletPath);
+    const zoom = leafletMap.getZoom();
+    switch(zoom) {
+        case 11:
+            changeFlowsData(
+                    'json!data/map_cities.geojson',
+                    'json!data/map_cities_centroids.geojson',
+                    'csv!data/cities_flows.csv');
+            break;
+        case 12:
+            changeFlowsData(
+                    'json!data/map_quarters.geojson',
+                    'json!data/map_quarters_centroids.geojson',
+                    'csv!data/quarters_flows.csv');
+            break;
+        case 14:
+            changeFlowsData(
+                    'json!data/map_subquarters.geojson',
+                    'json!data/map_subquarters_centroids.geojson',
+                    'csv!data/subquarters_flows.csv');
+            break;
+        default:
+            vizModel.update();
+            vizMap.data.map = vizModel.areas;
+            vizMap.render(vizControls.getOptions());
+            vizMap.update(event, leafletMap, leafletPath);
+    }
+    return true;
 });
 
-vizModel.load([
-        'json!data/simplified-statareas.geojson',
-        'json!data/stat-areas-centers.geojson',
-        'csv!data/flows_bat_yam_tel_aviv.csv'
-    ])
-    .done(function() {
-        vizMap.projection = projection;
-        vizMap.data({
-            map: vizModel.areas,
-            centers: vizModel.centers,
-            OD: vizModel.OD
-        });
-
-        vizMap.render({dataChanged: true});
-        vizMap.update(false, leafletMap, leafletPath);
-
-   });
+changeFlowsData(
+    'json!data/map_quarters.geojson',
+    'json!data/map_quarters_centroids.geojson',
+    'csv!data/quarters_flows.csv');

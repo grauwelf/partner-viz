@@ -15,8 +15,8 @@ function VizComponent(container, width, height) {
     this.dashWidth = 1.5;
     this.particleSize = 10;
     this.simulationRate = 7;
-    this.devicesPerParticle = 3;
-    this.standingPerMarker = 25;
+    this.devicesPerParticle = 10;
+    this.standingPerMarker = 5;
 }
 
 VizComponent.prototype.render = function() {
@@ -208,6 +208,7 @@ VizFlowMap.prototype.render = function (options) {
     var smoothPath = d3.geoPath().projection(this.projection);
     const maxDifference = this.maxDifference;
 
+    this.container.selectAll('.scene-map').remove();
     this.container.selectAll('.scene-map')
         .data(map.features)
       .enter()
@@ -224,12 +225,13 @@ VizFlowMap.prototype.render = function (options) {
         const standingPerMarker = this.standingPerMarker;
         _.each(map.features, function(area) {
             d3.selectAll('.scene-standing-particle').remove();
-            const sta = area.properties.YISHUV_STA.toString().padStart(8, '0');
+            const sta = area.properties.STA.toString().padStart(8, '0');
             const center = centers[sta];
             if (center !== undefined) {
                 const m = Math.round(center.stay / standingPerMarker);
                 for(var i = 0; i < m; i++) {
                     var p = [NaN, NaN];
+                    var iter = 0;
                     while (!d3.polygonContains(area.polygon, p) ||
                           (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 50) ||
                           (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) < 20)) {
@@ -237,11 +239,18 @@ VizFlowMap.prototype.render = function (options) {
                             _.random(area.xlim[0], area.xlim[1]),
                             _.random(area.ylim[0], area.ylim[1])
                         ];
+                        if (iter < 50) {
+                            iter++;
+                        } else {
+                            break;
+                        }
                     }
-                    standingPoints.push(Object({
-                        point: p,
-                        latlng: leafletMap.layerPointToLatLng(p)
-                    }));
+                    if (iter < 50) {
+                        standingPoints.push(Object({
+                            point: p,
+                            latlng: leafletMap.layerPointToLatLng(p)
+                        }));
+                    }
                 }
             }
         });
