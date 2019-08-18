@@ -26,62 +26,15 @@ L.tileLayer(
             '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>',
     }).addTo(leafletMap);
 
-var ZoomViewer = L.Control.extend({
-    onAdd: function() {
-        var container = L.DomUtil.create('div',
-                'leaflet-control-zoom' + ' leaflet-bar leaflet-control');
-        const zoomInButton = this._createButton('+', 'Zoom In',
-                'leaflet-control-zoom-in',  container, this._zoomIn,  this);
-
-        var gauge = L.DomUtil.create('a', 'leaflet-control-zoom', container);
-        gauge.title = 'Current zoom level';
-        gauge.style.textAlign = 'center';
-        gauge.style.fontSize = '14px';
-        gauge.innerHTML = 'Z' + leafletMap.getZoom().toString().padStart(2, '0');
-        leafletMap.on('zoomend', function(ev) {
-            gauge.innerHTML = 'Z' + leafletMap.getZoom().toString().padStart(2, '0');
-        });
-
-        const zoomOutButton = this._createButton('-', 'Zoom Out',
-                'leaflet-control-zoom-out',  container, this._zoomOut,  this);
-
-        return container;
-    },
-
-    _zoomIn: function(e){
-        this._map.zoomIn(e.shiftKey ? 3 : 1);
-    },
-
-    _zoomOut: function(e){
-        this._map.zoomOut(e.shiftKey ? 3 : 1);
-    },
-
-    _createButton: function(html, title, className, container, callback, context)
-    {
-        var link = L.DomUtil.create('a', className, container);
-        link.innerHTML = html;
-        link.href = '#';
-        link.title = title;
-        link.role = 'button';
-
-        const stop = L.DomEvent.stopPropagation;
-
-        L.DomEvent
-            .on(link, 'click', stop)
-            .on(link, 'mousedown', stop)
-            .on(link, 'dblclick', stop)
-            .on(link, 'click', L.DomEvent.preventDefault)
-            .on(link, 'click', callback, context);
-
-        return link;
-    }
-});
-
 L.control.zoomviewer = function(opts) {
     return new ZoomViewer(opts);
 }
-
 L.control.zoomviewer({ position: 'topleft' }).addTo(leafletMap);
+
+var timeslider = new TimeSlider({ position: 'bottomleft' });
+timeslider.addTo(leafletMap).afterLoad();
+//timeslider.play();
+
 
 L.control
     .scale({
