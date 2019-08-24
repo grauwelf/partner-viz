@@ -98,12 +98,55 @@
     stroke-linecap: round;
 }
 
+.time-slider-control {
+	width: 1040px;
+	height: 60px;
+	margin-bottom: 10px;
+	margin-left: 10px;
+	background-color: white;
+	border-radius: 5px;
+}
+
+.time-slider {
+    pointerEvents : auto;
+    width : 90%;
+    position: relative;
+    left : 60px;
+    top: 36px;
+}
 
 .timeline-bar {
-    height: 2px;
-    width: 100%;
+    height: 2px;    
+    width: 90%;
+    left: 71px;
+    top: 36px;
     background: #000;
     position: relative;
+}
+
+.time-slider-reset {
+	cursor: default;
+	font-size: 14px;
+	color: black !important;
+	position: absolute;
+	left: 24px;	
+	top: 30px;
+}
+
+.time-slider-play {
+	cursor : default;
+    font-size: 14px;
+    color: black !important;
+    position : absolute;
+	left: 0px;
+	top: 30px;
+}
+
+.time-slider-display {
+    font-size: 16px;
+    position: absolute;
+    top: 6px;
+    left: 6px;
 }
 
 .steps-bar {
@@ -136,7 +179,7 @@
     margin-top: -10px;
 }
 
-.step:nth-child(3n+1) .step-border {
+.step:nth-child(n+1) .step-border {
     height: 20px;
     width: 2px;
     background: #000;

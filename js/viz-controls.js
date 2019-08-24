@@ -265,19 +265,18 @@ var TimeSlider = L.Control.extend({
     defaultStart: 6,
 
     onAdd: function() {
-        var container = L.DomUtil.create('div', 'leaflet-control');
+        var container = L.DomUtil.create('div', 'leaflet-control time-slider-control');
         const stop = L.DomEvent.stopPropagation;
         const prevent = L.DomEvent.preventDefault;
 
-        var playButton = L.DomUtil.create('a', '', container);
+        var display = L.DomUtil.create('div', 'time-slider-display', container);
+        display.id = 'time-display';
+        display.innerHTML = String(this.defaultStart).padStart(2, '0') + ':00';
+
+        var playButton = L.DomUtil.create('a', 'time-slider-play', container);
         playButton.pauseHTML = '<i class="material-icons">pause</i>';
         playButton.playHTML = '<i class="material-icons">play_arrow</i>';
         playButton.innerHTML = playButton.playHTML;
-        playButton.style.cursor = 'default';
-        playButton.style.fontSize = '14px';
-        playButton.style.color = 'black';
-        playButton.style.position = 'absolute';
-        playButton.style.left = '0px';
 
         L.DomEvent
             .on(playButton, 'click mousedown dblclick', stop)
@@ -298,14 +297,8 @@ var TimeSlider = L.Control.extend({
                 }
             }, this);
 
-        var resetButton = L.DomUtil.create('a', '', container);
+        var resetButton = L.DomUtil.create('a', 'time-slider-reset', container);
         resetButton.innerHTML = '<i class="material-icons">stop</i>';
-        resetButton.style.cursor = 'default';
-        resetButton.style.fontSize = '14px';
-        resetButton.style.color = 'black';
-        resetButton.style.position = 'absolute';
-        resetButton.style.left = '24px';
-
         L.DomEvent
             .on(resetButton, 'click mousedown dblclick', stop)
             .on(resetButton, 'click', prevent)
@@ -314,23 +307,14 @@ var TimeSlider = L.Control.extend({
                 playButton.innerHTML = playButton.playHTML;
             }, this);
 
-        var slider = L.DomUtil.create('a', 'leaflet-control', container);
+        var slider = L.DomUtil.create('a', 'leaflet-control time-slider', container);
         slider.id = 'time-slider';
-        slider.style.pointerEvents = 'auto'
-        slider.style.width = '400px';
-        slider.style.position = 'relative';
-        slider.style.left = '48px';
-        slider.style.top = '6px';
 
         var scale = L.DomUtil.create('div', 'timeline-bar', container);
-        scale.style.position = 'relative';
-        scale.style.left = '57px';
-        scale.style.top = '6px';
-        scale.style.width = '400px';
         var content = '<div class="steps-bar clearfix">';
         for (var i = 0; i <= 24; i++) {
             if (i % 3 != 0) {
-                continue;
+                //continue;
             }
             content += '\
             <div class="step" data-time="' + i + '">\
@@ -339,11 +323,6 @@ var TimeSlider = L.Control.extend({
             </div>';
         }
         scale.innerHTML += content + '</div>';
-
-        var display = L.DomUtil.create('div', '', container);
-        display.id = 'time-display';
-        display.innerHTML = String(this.defaultStart).padStart(2, '0') + ':00';
-        display.style.fontSize = '16px';
 
         return container;
     },

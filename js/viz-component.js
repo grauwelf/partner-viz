@@ -13,6 +13,8 @@ function VizComponent(container, width, height) {
     this._data = {centers: {}, map: {}};
     this.maxDifference = 4;
     this.dashWidth = 1.5;
+    this.dishLength = 5;
+    this.dishGapLength = 10;
     this.particleSize = 10;
     this.simulationRate = 7;
     this.devicesPerParticle = 100;
@@ -48,127 +50,11 @@ VizComponent.prototype.prepareData = function() {
     };
 };
 
-
 function VizFlowMap(container, width, height) {
     VizComponent.call(this, container, width, height);
 }
 
 VizFlowMap.prototype = Object.create(VizComponent.prototype);
-
-function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
-    d3.selectAll('.scene-flow-particle').transition();
-    d3.selectAll('.scene-flow-particle').remove();
-    lines.each(function(line, idx) {
-
-        const pathLength = d3.select(this).node().getTotalLength();
-        const transitionDuration = 1000 * Math.floor(pathLength / 15);
-
-        if (d3.select(this).attr('class').indexOf('-to') >= 0) {
-            runDottedEdge(d3.select(this), pathLength, transitionDuration, 1);
-        }
-        else {
-            runDottedEdge(d3.select(this), pathLength, transitionDuration, -1);
-        }
-        return;
-    });
-}
-
-function getGradientColor (start_color, end_color, percent) {
-    if (!isFinite(percent)) {
-        percent = 0;
-    } else {
-        percent = Math.min(1.0, percent);
-    }
-    start_color = start_color.replace(/^\s*#|\s*$/g, '');
-    end_color = end_color.replace(/^\s*#|\s*$/g, '');
-    if(start_color.length == 3){
-      start_color = start_color.replace(/(.)/g, '$1$1');
-    }
-    if(end_color.length == 3){
-      end_color = end_color.replace(/(.)/g, '$1$1');
-    }
-    var start_red = parseInt(start_color.substr(0, 2), 16),
-        start_green = parseInt(start_color.substr(2, 2), 16),
-        start_blue = parseInt(start_color.substr(4, 2), 16);
-    var end_red = parseInt(end_color.substr(0, 2), 16),
-        end_green = parseInt(end_color.substr(2, 2), 16),
-        end_blue = parseInt(end_color.substr(4, 2), 16);
-    var diff_red = end_red - start_red;
-    var diff_green = end_green - start_green;
-    var diff_blue = end_blue - start_blue;
-    diff_red = ( (diff_red * percent) + start_red ).toString(16).split('.')[0];
-    diff_green = ( (diff_green * percent) + start_green ).toString(16).split('.')[0];
-    diff_blue = ( (diff_blue * percent) + start_blue ).toString(16).split('.')[0];
-    if( diff_red.length == 1 )
-        diff_red = '0' + diff_red
-    if( diff_green.length == 1 )
-        diff_green = '0' + diff_green
-    if( diff_blue.length == 1 )
-        diff_blue = '0' + diff_blue
-    return '#' + diff_red + diff_green + diff_blue;
-};
-
-function scaleToRange(range, value) {
-    range[0] = 0;
-    range[1] = 100;
-    var ratio = (value - range[0]) / (range[1] - range[0]);
-    if (ratio < 0) {
-        ratio = 0;
-    } else if (ratio > 1) {
-        ratio = 1;
-    }
-    return ratio;
-}
-
-function runDottedEdge(path, pathLength, duration, direction) {
-    const startDashOffset = direction == 1 ? 0 : pathLength;
-    const endDashOffset = direction == 1 ? pathLength : 0;
-    path
-        .attr("stroke-dashoffset", startDashOffset)
-        .transition()
-        .duration(duration)
-        .ease(d3.easeLinear)
-        .attr("stroke-dashoffset", endDashOffset)
-        .on('end', function(d, i, a) {
-            runDottedEdge(path, pathLength, duration, direction);
-        });
-}
-
-function getSVGPathLength(path) {
-    const parts = path.match(/^M(.*?)L(.*?)$/);
-    const startPoint = _.map(parts[1].split(','), parseFloat);
-    const endPoint =  _.map(parts[2].split(','), parseFloat);
-    return Math.sqrt(Math.pow(startPoint[0] - endPoint[0], 2) + Math.pow(startPoint[1] - endPoint[1], 2));
-}
-
-function buildDashArray(d, dashWidth, dashNumber) {
-    if (dashNumber === undefined || dashNumber < 1) {
-        return '0%, 100%';
-    }
-    const pathLength = getSVGPathLength(leafletPath(d));
-    const gapWidth = Math.floor(getSVGPathLength(leafletPath(d)) / dashNumber - dashWidth);
-    const dashes = Array.apply(null, {length: dashNumber}).map(Function.call, () => dashWidth + ', ' + gapWidth).join(', ');
-    return dashes;
-}
-
-function parseSVGPathNatural(pathString) {
-    const parts = pathString.match(/^M(.*?)C(.*?)C(.*?)$/);
-    const start = _.map(parts[1].split(','), parseFloat);
-    const curve1 = start.concat(_.map(parts[2].split(','), parseFloat));
-    const curve2 = [curve1[6], curve1[7]].concat(_.map(parts[3].split(','), parseFloat));
-    return {startCurve: curve1, endCurve: curve2};
-}
-
-function pointAtLengthOnCubicCurve(C, t) {
-    const q1 = (1 - t) * (1 - t) * (1 - t);
-    const q2 = 3 * (1 - t) * (1 - t) * t;
-    const q3 = 3 * (1 - t) * t * t;
-    const q4 = t * t * t;
-    return [
-        q1 * C[0] + q2 * C[2] + q3 * C[4] + q4 * C[6],
-        q1 * C[1] + q2 * C[3] + q3 * C[5] + q4 * C[7]
-    ];
-}
 
 function buildArc(edge, direction, maxDifference) {
     const leafletLineString = leafletPath(edge);
@@ -183,6 +69,45 @@ function buildArc(edge, direction, maxDifference) {
         Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY * direction
     ];
     return arcGenerator([coords[0], midpointL, coords[1]]);
+}
+
+VizFlowMap.prototype.buildDashArray = function (d, dashWidth, dashNumber) {
+    if (dashNumber === undefined || dashNumber < 1) {
+        return '0%, 100%';
+    } else {
+        return this.dishLength + 'px, ' + this.dishGapLength + 'px';
+    }
+//    const pathLength = getSVGPathLength(leafletPath(d));
+//    const gapWidth = Math.floor(getSVGPathLength(leafletPath(d)) / dashNumber - dashWidth);
+//    const dashes = Array.apply(null, {length: dashNumber}).map(Function.call, () => dashWidth + ', ' + gapWidth).join(', ');
+//    return dashes;
+}
+
+
+VizFlowMap.prototype.runDottedEdge = function (path, pathLength, duration, direction) {
+    const startDashOffset = direction == 1 ? 0 : pathLength;
+    const endDashOffset = direction == 1 ? pathLength : 0;
+    path
+        .attr("stroke-dashoffset", startDashOffset)
+        .transition()
+        .duration(duration)
+        .ease(d3.easeLinear)
+        .attr("stroke-dashoffset", endDashOffset)
+        .on('end', (d, i, a) => {
+            this.runDottedEdge(path, pathLength, duration, direction);
+        });
+}
+
+VizFlowMap.prototype.edgesInit = function (lines, simulationRate, devicesPerParticle, particleSize) {
+    d3.selectAll('.scene-flow-particle').transition();
+    d3.selectAll('.scene-flow-particle').remove();
+    lines.each((line, idx, nodes) => {
+        const pathLength = nodes[idx].getTotalLength();
+        const transitionDuration = 1000 * Math.floor(pathLength / 7);
+        const direction = (d3.select(nodes[idx]).attr('class').indexOf('-to') >= 0) ? 1 : -1;
+        this.runDottedEdge(d3.select(nodes[idx]), pathLength, transitionDuration, direction);
+        return;
+    });
 }
 
 VizFlowMap.prototype.render = function (options) {
@@ -318,7 +243,9 @@ VizFlowMap.prototype.render = function (options) {
       .enter().append('path')
         .attr('class', 'scene-edge-to')
         .style("stroke-dasharray",
-                (d) => buildDashArray(d, this.dashWidth, Math.ceil(d.backwardLoad / this.devicesPerParticle)))
+                (d) => this.buildDashArray(d, this.dashWidth, Math.ceil(d.backwardLoad / this.devicesPerParticle)))
+        .style("stroke-width",
+                (d) => Math.ceil(Math.log10(d.backwardLoad / this.devicesPerParticle)) + 'px')
         .style("stroke", function(d) {
             //const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
             const color = getGradientColor('#0000dd', '#0000dd', scaleToRange(options.loadRange, d.backwardLoad));
@@ -337,7 +264,9 @@ VizFlowMap.prototype.render = function (options) {
           .enter().append('path')
             .attr('class', 'scene-edge-from')
             .style("stroke-dasharray",
-                    (d) => buildDashArray(d, this.dashWidth, Math.ceil(d.forwardLoad / this.devicesPerParticle)))
+                (d) => this.buildDashArray(d, this.dashWidth, Math.ceil(d.forwardLoad / this.devicesPerParticle)))
+            .style("stroke-width",
+                (d) => Math.ceil(Math.log10(d.backwardLoad / this.devicesPerParticle)) + 'px')
             .style("stroke", function(d) {
                 const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.forwardLoad));
                 return color;
@@ -358,18 +287,10 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
     }
     this.zoom = leaflet.getZoom();
     var zoomDiff = this.zoom - previousZoom;
-
     const maxDifference = this.maxDifference;
 
     this.container.selectAll('.scene-map')
         .attr('d', path);
-
-    /*
-    this.container.selectAll('.scene-edge-from')
-        .attr('d', (d) => buildArc(d, 1, maxDifference));
-    this.container.selectAll('.scene-edge-to')
-        .attr('d', (d) => buildArc(d, -1, maxDifference));
-     */
 
     var edgeOpacity = (this.zoom >= 14) ? 0.75 : 0.0;
     /*g.selectAll('.scene-edge-to,.scene-edge-from')
@@ -394,9 +315,8 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
             return leaflet.latLngToLayerPoint(d.latlng).y;
         });
 
-    edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'),
+    this.edgesInit(this.container.selectAll('.scene-edge-to,.scene-edge-from'),
             this.simulationRate,
             this.devicesPerParticle,
             this.particleSize);
-
 }
