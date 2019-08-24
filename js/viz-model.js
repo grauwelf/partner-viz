@@ -70,6 +70,7 @@ function VizModel() {
     this.areas = {};
     this.centers = {};
     this.OD = {'weekday': [], 'friday': [], 'saturday': []};
+    this.range = {'min': null, 'max': null};
     this.projection = {};
     this.files = {};
 
@@ -89,7 +90,7 @@ function VizModel() {
             var xlim = [];
             var ylim = [];
             latlngPolygon.forEach(function(point) {
-                var xyPoint = leafletMap.latLngToLayerPoint(new L.LatLng(point[1], point[0]));
+                var xyPoint = leafletMapLeft.latLngToLayerPoint(new L.LatLng(point[1], point[0]));
                 polygon.push([xyPoint.x, xyPoint.y]);
                 if (xlim.length == 0) {
                     xlim = [xyPoint.x, xyPoint.x];
@@ -153,6 +154,12 @@ function VizModel() {
 
                     var hour = row.time_end.substr(0,2) + ':00';
                     if (origin != destination) {
+                        if ((self.range.min === null) || (self.range.min > load)) {
+                            self.range.min = load;
+                        }
+                        if ((self.range.max === null) || (self.range.max < load)) {
+                            self.range.max = load;
+                        }
                         if (self.OD.weekday[hour] === undefined) {
                             self.OD.weekday[hour] = new Object();
                         }

@@ -11,15 +11,14 @@ function VizComponent(container, width, height) {
     this.container = container;
     this.zoom = null;
     this._data = {centers: {}, map: {}};
-    this.maxDifference = 4;
-    this.dashWidth = 1.5;
-    this.dishLength = 5;
-    this.dishGapLength = 10;
+    this.maxDifference = 0;
+    this.dashLength = 5;
+    this.dashGapLength = 10;
     this.particleSize = 10;
-    this.simulationRate = 7;
+    this.simulationRate = 12;
     this.devicesPerParticle = 100;
     this.standingPerMarker = 10;
-    this.directionMode = 'both';
+    this.directionMode = null;
 }
 
 VizComponent.prototype.render = function() {
@@ -71,11 +70,11 @@ function buildArc(edge, direction, maxDifference) {
     return arcGenerator([coords[0], midpointL, coords[1]]);
 }
 
-VizFlowMap.prototype.buildDashArray = function (d, dashWidth, dashNumber) {
+VizFlowMap.prototype.buildDashArray = function (d, dashNumber) {
     if (dashNumber === undefined || dashNumber < 1) {
         return '0%, 100%';
     } else {
-        return this.dishLength + 'px, ' + this.dishGapLength + 'px';
+        return this.dashLength + 'px, ' + this.dashGapLength + 'px';
     }
 //    const pathLength = getSVGPathLength(leafletPath(d));
 //    const gapWidth = Math.floor(getSVGPathLength(leafletPath(d)) / dashNumber - dashWidth);
@@ -83,6 +82,9 @@ VizFlowMap.prototype.buildDashArray = function (d, dashWidth, dashNumber) {
 //    return dashes;
 }
 
+VizFlowMap.prototype.dashWidth = function (d, loadRange) {
+    return Math.ceil(3 * Math.log10(d.backwardLoad / this.devicesPerParticle)) + 'px';
+}
 
 VizFlowMap.prototype.runDottedEdge = function (path, pathLength, duration, direction) {
     const startDashOffset = direction == 1 ? 0 : pathLength;
@@ -103,7 +105,7 @@ VizFlowMap.prototype.edgesInit = function (lines, simulationRate, devicesPerPart
     d3.selectAll('.scene-flow-particle').remove();
     lines.each((line, idx, nodes) => {
         const pathLength = nodes[idx].getTotalLength();
-        const transitionDuration = 1000 * Math.floor(pathLength / 7);
+        const transitionDuration = 1000 * Math.floor(pathLength / this.simulationRate);
         const direction = (d3.select(nodes[idx]).attr('class').indexOf('-to') >= 0) ? 1 : -1;
         this.runDottedEdge(d3.select(nodes[idx]), pathLength, transitionDuration, direction);
         return;
@@ -128,6 +130,9 @@ VizFlowMap.prototype.render = function (options) {
     }
     if (!options.dataChanged) {
         options.dataChanged = false;
+    }
+    if(options.directionMode) {
+        this.directionMode = options.directionMode;
     }
 
     var centers = this.data().centers.nodes;
@@ -162,8 +167,8 @@ VizFlowMap.prototype.render = function (options) {
                     var p = [NaN, NaN];
                     var iter = 0;
                     while (!d3.polygonContains(area.polygon, p) ||
-                          (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) > 50) ||
-                          (leafletMap.layerPointToLatLng(p).distanceTo(center.latlng) < 20)) {
+                          (leafletMapLeft.layerPointToLatLng(p).distanceTo(center.latlng) > 50) ||
+                          (leafletMapLeft.layerPointToLatLng(p).distanceTo(center.latlng) < 20)) {
                         p = [
                             _.random(area.xlim[0], area.xlim[1]),
                             _.random(area.ylim[0], area.ylim[1])
@@ -177,7 +182,7 @@ VizFlowMap.prototype.render = function (options) {
                     if (iter < 50) {
                         standingPoints.push(Object({
                             point: p,
-                            latlng: leafletMap.layerPointToLatLng(p)
+                            latlng: leafletMapLeft.layerPointToLatLng(p)
                         }));
                     }
                 }
@@ -243,9 +248,9 @@ VizFlowMap.prototype.render = function (options) {
       .enter().append('path')
         .attr('class', 'scene-edge-to')
         .style("stroke-dasharray",
-                (d) => this.buildDashArray(d, this.dashWidth, Math.ceil(d.backwardLoad / this.devicesPerParticle)))
+                (d) => this.buildDashArray(d, Math.ceil(d.backwardLoad / this.devicesPerParticle)))
         .style("stroke-width",
-                (d) => Math.ceil(Math.log10(d.backwardLoad / this.devicesPerParticle)) + 'px')
+                (d) => this.dashWidth(d, options.loadRange))
         .style("stroke", function(d) {
             //const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
             const color = getGradientColor('#0000dd', '#0000dd', scaleToRange(options.loadRange, d.backwardLoad));
@@ -264,9 +269,9 @@ VizFlowMap.prototype.render = function (options) {
           .enter().append('path')
             .attr('class', 'scene-edge-from')
             .style("stroke-dasharray",
-                (d) => this.buildDashArray(d, this.dashWidth, Math.ceil(d.forwardLoad / this.devicesPerParticle)))
+                (d) => this.buildDashArray(d, Math.ceil(d.forwardLoad / this.devicesPerParticle)))
             .style("stroke-width",
-                (d) => Math.ceil(Math.log10(d.backwardLoad / this.devicesPerParticle)) + 'px')
+                (d) => this.dashWidth(d, options.loadRange))
             .style("stroke", function(d) {
                 const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.forwardLoad));
                 return color;
@@ -297,7 +302,7 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
         .style('stroke-opacity', edgeOpacity)
         .style('opacity', edgeOpacity);
 */
-    g.selectAll('.scene-standing-particle,.scene-node').raise()
+    this.container.selectAll('.scene-standing-particle,.scene-node').raise()
         .attr('r', function(d) {
             var currentRadius = Number.parseFloat(d3.select(this).attr('r'));
             var radiusMultiplier = 1;

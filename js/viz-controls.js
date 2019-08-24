@@ -3,13 +3,15 @@
  *
  */
 
-function VizControls(map, leafletMap, leafletPath) {
+function VizControls(map, mapRight, leafletMaps, leafletPath) {
     if (arguments.length < 2) {
         width = container.attr('width');
         height = container.attr('height');
     }
     this.map = map;
-    this.leafletMap = leafletMap;
+    this.mapRight = mapRight;
+    this.leafletMapLeft = leafletMaps.left;
+    this.leafletMapRight = leafletMaps.right;
     this.leafletPath = leafletPath;
     this.logSlider = new LogSlider({
         maxpos: 100,
@@ -20,43 +22,44 @@ function VizControls(map, leafletMap, leafletPath) {
 
 VizControls.prototype.getOptions = function() {
     const values = $('#load-slider').slider('values');
-    const time = String($('#time-slider').slider('value')).padStart(2, '0') + ':00';
+    const time = String($('#time-slider').slider('value') % 24).padStart(2, '0') + ':00';
     return {
         selectedDay : $('[name="choose-day"]:checked').val(),
         selectedHour : time,
         loadRange : [
             Math.floor(this.logSlider.value(+values[0])),
             Math.floor(this.logSlider.value(+values[1]))]
-    };;
+    };
 }
 
 VizControls.prototype.initialize = function(model) {
+    // Main container for all controls
+    var controls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left')
+    controls.html('');
+    $('.time-slider-control').remove();
 
     L.control.zoomviewer = function(opts) {
         return new ZoomViewer(opts);
     }
-    L.control.zoomviewer({ position: 'topleft' }).addTo(this.leafletMap);
+    L.control.zoomviewer({ position: 'topleft' }).addTo(this.leafletMapLeft);
 
+    var zoomControls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left > .leaflet-bar');
 
     L.control
         .scale({
             imperial: false,
             position: 'topleft'
         })
-        .addTo(this.leafletMap);
+        .addTo(this.leafletMapLeft);
 
     var timeslider = new TimeSlider({
         position: 'bottomleft',
         map: this.map,
-        leafletMap: this.leafletMap,
+        leafletMapLeft: this.leafletMapLeft,
         leafletPath: this.leafletPath,
         parent: this
     });
-    timeslider.addTo(this.leafletMap).afterLoad();
-
-    // Main container for all controls
-    var controls = $('.leaflet-top.leaflet-left');
-    var zoomControls = $('.leaflet-top.leaflet-left > .leaflet-bar');
+    timeslider.addTo(this.leafletMapLeft).afterLoad();
 
     // Time interval picker
     var days = _.keys(model.OD);
@@ -77,10 +80,16 @@ VizControls.prototype.initialize = function(model) {
     var minLoad = 1;
     var maxLoad = 100;
     var step = 1;
-    var loadLow = 10;
+    var loadLow = minLoad;
     var loadHigh = maxLoad;
     var lowMarkerPosition = Math.floor(100 * (loadLow - minLoad) / (maxLoad - minLoad));
     var highMarkerPosition = Math.floor(100 * (loadHigh - minLoad) / (maxLoad - minLoad));
+
+    this.logSlider = new LinearSlider({
+        maxpos: 100,
+        minval: Math.ceil(model.range.min),
+        maxval: Math.floor(model.range.max)
+    });
 
     function updateLoadFilter(values, slider) {
         var start = Math.floor(slider.value(+values[0]));
@@ -109,28 +118,33 @@ VizControls.prototype.initialize = function(model) {
         step: step,
         values: [loadLow, loadHigh],
         start: (event, ui) => {
-            this.leafletMap.dragging.disable();
+            this.leafletMapLeft.dragging.disable();
         },
         slide: (event, ui) => {
             updateLoadFilter(ui.values, this.logSlider);
         },
         stop: (event, ui) => {
-            this.leafletMap.dragging.enable();
+            this.leafletMapLeft.dragging.enable();
             var selectedDay = $('[name="choose-day"]:checked').val();
             vizOptions = this.getOptions();
             vizOptions.dataChanged = false;
             this.map.render(vizOptions);
-            this.map.update(false, this.leafletMap, this.leafletPath);
-
+            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.mapRight.render(vizOptions);
+            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
         },
     });
     $('#load-filter').append('<span id="load-range-low">' + loadLow + '</span>');
     $('#load-range-low').css('position', 'relative').css('left', lowMarkerPosition + '%');
 
+    /*
     L.control.directionSwitcher = function(opts) {
         return new DirectionSwitch(opts);
     }
-    L.control.directionSwitcher({ position: 'topleft' }).addTo(this.leafletMap);
+    L.control.directionSwitcher({ position: 'topleft' }).addTo(this.leafletMapLeft);
+    */
 
     $('[name="choose-day"]').on('change', (event) => {
         var selectedDay = $('[name="choose-day"]:checked').val();
@@ -138,7 +152,9 @@ VizControls.prototype.initialize = function(model) {
             vizOptions = this.getOptions();
             vizOptions.dataChanged = true;
             this.map.render(vizOptions);
-            this.map.update(false, this.leafletMap, this.leafletPath);
+            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            this.mapRight.render(vizOptions);
+            this.mapRight.update(false, this.leafletMapRight, leafletPath);
         }
     });
 
@@ -146,6 +162,8 @@ VizControls.prototype.initialize = function(model) {
     currentOptions.dataChanged = true;
     return currentOptions;
 }
+
+
 
 var LogSlider = function(options) {
     options = options || {};
@@ -158,13 +176,30 @@ var LogSlider = function(options) {
 
  LogSlider.prototype = {
     value: function(position) {
-       return Math.pow(10, (position - this.minpos) * this.scale + this.minlval);
+        return Math.pow(10, (position - this.minpos) * this.scale + this.minlval);
     },
     position: function(value) {
-       return this.minpos + (Math.log10(value) - this.minlval) / this.scale;
+        return this.minpos + (Math.log10(value) - this.minlval) / this.scale;
     }
  };
 
+var LinearSlider = function(options) {
+     options = options || {};
+     this.minpos = options.minpos || 0;
+     this.maxpos = options.maxpos || 100;
+     this.minlval = options.minval || 1;
+     this.maxlval = options.maxval || 100;
+     this.scale = (this.maxlval - this.minlval) / (this.maxpos - this.minpos);
+}
+
+LinearSlider.prototype = {
+     value: function(position) {
+         return (position - this.minpos) * this.scale + this.minlval;
+     },
+     position: function(value) {
+         return this.minpos + (value - this.minlval) / this.scale;
+     }
+ };
 
 var DirectionSwitch = L.Control.extend({
     onAdd: function() {
@@ -176,9 +211,9 @@ var DirectionSwitch = L.Control.extend({
         directionControl.style.fontSize = '13px';
 
         var content = '<span>Flows direction</span><br/>';
-        content += '<input type="radio" name="choose-direction[]" value="from">Bat Yam => Tel Aviv</br>';
+        content += '<input type="radio" name="choose-direction[]" value="from" checked="true">Bat Yam => Tel Aviv</br>';
         content += '<input type="radio" name="choose-direction[]" value="to">Tel Aviv => Bat Yam</br>';
-        content += '<input type="radio" name="choose-direction[]" value="both" checked="true">Tel Aviv <=> Bat Yam</br>';
+        //content += '<input type="radio" name="choose-direction[]" value="both" checked="true">Tel Aviv <=> Bat Yam</br>';
         directionControl.innerHTML = content;
 
         const stop = L.DomEvent.stopPropagation;
@@ -202,7 +237,19 @@ var DirectionSwitch = L.Control.extend({
             vizMap.maxDifference = 0;
         }
         vizMap.render(vizControls.getOptions());
-        vizMap.update(false, leafletMap, leafletPath);
+        vizMap.update(false, leafletMapLeft, leafletPath);
+        if (vizMap.directionMode == 'both') {
+            vizMapRight.directionMode = 'both';
+            vizMapRight.maxDifference = 4;
+        } else if (vizMap.directionMode == 'to') {
+            vizMapRight.directionMode = 'from';
+            vizMapRight.maxDifference = 0;
+        } else if (vizMap.directionMode == 'from') {
+            vizMapRight.directionMode = 'to';
+            vizMapRight.maxDifference = 0;
+        }
+        vizMapRight.render(vizControls.getOptions());
+        vizMapRight.update(false, leafletMapRight, leafletPath);
     }
 });
 
@@ -218,9 +265,9 @@ var ZoomViewer = L.Control.extend({
         gauge.title = 'Current zoom level';
         gauge.style.textAlign = 'center';
         gauge.style.fontSize = '14px';
-        gauge.innerHTML = 'Z' + leafletMap.getZoom().toString().padStart(2, '0');
-        leafletMap.on('zoomend', function(ev) {
-            gauge.innerHTML = 'Z' + leafletMap.getZoom().toString().padStart(2, '0');
+        gauge.innerHTML = 'Z' + leafletMapLeft.getZoom().toString().padStart(2, '0');
+        leafletMapLeft.on('zoomend', function(ev) {
+            gauge.innerHTML = 'Z' + leafletMapLeft.getZoom().toString().padStart(2, '0');
         });
 
         const zoomOutButton = this._createButton('-', 'Zoom Out',
@@ -265,7 +312,7 @@ var TimeSlider = L.Control.extend({
     defaultStart: 6,
 
     onAdd: function() {
-        var container = L.DomUtil.create('div', 'leaflet-control time-slider-control');
+        var container = L.DomUtil.create('div', 'time-slider-control');
         const stop = L.DomEvent.stopPropagation;
         const prevent = L.DomEvent.preventDefault;
 
@@ -328,6 +375,7 @@ var TimeSlider = L.Control.extend({
     },
 
     afterLoad: function(options) {
+        $('.time-slider-control').appendTo('body');
         if (options === undefined)
             options = {};
         $('#time-slider').slider({
@@ -341,11 +389,20 @@ var TimeSlider = L.Control.extend({
                 this._map.dragging.disable();
             },
             slide: (event, ui) => {
-                //updateLoadFilter(ui.values)
+                //
             },
             stop: (event, ui) => {
                 this._map.dragging.enable();
-
+                vizOptions = vizControls.getOptions();
+                vizOptions.dataChanged = true;
+                vizMap.render(vizOptions);
+                vizMap.update(true, leafletMapLeft, leafletPath);
+                vizOptions = vizControls.getOptions();
+                vizOptions.dataChanged = true;
+                vizMapRight.render(vizOptions);
+                vizMapRight.update(true, leafletMapRight, leafletPath);
+                const sliderValue = $('#time-slider').slider('value');
+                $('#time-display').html(String(sliderValue % 24).padStart(2, '0') + ':00');
             },
         });
     },
@@ -363,7 +420,11 @@ var TimeSlider = L.Control.extend({
             vizOptions = context.options.parent.getOptions();
             vizOptions.dataChanged = true;
             context.options.map.render(vizOptions);
-            context.options.map.update(true, context.options.leafletMap, context.options.leafletPath);
+            context.options.map.update(true, context.options.leafletMapLeft, context.options.leafletPath);
+            vizOptions = context.options.parent.getOptions();
+            vizOptions.dataChanged = true;
+            vizMapRight.render(vizOptions);
+            vizMapRight.update(true, leafletMapRight, leafletPath);
             display.html(String(sliderValue).padStart(2, '0') + ':00');
         }, this.duration, this);
     },

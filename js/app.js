@@ -7,7 +7,8 @@
  * Add tile layer and controls
  */
 var mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
-var leafletMap = L.map('partner-viz-container', {
+
+var leafletMapLeft = L.map('viz-container-left', {
         zoomControl: false,
         minZoom: 8,
         maxZoom: 17
@@ -17,34 +18,55 @@ var leafletMap = L.map('partner-viz-container', {
 //    [32.062791783472406, 34.91180419921876],
 //    [31.96818267111348, 34.682121276855476]
 //]);
-//leafletMap.fitBounds(mapBounds);
+//leafletMapLeft.fitBounds(mapBounds);
 
 L.tileLayer(
-    'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; ' + mapLink + ' Contributors' +
-            '<br/>I. Benenson, A. Ogulenko, A. Rotem' +
-            '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>',
-    }).addTo(leafletMap);
+    'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(leafletMapLeft);
+
+
+var leafletMapRight = L.map('viz-container-right', {
+    zoomControl: false,
+    minZoom: 8,
+    maxZoom: 17
+}).setView([32.08, 34.8], 12);
+
+L.tileLayer(
+'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; ' + mapLink + ' Contributors' +
+        '<br/>I. Benenson, A. Ogulenko, A. Rotem' +
+        '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>',
+}).addTo(leafletMapRight);
+
+L.control.zoomviewerRight = function(opts) {
+    return new ZoomViewer(opts);
+}
+L.control.zoomviewerRight({ position: 'topleft' }).addTo(this.leafletMapRight);
 
 /*
  * Create SVG layer for Leaflet map and bind it.
  */
 
-var svgLayer = L.svg();
-svgLayer.addTo(leafletMap);
+var svgLayerLeft = L.svg();
+svgLayerLeft.addTo(leafletMapLeft);
+
+var svgLayerRight = L.svg();
+svgLayerRight.addTo(leafletMapRight);
 
 /*
  * Create SVG element with basic <g> group inside given container.
  */
 
-var svg = d3.select('.container').select('svg');
-var g = svg.select('g');
+var svgLeft = d3.select('.container-left').select('svg');
+var gLeft = svgLeft.select('g');
+
+var svgRight = d3.select('.container-right').select('svg');
+var gRight = svgRight.select('g');
 
 /*
  * Create D3 projection from (lat, lng) CRS to Leaflet map
  */
 function projectPoint(x, y) {
-    var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
+    var point = leafletMapLeft.latLngToLayerPoint(new L.LatLng(y, x));
     this.stream.point(point.x, point.y);
 }
 
@@ -67,19 +89,30 @@ var projection = d3.geoMercator();
  *     2) collection of GeoJSON features representing statistical areas centroids;
  *     3) OD matrices.
  */
-var vizMap = new VizFlowMap(g, svg.attr('width'), svg.attr('height'));
+
+var vizMap = new VizFlowMap(gLeft, svgLeft.attr('width'), svgLeft.attr('height'));
 vizMap.projection = projection;
+
+var vizMapRight = new VizFlowMap(gRight, svgRight.attr('width'), svgRight.attr('height'));
+vizMapRight.projection = projection;
 
 var vizModel = new VizModel();
 vizModel.projection = projection;
 
-var vizControls = new VizControls(vizMap, leafletMap, leafletPath);
+var vizControls = new VizControls(vizMap, vizMapRight,
+        {left: leafletMapLeft, right: leafletMapRight},
+        leafletPath);
 var vizOptions =  vizControls.initialize(vizModel);
 
 // Bind Leaflet map's event handlers
-leafletMap.on(["viewreset", "moveend"], function(event) {
+leafletMapLeft.on(["viewreset", "moveend"], function(event) {
     vizMap.render(vizControls.getOptions());
-    vizMap.update(event, leafletMap, leafletPath);
+    vizMap.update(event, leafletMapLeft, leafletPath);
+});
+
+leafletMapRight.on(["viewreset", "moveend"], function(event) {
+    vizMapRight.render(vizControls.getOptions());
+    vizMapRight.update(event, leafletMapRight, leafletPath);
 });
 
 function changeFlowsData(areaFile, centersFile, flowsFile) {
@@ -91,13 +124,31 @@ function changeFlowsData(areaFile, centersFile, flowsFile) {
                 centers: vizModel.centers,
                 OD: vizModel.OD
             });
-            vizMap.render({dataChanged: true});
-            vizMap.update(false, leafletMap, leafletPath);
+
+            vizControls.initialize(vizModel);
+
+            var options = vizControls.getOptions();
+            options.dataChanged = true;
+            options.directionMode = 'from';
+            vizMap.render(options);
+            vizMap.update(false, leafletMapLeft, leafletPath);
+
+            vizMapRight.data({
+                map: vizModel.areas,
+                centers: vizModel.centers,
+                OD: vizModel.OD
+            });
+
+            var options = vizControls.getOptions();
+            options.dataChanged = true;
+            options.directionMode = 'to';
+            vizMapRight.render(options);
+            vizMapRight.update(false, leafletMapRight, leafletPath);
        });
 }
 
-leafletMap.on("zoomend", function(event) {
-    const zoom = leafletMap.getZoom();
+leafletMapLeft.on("zoomend", function(event) {
+    const zoom = leafletMapLeft.getZoom();
     switch(zoom) {
         case 11:
             changeFlowsData(
@@ -119,9 +170,18 @@ leafletMap.on("zoomend", function(event) {
             break;
         default:
             vizModel.update();
+
             vizMap.data.map = vizModel.areas;
-            vizMap.render(vizControls.getOptions());
-            vizMap.update(event, leafletMap, leafletPath);
+            var options = vizControls.getOptions();
+            options.directionMode = 'from';
+            vizMap.render(options);
+            vizMap.update(event, leafletMapLeft, leafletPath);
+
+            vizMapRight.data.map = vizModel.areas;
+            var options = vizControls.getOptions();
+            options.directionMode = 'to';
+            vizMapRight.render(options);
+            vizMapRight.update(event, leafletMapRight, leafletPath);
     }
     return true;
 });
