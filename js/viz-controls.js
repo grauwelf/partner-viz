@@ -19,18 +19,40 @@ function VizControls(map, leafletMap, leafletPath) {
 }
 
 VizControls.prototype.getOptions = function() {
-    var values = $('#load-slider').slider('values');
-    var start = Math.floor(this.logSlider.value(+values[0]));
-    var end = Math.floor(this.logSlider.value(+values[1]));
-    var currentOptions = {
+    const values = $('#load-slider').slider('values');
+    const time = String($('#time-slider').slider('value')).padStart(2, '0') + ':00';
+    return {
         selectedDay : $('[name="choose-day"]:checked').val(),
-        selectedHour : parseInt($('[name="choose-hour"] option:selected').val()),
-        loadRange : [start, end]
-    };
-    return currentOptions;
+        selectedHour : time,
+        loadRange : [
+            Math.floor(this.logSlider.value(+values[0])),
+            Math.floor(this.logSlider.value(+values[1]))]
+    };;
 }
 
 VizControls.prototype.initialize = function(model) {
+
+    L.control.zoomviewer = function(opts) {
+        return new ZoomViewer(opts);
+    }
+    L.control.zoomviewer({ position: 'topleft' }).addTo(this.leafletMap);
+
+
+    L.control
+        .scale({
+            imperial: false,
+            position: 'topleft'
+        })
+        .addTo(this.leafletMap);
+
+    var timeslider = new TimeSlider({
+        position: 'bottomleft',
+        map: this.map,
+        leafletMap: this.leafletMap,
+        leafletPath: this.leafletPath,
+        parent: this
+    });
+    timeslider.addTo(this.leafletMap).afterLoad();
 
     // Main container for all controls
     var controls = $('.leaflet-top.leaflet-left');
@@ -95,7 +117,6 @@ VizControls.prototype.initialize = function(model) {
         stop: (event, ui) => {
             this.leafletMap.dragging.enable();
             var selectedDay = $('[name="choose-day"]:checked').val();
-            var selectedHour = parseInt($('[name="choose-hour"] option:selected').val());
             vizOptions = this.getOptions();
             vizOptions.dataChanged = false;
             this.map.render(vizOptions);
@@ -106,41 +127,14 @@ VizControls.prototype.initialize = function(model) {
     $('#load-filter').append('<span id="load-range-low">' + loadLow + '</span>');
     $('#load-range-low').css('position', 'relative').css('left', lowMarkerPosition + '%');
 
-    controls.append('<div id="choose-hour" class="leaflet-control" style="pointer-events: auto"></div>');
-    var options = '';
-    for (var i = 1; i <= 24; i++) {
-        if (i == 24) {
-            options += '<option value="0">23:00 - 00:00</option>';
-        } else {
-            var hourStart = (i-1).toString().padStart(2, '0');
-            var hourEnd = i.toString().padStart(2, '0');
-            options += '<option value="' + i + '">' + hourStart + ':00 - ' + hourEnd + ':00</option>';
-        }
+    L.control.directionSwitcher = function(opts) {
+        return new DirectionSwitch(opts);
     }
-    $('#choose-hour').append('<button id="prev-hour"> << </button>');
-    $('#choose-hour').append('<select name="choose-hour">' + options + '</select>');
-    $('#choose-hour').append('<button id="next-hour"> >> </button>');
-
-
-    var currentHour = moment().hour();
-    $('[name="choose-hour"]').val(currentHour + 1);
-
-    $('[name="choose-hour"]').on('change', (event) => {
-        var selectedDay = $('[name="choose-day"]:checked').val();
-        var selectedHour = parseInt($('[name="choose-hour"] option:selected').val());
-        if (selectedDay !== undefined && selectedHour !== undefined) {
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = true;
-            this.map.render(vizOptions);
-            this.map.update(false, this.leafletMap, this.leafletPath);
-
-        }
-    });
+    L.control.directionSwitcher({ position: 'topleft' }).addTo(this.leafletMap);
 
     $('[name="choose-day"]').on('change', (event) => {
         var selectedDay = $('[name="choose-day"]:checked').val();
-        var selectedHour = parseInt($('[name="choose-hour"] option:selected').val());
-        if (selectedDay !== undefined && selectedHour !== undefined) {
+        if (selectedDay !== undefined) {
             vizOptions = this.getOptions();
             vizOptions.dataChanged = true;
             this.map.render(vizOptions);
@@ -148,38 +142,8 @@ VizControls.prototype.initialize = function(model) {
         }
     });
 
-    $('button#next-hour').on('click', (event) => {
-        var selectedDay = $('[name="choose-day"]:checked').val();
-        var selectedHour = parseInt($('[name="choose-hour"] option:selected').val());
-        selectedHour = (selectedHour + 1) % 24;
-        $('[name="choose-hour"]').val(selectedHour);
-        //map.render(selectedDay, selectedHour);
-        vizOptions = this.getOptions();
-        vizOptions.dataChanged = true;
-        this.map.render(vizOptions);
-        this.map.update(false, this.leafletMap, this.leafletPath);
-    });
-
-    $('button#prev-hour').on('click', (event) => {
-        var selectedDay = $('[name="choose-day"]:checked').val();
-        var selectedHour = parseInt($('[name="choose-hour"] option:selected').val());
-        if (selectedHour - 1 < 0) {
-            selectedHour = 24 + selectedHour;
-        }
-        $('[name="choose-hour"]').val(selectedHour - 1);
-        //map.render(selectedDay, selectedHour - 1);
-        vizOptions = this.getOptions();
-        vizOptions.dataChanged = true;
-        this.map.render(vizOptions);
-        this.map.update(false, this.leafletMap, this.leafletPath);
-    });
-
-    var currentOptions = {
-            selectedDay : $('[name="choose-day"]:checked').val(),
-            selectedHour : parseInt($('[name="choose-hour"] option:selected').val()),
-            loadRange : $('#load-slider').slider('values'),
-            dataChange: true
-    };
+    var currentOptions = this.getOptions();
+    currentOptions.dataChanged = true;
     return currentOptions;
 }
 
@@ -200,6 +164,48 @@ var LogSlider = function(options) {
        return this.minpos + (Math.log10(value) - this.minlval) / this.scale;
     }
  };
+
+
+var DirectionSwitch = L.Control.extend({
+    onAdd: function() {
+
+        var directionControl = L.DomUtil.create('div', 'leaflet-control');
+
+        directionControl.id = 'choose-direction';
+        directionControl.style.pointerEvents = 'auto';
+        directionControl.style.fontSize = '13px';
+
+        var content = '<span>Flows direction</span><br/>';
+        content += '<input type="radio" name="choose-direction[]" value="from">Bat Yam => Tel Aviv</br>';
+        content += '<input type="radio" name="choose-direction[]" value="to">Tel Aviv => Bat Yam</br>';
+        content += '<input type="radio" name="choose-direction[]" value="both" checked="true">Tel Aviv <=> Bat Yam</br>';
+        directionControl.innerHTML = content;
+
+        const stop = L.DomEvent.stopPropagation;
+
+        L.DomEvent
+            .on(directionControl, 'click', stop)
+            .on(directionControl, 'mousedown', stop)
+            .on(directionControl, 'dblclick', stop)
+            .on(directionControl, 'click', L.DomEvent.preventDefault)
+            .on(directionControl, 'click', this._onDirectionChange, this);
+
+        return directionControl;
+    },
+
+    _onDirectionChange: function(event){
+        $(event.target).prop('checked', true).trigger('click');
+        vizMap.directionMode = event.target.value;
+        if (vizMap.directionMode == 'both') {
+            vizMap.maxDifference = 4;
+        } else {
+            vizMap.maxDifference = 0;
+        }
+        vizMap.render(vizControls.getOptions());
+        vizMap.update(false, leafletMap, leafletPath);
+    }
+});
+
 
 var ZoomViewer = L.Control.extend({
     onAdd: function() {
@@ -223,12 +229,12 @@ var ZoomViewer = L.Control.extend({
         return container;
     },
 
-    _zoomIn: function(e){
-        this._map.zoomIn(e.shiftKey ? 3 : 1);
+    _zoomIn: function(event){
+        this._map.zoomIn(event.shiftKey ? 3 : 1);
     },
 
-    _zoomOut: function(e){
-        this._map.zoomOut(e.shiftKey ? 3 : 1);
+    _zoomOut: function(event){
+        this._map.zoomOut(event.shiftKey ? 3 : 1);
     },
 
     _createButton: function(html, title, className, container, callback, context)
@@ -256,6 +262,7 @@ var TimeSlider = L.Control.extend({
 
     clock: null,
     duration: 3000,
+    defaultStart: 6,
 
     onAdd: function() {
         var container = L.DomUtil.create('div', 'leaflet-control');
@@ -301,8 +308,11 @@ var TimeSlider = L.Control.extend({
 
         L.DomEvent
             .on(resetButton, 'click mousedown dblclick', stop)
-            .on(resetButton, 'click', prevent);
-            //.on(resetButton, 'click', this._onReset, this);
+            .on(resetButton, 'click', prevent)
+            .on(resetButton, 'click', function(event) {
+                this.reset();
+                playButton.innerHTML = playButton.playHTML;
+            }, this);
 
         var slider = L.DomUtil.create('a', 'leaflet-control', container);
         slider.id = 'time-slider';
@@ -330,6 +340,11 @@ var TimeSlider = L.Control.extend({
         }
         scale.innerHTML += content + '</div>';
 
+        var display = L.DomUtil.create('div', '', container);
+        display.id = 'time-display';
+        display.innerHTML = String(this.defaultStart).padStart(2, '0') + ':00';
+        display.style.fontSize = '16px';
+
         return container;
     },
 
@@ -339,10 +354,10 @@ var TimeSlider = L.Control.extend({
         $('#time-slider').slider({
             anima1te: this.duration,
             range: 'min',
-            min: options.min === undefined ? 0 : options.min,
-            max: options.max === undefined ? 24 : options.max,
+            min: options.min || 0,
+            max: options.max || 24,
             //step: 1,
-            value: 6,
+            value: this.defaultStart,
             start: (event, ui) => {
                 this._map.dragging.disable();
             },
@@ -360,13 +375,18 @@ var TimeSlider = L.Control.extend({
         if (this.clock !== null) {
             clearInterval(this.clock);
         }
-        var slider = $('#time-slider')
-        start = (start === undefined) ? slider.slider('value') : start;
-        //duration = (duration === undefined) ? 200 : duration;
-        return setInterval(function() {
+        var slider = $('#time-slider');
+        var display = $('#time-display');
+        start = start || slider.slider('value');
+        return setInterval(function(context) {
             const sliderValue = slider.slider('value');
             slider.slider('value', (sliderValue + 1) % 24);
-        }, this.duration);
+            vizOptions = context.options.parent.getOptions();
+            vizOptions.dataChanged = true;
+            context.options.map.render(vizOptions);
+            context.options.map.update(true, context.options.leafletMap, context.options.leafletPath);
+            display.html(String(sliderValue).padStart(2, '0') + ':00');
+        }, this.duration, this);
     },
 
     pause: function() {
@@ -375,10 +395,12 @@ var TimeSlider = L.Control.extend({
         }
     },
 
-    reset: function() {
+    reset: function(value) {
         if (this.clock !== null) {
             clearInterval(this.clock);
         }
-        $('#time-slider').slider('value', 0);
+        value = value || this.defaultStart;
+        $('#time-slider').slider('value', value);
+        $('#time-display').html(String(value).padStart(2, '0') + ':00');
     }
 });

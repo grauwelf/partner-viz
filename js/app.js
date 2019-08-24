@@ -26,23 +26,6 @@ L.tileLayer(
             '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>',
     }).addTo(leafletMap);
 
-L.control.zoomviewer = function(opts) {
-    return new ZoomViewer(opts);
-}
-L.control.zoomviewer({ position: 'topleft' }).addTo(leafletMap);
-
-var timeslider = new TimeSlider({ position: 'bottomleft' });
-timeslider.addTo(leafletMap).afterLoad();
-//timeslider.play();
-
-
-L.control
-    .scale({
-        imperial: false,
-        position: 'topleft'
-    })
-    .addTo(leafletMap);
-
 /*
  * Create SVG layer for Leaflet map and bind it.
  */

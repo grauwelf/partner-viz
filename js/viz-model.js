@@ -145,13 +145,13 @@ function VizModel() {
 //                    }
                     var origin = row.origin_sta;
                     var destination = row.destination_sta;
-                    var load = row.load;
+                    var load = +row.load;
 
                     if (origin == destination) {
                         self.centers.nodes[origin].stay = load;
                     }
 
-                    var hour = parseInt(row.time_end.substr(0,2));
+                    var hour = row.time_end.substr(0,2) + ':00';
                     if (origin != destination) {
                         if (self.OD.weekday[hour] === undefined) {
                             self.OD.weekday[hour] = new Object();

@@ -15,8 +15,9 @@ function VizComponent(container, width, height) {
     this.dashWidth = 1.5;
     this.particleSize = 10;
     this.simulationRate = 7;
-    this.devicesPerParticle = 10;
-    this.standingPerMarker = 5;
+    this.devicesPerParticle = 100;
+    this.standingPerMarker = 10;
+    this.directionMode = 'both';
 }
 
 VizComponent.prototype.render = function() {
@@ -60,7 +61,7 @@ function edgesInit(lines, simulationRate, devicesPerParticle, particleSize) {
     lines.each(function(line, idx) {
 
         const pathLength = d3.select(this).node().getTotalLength();
-        const transitionDuration = 1000 * Math.floor(pathLength / 7);
+        const transitionDuration = 1000 * Math.floor(pathLength / 15);
 
         if (d3.select(this).attr('class').indexOf('-to') >= 0) {
             runDottedEdge(d3.select(this), pathLength, transitionDuration, 1);
@@ -192,7 +193,10 @@ VizFlowMap.prototype.render = function (options) {
         options.selectedDay = 'weekday';
     }
     if (!options.selectedHour) {
-        options.selectedHour = moment().hour() + 1;
+        var time = (moment().hour() + 1) % 24;
+        time = String(time).padStart(2, '0') + ':00';
+        options.selectedHour = time;
+
     }
     if (!options.loadRange) {
         options.loadRange = [10, 100];
@@ -306,14 +310,18 @@ VizFlowMap.prototype.render = function (options) {
     });
 
     this.container.selectAll('.scene-edge-to').remove();
-    var arcsTo =  this.container.selectAll('.scene-edge-to')
+    this.container.selectAll('.scene-edge-from').remove();
+
+    if (this.directionMode == 'both' || this.directionMode == 'to') {
+        var arcsTo =  this.container.selectAll('.scene-edge-to')
         .data(linestringData)
       .enter().append('path')
         .attr('class', 'scene-edge-to')
         .style("stroke-dasharray",
                 (d) => buildDashArray(d, this.dashWidth, Math.ceil(d.backwardLoad / this.devicesPerParticle)))
         .style("stroke", function(d) {
-            const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
+            //const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
+            const color = getGradientColor('#0000dd', '#0000dd', scaleToRange(options.loadRange, d.backwardLoad));
             return color;
         })
         .style("fill", function(d) {
@@ -321,23 +329,26 @@ VizFlowMap.prototype.render = function (options) {
             return color;
         })
         .attr('d', (d) => buildArc(d, 1, maxDifference));
+    }
 
-    this.container.selectAll('.scene-edge-from').remove();
-    var arcsFrom =  this.container.selectAll('.scene-edge-from')
-        .data(linestringData)
-      .enter().append('path')
-        .attr('class', 'scene-edge-from')
-        .style("stroke-dasharray",
-                (d) => buildDashArray(d, this.dashWidth, Math.ceil(d.forwardLoad / this.devicesPerParticle)))
-        .style("stroke", function(d) {
-            const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.forwardLoad));
-            return color;
-        })
-        .style("fill", function(d) {
-            const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.forwardLoad));
-            return color;
-        })
-        .attr('d', (d) => buildArc(d, -1, maxDifference));
+    if (this.directionMode == 'both' || this.directionMode == 'from') {
+        var arcsFrom =  this.container.selectAll('.scene-edge-from')
+            .data(linestringData)
+          .enter().append('path')
+            .attr('class', 'scene-edge-from')
+            .style("stroke-dasharray",
+                    (d) => buildDashArray(d, this.dashWidth, Math.ceil(d.forwardLoad / this.devicesPerParticle)))
+            .style("stroke", function(d) {
+                const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.forwardLoad));
+                return color;
+            })
+            .style("fill", function(d) {
+                const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.forwardLoad));
+                return color;
+            })
+            .attr('d', (d) => buildArc(d, -1, maxDifference));
+    }
+
 }
 
 VizFlowMap.prototype.update = function (event, leaflet, path) {
