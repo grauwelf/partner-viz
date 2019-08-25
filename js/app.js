@@ -37,11 +37,11 @@ L.tileLayer(
         '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>',
 }).addTo(leafletMapRight);
 
-L.control.zoomviewerRight = function(opts) {
+/*L.control.zoomviewerRight = function(opts) {
     return new ZoomViewer(opts);
 }
 L.control.zoomviewerRight({ position: 'topleft' }).addTo(this.leafletMapRight);
-
+*/
 /*
  * Create SVG layer for Leaflet map and bind it.
  */
@@ -108,12 +108,14 @@ var vizOptions =  vizControls.initialize(vizModel);
 leafletMapLeft.on(["viewreset", "moveend"], function(event) {
     vizMap.render(vizControls.getOptions());
     vizMap.update(event, leafletMapLeft, leafletPath);
-});
-
-leafletMapRight.on(["viewreset", "moveend"], function(event) {
     vizMapRight.render(vizControls.getOptions());
     vizMapRight.update(event, leafletMapRight, leafletPath);
 });
+
+/*leafletMapRight.on(["viewreset", "moveend"], function(event) {
+    vizMapRight.render(vizControls.getOptions());
+    vizMapRight.update(event, leafletMapRight, leafletPath);
+});*/
 
 function changeFlowsData(areaFile, centersFile, flowsFile) {
     vizModel
@@ -149,6 +151,7 @@ function changeFlowsData(areaFile, centersFile, flowsFile) {
 
 leafletMapLeft.on("zoomend", function(event) {
     const zoom = leafletMapLeft.getZoom();
+    leafletMapRight.setZoom(zoom);
     switch(zoom) {
         case 11:
             changeFlowsData(
