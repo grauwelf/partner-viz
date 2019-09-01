@@ -155,10 +155,10 @@ VizFlowMap.prototype.render = function (options) {
 
 
     var standingPoints = [];
-    if (options.dataChanged) {
+    if (options.dataChanged && false) {
+        d3.selectAll('.scene-standing-particle').remove();
         const standingPerMarker = this.standingPerMarker;
         _.each(map.features, function(area) {
-            d3.selectAll('.scene-standing-particle').remove();
             const sta = area.properties.STA.toString().padStart(8, '0');
             const center = centers[sta];
             if (center !== undefined) {
@@ -203,6 +203,7 @@ VizFlowMap.prototype.render = function (options) {
         return d.name + '</br># ' + d.sta;
     }).attr('class', 'scene-node-tooltip').style("z-index", "999");
 
+    this.container.selectAll('.scene-node').remove();
     var nodes = this.container.selectAll('.scene-node')
         .data(Object.values(centers))
       .enter()

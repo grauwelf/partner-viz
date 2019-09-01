@@ -104,18 +104,15 @@ var vizControls = new VizControls(vizMap, vizMapRight,
         leafletPath);
 var vizOptions =  vizControls.initialize(vizModel);
 
+leafletMapLeft.sync(leafletMapRight);
+
 // Bind Leaflet map's event handlers
-leafletMapLeft.on(["viewreset", "moveend"], function(event) {
+leafletMapLeft.on('moveend', function(event) {
     vizMap.render(vizControls.getOptions());
     vizMap.update(event, leafletMapLeft, leafletPath);
     vizMapRight.render(vizControls.getOptions());
     vizMapRight.update(event, leafletMapRight, leafletPath);
 });
-
-/*leafletMapRight.on(["viewreset", "moveend"], function(event) {
-    vizMapRight.render(vizControls.getOptions());
-    vizMapRight.update(event, leafletMapRight, leafletPath);
-});*/
 
 function changeFlowsData(areaFile, centersFile, flowsFile) {
     vizModel
