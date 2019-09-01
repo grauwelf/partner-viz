@@ -102,7 +102,7 @@ vizModel.projection = projection;
 var vizControls = new VizControls(vizMap, vizMapRight,
         {left: leafletMapLeft, right: leafletMapRight},
         leafletPath);
-var vizOptions =  vizControls.initialize(vizModel);
+//var vizOptions =  vizControls.initialize(vizModel);
 
 leafletMapLeft.sync(leafletMapRight);
 

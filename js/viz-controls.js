@@ -77,19 +77,20 @@ VizControls.prototype.initialize = function(model) {
     $('[name="choose-day"][value="weekday"]').prop('checked', true);
 
     // Load range slider
-    var minLoad = 1;
-    var maxLoad = 100;
-    var step = 1;
-    var loadLow = minLoad;
-    var loadHigh = maxLoad;
-    var lowMarkerPosition = Math.floor(100 * (loadLow - minLoad) / (maxLoad - minLoad));
-    var highMarkerPosition = Math.floor(100 * (loadHigh - minLoad) / (maxLoad - minLoad));
-
-    this.logSlider = new LinearSlider({
+    this.logSlider = new LogSlider({
+        minpos: 1,
         maxpos: 100,
         minval: Math.ceil(model.range.min),
         maxval: Math.floor(model.range.max)
     });
+
+    var minLoad = 1;
+    var maxLoad = 100;
+    var step = 1;
+    var loadLow = Math.ceil(model.range.min);
+    var loadHigh = Math.ceil(model.range.max);
+    var lowMarkerPosition = 1;
+    var highMarkerPosition = 100;
 
     function updateLoadFilter(values, slider) {
         var start = Math.floor(slider.value(+values[0]));
@@ -116,7 +117,7 @@ VizControls.prototype.initialize = function(model) {
         min: minLoad,
         max: maxLoad,
         step: step,
-        values: [loadLow, loadHigh],
+        values: [lowMarkerPosition, highMarkerPosition],
         start: (event, ui) => {
             this.leafletMapLeft.dragging.disable();
         },
@@ -167,19 +168,19 @@ VizControls.prototype.initialize = function(model) {
 
 var LogSlider = function(options) {
     options = options || {};
-    this.minpos = options.minpos || 0;
+    this.minpos = options.minpos || 1;
     this.maxpos = options.maxpos || 100;
-    this.minlval = Math.log(options.minval || 1);
-    this.maxlval = Math.log(options.maxval || 100000);
-    this.scale = (this.maxlval - this.minlval) / (this.maxpos - this.minpos);
+    this.minval = Math.log10(options.minval || 1);
+    this.maxval = Math.log10(options.maxval || 100000);
+    this.scale = (this.maxval - this.minval) / (this.maxpos - this.minpos);
  }
 
  LogSlider.prototype = {
     value: function(position) {
-        return Math.pow(10, (position - this.minpos) * this.scale + this.minlval);
+        return Math.pow(10, (position - this.minpos) * this.scale + this.minval);
     },
     position: function(value) {
-        return this.minpos + (Math.log10(value) - this.minlval) / this.scale;
+        return this.minpos + (Math.log10(value) - this.minval) / this.scale;
     }
  };
 

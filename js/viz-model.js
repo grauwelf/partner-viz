@@ -113,6 +113,7 @@ function VizModel() {
 
     self.load = function (value) {
         self.files = value;
+        this.range = {'min': null, 'max': null};
         return new VizDataLoader(self.files)
             .done(function(areasData, centersData, flowsData) {
 
