@@ -32,25 +32,6 @@ VizControls.prototype.getOptions = function() {
     };
 }
 
-VizControls.prototype.updateLoadFilter = function (values, slider) {
-    var start = Math.floor(slider.value(+values[0]));
-    var end = Math.floor(slider.value(+values[1]));
-
-    loadLow = values[0];
-    loadHigh = values[1];
-    lowMarkerPosition = Math.floor(100 * (loadLow - 1) / (100 - 1));
-    highMarkerPosition = Math.floor(100 * (loadHigh - 1) / (100 - 1));
-    $('#load-range-high').css('left', highMarkerPosition + '%');
-    $('#load-range-high').text(end);
-    $('#load-range-low').css('left', lowMarkerPosition + '%');
-    $('#load-range-low').text(start);
-    $('#load-slider').slider('values', 0, lowMarkerPosition);
-    $('#load-slider').slider('values', 1, highMarkerPosition);
-    lastLoadRange[leafletMapLeft.getZoom()] = [start, end];
-}
-
-
-
 VizControls.prototype.initialize = function(model) {
     // Main container for all controls
     var controls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left')
@@ -96,20 +77,33 @@ VizControls.prototype.initialize = function(model) {
     $('[name="choose-day"][value="weekday"]').prop('checked', true);
 
     // Load range slider
-    this.logSlider = new LogSlider({
-        minpos: 1,
+    var minLoad = 1;
+    var maxLoad = 100;
+    var step = 1;
+    var loadLow = minLoad;
+    var loadHigh = maxLoad;
+    var lowMarkerPosition = Math.floor(100 * (loadLow - minLoad) / (maxLoad - minLoad));
+    var highMarkerPosition = Math.floor(100 * (loadHigh - minLoad) / (maxLoad - minLoad));
+
+    this.logSlider = new LinearSlider({
         maxpos: 100,
         minval: Math.ceil(model.range.min),
         maxval: Math.floor(model.range.max)
     });
 
-    var minLoad = 1;
-    var maxLoad = 100;
-    var step = 1;
-    var loadLow = Math.ceil(model.range.min);
-    var loadHigh = Math.ceil(model.range.max);
-    var lowMarkerPosition = 1;
-    var highMarkerPosition = 100;
+    function updateLoadFilter(values, slider) {
+        var start = Math.floor(slider.value(+values[0]));
+        var end = Math.floor(slider.value(+values[1]));
+
+        loadLow = values[0];
+        loadHigh = values[1];
+        lowMarkerPosition = Math.floor(100 * (loadLow - minLoad) / (maxLoad - minLoad));
+        highMarkerPosition = Math.floor(100 * (loadHigh - minLoad) / (maxLoad - minLoad));
+        $('#load-range-high').css('left', highMarkerPosition + '%');
+        $('#load-range-high').text(end);
+        $('#load-range-low').css('left', lowMarkerPosition + '%');
+        $('#load-range-low').text(start);
+    }
 
     controls.append('<div id="load-filter" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
     $('#load-filter').append('<span>Load filter</span><br/>');
@@ -122,12 +116,12 @@ VizControls.prototype.initialize = function(model) {
         min: minLoad,
         max: maxLoad,
         step: step,
-        values: [lowMarkerPosition, highMarkerPosition],
+        values: [loadLow, loadHigh],
         start: (event, ui) => {
             this.leafletMapLeft.dragging.disable();
         },
         slide: (event, ui) => {
-            this.updateLoadFilter(ui.values, this.logSlider);
+            updateLoadFilter(ui.values, this.logSlider);
         },
         stop: (event, ui) => {
             this.leafletMapLeft.dragging.enable();
@@ -173,19 +167,19 @@ VizControls.prototype.initialize = function(model) {
 
 var LogSlider = function(options) {
     options = options || {};
-    this.minpos = options.minpos || 1;
+    this.minpos = options.minpos || 0;
     this.maxpos = options.maxpos || 100;
-    this.minval = Math.log10(options.minval || 1);
-    this.maxval = Math.log10(options.maxval || 100000);
-    this.scale = (this.maxval - this.minval) / (this.maxpos - this.minpos);
+    this.minlval = Math.log(options.minval || 1);
+    this.maxlval = Math.log(options.maxval || 100000);
+    this.scale = (this.maxlval - this.minlval) / (this.maxpos - this.minpos);
  }
 
  LogSlider.prototype = {
     value: function(position) {
-        return Math.pow(10, (position - this.minpos) * this.scale + this.minval);
+        return Math.pow(10, (position - this.minpos) * this.scale + this.minlval);
     },
     position: function(value) {
-        return this.minpos + (Math.log10(value) - this.minval) / this.scale;
+        return this.minpos + (Math.log10(value) - this.minlval) / this.scale;
     }
  };
 
@@ -385,7 +379,7 @@ var TimeSlider = L.Control.extend({
         if (options === undefined)
             options = {};
         $('#time-slider').slider({
-            anima1te: this.duration,
+            animate: this.duration,
             range: 'min',
             min: options.min || 0,
             max: options.max || 24,
@@ -413,26 +407,30 @@ var TimeSlider = L.Control.extend({
         });
     },
 
+    step: function(context, start) {
+        var slider = $('#time-slider');
+        var display = $('#time-display');
+        start = start || slider.slider('value');
+        const sliderValue = slider.slider('value');
+
+        slider.slider('value', (sliderValue + 1) % 24);
+        vizOptions = context.options.parent.getOptions();
+        vizOptions.dataChanged = true;
+        context.options.map.render(vizOptions);
+        context.options.map.update(true, context.options.leafletMapLeft, context.options.leafletPath);
+        vizOptions = context.options.parent.getOptions();
+        vizOptions.dataChanged = true;
+        vizMapRight.render(vizOptions);
+        vizMapRight.update(true, leafletMapRight, leafletPath);
+        display.html(String(sliderValue).padStart(2, '0') + ':00');
+    },
+
     play: function(start) {
         if (this.clock !== null) {
             clearInterval(this.clock);
         }
-        var slider = $('#time-slider');
-        var display = $('#time-display');
-        start = start || slider.slider('value');
-        return setInterval(function(context) {
-            const sliderValue = slider.slider('value');
-            slider.slider('value', (sliderValue + 1) % 24);
-            vizOptions = context.options.parent.getOptions();
-            vizOptions.dataChanged = true;
-            context.options.map.render(vizOptions);
-            context.options.map.update(true, context.options.leafletMapLeft, context.options.leafletPath);
-            vizOptions = context.options.parent.getOptions();
-            vizOptions.dataChanged = true;
-            vizMapRight.render(vizOptions);
-            vizMapRight.update(true, leafletMapRight, leafletPath);
-            display.html(String(sliderValue).padStart(2, '0') + ':00');
-        }, this.duration, this);
+        this.step(this, start);
+        return setInterval(this.step, this.duration, this);
     },
 
     pause: function() {
