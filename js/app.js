@@ -114,6 +114,9 @@ leafletMapLeft.on('moveend', function(event) {
     vizMapRight.update(event, leafletMapRight, leafletPath);
 });
 
+var zoomLevel = 12;
+var lastLoadRange = {};
+
 function changeFlowsData(areaFile, centersFile, flowsFile) {
     vizModel
         .load([areaFile, centersFile, flowsFile])
@@ -125,6 +128,14 @@ function changeFlowsData(areaFile, centersFile, flowsFile) {
             });
 
             vizControls.initialize(vizModel);
+
+            const zoom = leafletMapLeft.getZoom().toString();
+            if (lastLoadRange[zoom] !== undefined) {
+                const values = [
+                    vizControls.logSlider.position(lastLoadRange[zoom][0]),
+                    vizControls.logSlider.position(lastLoadRange[zoom][1])];
+                vizControls.updateLoadFilter(values, vizControls.logSlider);
+            }
 
             var options = vizControls.getOptions();
             options.dataChanged = true;
@@ -162,7 +173,7 @@ leafletMapLeft.on("zoomend", function(event) {
                     'json!data/map_quarters_centroids.geojson',
                     'csv!data/quarters_flows.csv');
             break;
-        case 14:
+        case 13:
             changeFlowsData(
                     'json!data/map_subquarters.geojson',
                     'json!data/map_subquarters_centroids.geojson',
@@ -183,6 +194,7 @@ leafletMapLeft.on("zoomend", function(event) {
             vizMapRight.render(options);
             vizMapRight.update(event, leafletMapRight, leafletPath);
     }
+    zoomLevel = zoom;
     return true;
 });
 

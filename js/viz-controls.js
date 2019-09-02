@@ -32,6 +32,25 @@ VizControls.prototype.getOptions = function() {
     };
 }
 
+VizControls.prototype.updateLoadFilter = function (values, slider) {
+    var start = Math.floor(slider.value(+values[0]));
+    var end = Math.floor(slider.value(+values[1]));
+
+    loadLow = values[0];
+    loadHigh = values[1];
+    lowMarkerPosition = Math.floor(100 * (loadLow - 1) / (100 - 1));
+    highMarkerPosition = Math.floor(100 * (loadHigh - 1) / (100 - 1));
+    $('#load-range-high').css('left', highMarkerPosition + '%');
+    $('#load-range-high').text(end);
+    $('#load-range-low').css('left', lowMarkerPosition + '%');
+    $('#load-range-low').text(start);
+    $('#load-slider').slider('values', 0, lowMarkerPosition);
+    $('#load-slider').slider('values', 1, highMarkerPosition);
+    lastLoadRange[leafletMapLeft.getZoom()] = [start, end];
+}
+
+
+
 VizControls.prototype.initialize = function(model) {
     // Main container for all controls
     var controls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left')
@@ -92,20 +111,6 @@ VizControls.prototype.initialize = function(model) {
     var lowMarkerPosition = 1;
     var highMarkerPosition = 100;
 
-    function updateLoadFilter(values, slider) {
-        var start = Math.floor(slider.value(+values[0]));
-        var end = Math.floor(slider.value(+values[1]));
-
-        loadLow = values[0];
-        loadHigh = values[1];
-        lowMarkerPosition = Math.floor(100 * (loadLow - minLoad) / (maxLoad - minLoad));
-        highMarkerPosition = Math.floor(100 * (loadHigh - minLoad) / (maxLoad - minLoad));
-        $('#load-range-high').css('left', highMarkerPosition + '%');
-        $('#load-range-high').text(end);
-        $('#load-range-low').css('left', lowMarkerPosition + '%');
-        $('#load-range-low').text(start);
-    }
-
     controls.append('<div id="load-filter" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
     $('#load-filter').append('<span>Load filter</span><br/>');
     $('#load-filter').append('<span id="load-range-high">' + loadHigh + '</span>');
@@ -122,7 +127,7 @@ VizControls.prototype.initialize = function(model) {
             this.leafletMapLeft.dragging.disable();
         },
         slide: (event, ui) => {
-            updateLoadFilter(ui.values, this.logSlider);
+            this.updateLoadFilter(ui.values, this.logSlider);
         },
         stop: (event, ui) => {
             this.leafletMapLeft.dragging.enable();
