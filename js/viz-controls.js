@@ -32,6 +32,25 @@ VizControls.prototype.getOptions = function() {
     };
 }
 
+VizControls.prototype.updateLoadFilter = function (values, slider) {
+    var start = Math.floor(slider.value(+values[0]));
+    var end = Math.floor(slider.value(+values[1]));
+
+    loadLow = values[0];
+    loadHigh = values[1];
+    lowMarkerPosition = Math.floor(100 * (loadLow - 1) / (100 - 1));
+    highMarkerPosition = Math.floor(100 * (loadHigh - 1) / (100 - 1));
+    $('#load-range-high').css('left', highMarkerPosition + '%');
+    $('#load-range-high').text(end);
+    $('#load-range-low').css('left', lowMarkerPosition + '%');
+    $('#load-range-low').text(start);
+    $('#load-slider').slider('values', 0, lowMarkerPosition);
+    $('#load-slider').slider('values', 1, highMarkerPosition);
+    lastLoadRange[leafletMapLeft.getZoom()] = [start, end];
+}
+
+
+
 VizControls.prototype.initialize = function(model) {
     // Main container for all controls
     var controls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left')
@@ -77,33 +96,20 @@ VizControls.prototype.initialize = function(model) {
     $('[name="choose-day"][value="weekday"]').prop('checked', true);
 
     // Load range slider
-    var minLoad = 1;
-    var maxLoad = 100;
-    var step = 1;
-    var loadLow = minLoad;
-    var loadHigh = maxLoad;
-    var lowMarkerPosition = Math.floor(100 * (loadLow - minLoad) / (maxLoad - minLoad));
-    var highMarkerPosition = Math.floor(100 * (loadHigh - minLoad) / (maxLoad - minLoad));
-
-    this.logSlider = new LinearSlider({
+    this.logSlider = new LogSlider({
+        minpos: 1,
         maxpos: 100,
         minval: Math.ceil(model.range.min),
         maxval: Math.floor(model.range.max)
     });
 
-    function updateLoadFilter(values, slider) {
-        var start = Math.floor(slider.value(+values[0]));
-        var end = Math.floor(slider.value(+values[1]));
-
-        loadLow = values[0];
-        loadHigh = values[1];
-        lowMarkerPosition = Math.floor(100 * (loadLow - minLoad) / (maxLoad - minLoad));
-        highMarkerPosition = Math.floor(100 * (loadHigh - minLoad) / (maxLoad - minLoad));
-        $('#load-range-high').css('left', highMarkerPosition + '%');
-        $('#load-range-high').text(end);
-        $('#load-range-low').css('left', lowMarkerPosition + '%');
-        $('#load-range-low').text(start);
-    }
+    var minLoad = 1;
+    var maxLoad = 100;
+    var step = 1;
+    var loadLow = Math.ceil(model.range.min);
+    var loadHigh = Math.ceil(model.range.max);
+    var lowMarkerPosition = 1;
+    var highMarkerPosition = 100;
 
     controls.append('<div id="load-filter" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
     $('#load-filter').append('<span>Load filter</span><br/>');
@@ -116,12 +122,12 @@ VizControls.prototype.initialize = function(model) {
         min: minLoad,
         max: maxLoad,
         step: step,
-        values: [loadLow, loadHigh],
+        values: [lowMarkerPosition, highMarkerPosition],
         start: (event, ui) => {
             this.leafletMapLeft.dragging.disable();
         },
         slide: (event, ui) => {
-            updateLoadFilter(ui.values, this.logSlider);
+            this.updateLoadFilter(ui.values, this.logSlider);
         },
         stop: (event, ui) => {
             this.leafletMapLeft.dragging.enable();
@@ -167,19 +173,19 @@ VizControls.prototype.initialize = function(model) {
 
 var LogSlider = function(options) {
     options = options || {};
-    this.minpos = options.minpos || 0;
+    this.minpos = options.minpos || 1;
     this.maxpos = options.maxpos || 100;
-    this.minlval = Math.log(options.minval || 1);
-    this.maxlval = Math.log(options.maxval || 100000);
-    this.scale = (this.maxlval - this.minlval) / (this.maxpos - this.minpos);
+    this.minval = Math.log10(options.minval || 1);
+    this.maxval = Math.log10(options.maxval || 100000);
+    this.scale = (this.maxval - this.minval) / (this.maxpos - this.minpos);
  }
 
  LogSlider.prototype = {
     value: function(position) {
-        return Math.pow(10, (position - this.minpos) * this.scale + this.minlval);
+        return Math.pow(10, (position - this.minpos) * this.scale + this.minval);
     },
     position: function(value) {
-        return this.minpos + (Math.log10(value) - this.minlval) / this.scale;
+        return this.minpos + (Math.log10(value) - this.minval) / this.scale;
     }
  };
 
@@ -379,7 +385,7 @@ var TimeSlider = L.Control.extend({
         if (options === undefined)
             options = {};
         $('#time-slider').slider({
-            animate: this.duration,
+            //animate: this.duration,
             range: 'min',
             min: options.min || 0,
             max: options.max || 24,

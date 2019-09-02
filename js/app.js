@@ -129,7 +129,7 @@ function changeFlowsData(areaFile, centersFile, flowsFile) {
 
             vizControls.initialize(vizModel);
 
-            const zoom = leafletMapLeft.getZoom().toString();
+            const zoom = leafletMapLeft.getZoom();
             if (lastLoadRange[zoom] !== undefined) {
                 const values = [
                     vizControls.logSlider.position(lastLoadRange[zoom][0]),

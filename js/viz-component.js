@@ -15,7 +15,7 @@ function VizComponent(container, width, height) {
     this.dashLength = 5;
     this.dashGapLength = 10;
     this.particleSize = 10;
-    this.simulationRate = 12;
+    this.simulationRate = 15;
     this.devicesPerParticle = 100;
     this.standingPerMarker = 10;
     this.directionMode = null;
@@ -83,7 +83,10 @@ VizFlowMap.prototype.buildDashArray = function (d, dashNumber) {
 }
 
 VizFlowMap.prototype.dashWidth = function (d, loadRange) {
-    return Math.ceil(3 * Math.log10(d.backwardLoad / this.devicesPerParticle)) + 'px';
+    //return Math.ceil(3 * Math.log10(d.backwardLoad / this.devicesPerParticle)) + 'px';
+    const k = 5 / (vizModel.range.max - vizModel.range.min);
+    const b = 1 - k * vizModel.range.min;
+    return Math.ceil(k * d.backwardLoad + b) + 'px';
 }
 
 VizFlowMap.prototype.runDottedEdge = function (path, pathLength, duration, direction) {
