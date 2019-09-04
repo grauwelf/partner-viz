@@ -3,7 +3,7 @@
  */
 
 /*
- * Initialize Leaflet map
+ * Initialize Leaflet maps
  * Add tile layer and controls
  */
 var mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
@@ -37,13 +37,8 @@ L.tileLayer(
         '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>',
 }).addTo(leafletMapRight);
 
-/*L.control.zoomviewerRight = function(opts) {
-    return new ZoomViewer(opts);
-}
-L.control.zoomviewerRight({ position: 'topleft' }).addTo(this.leafletMapRight);
-*/
 /*
- * Create SVG layer for Leaflet map and bind it.
+ * Create SVG layers for Leaflet map and bind it.
  */
 
 var svgLayerLeft = L.svg();
@@ -99,11 +94,12 @@ vizMapRight.projection = projection;
 var vizModel = new VizModel();
 vizModel.projection = projection;
 
+// Create controls
 var vizControls = new VizControls(vizMap, vizMapRight,
         {left: leafletMapLeft, right: leafletMapRight},
         leafletPath);
-//var vizOptions =  vizControls.initialize(vizModel);
 
+// Syncronize left and right maps
 leafletMapLeft.sync(leafletMapRight);
 
 // Bind Leaflet map's event handlers
@@ -117,6 +113,7 @@ leafletMapLeft.on('moveend', function(event) {
 var zoomLevel = 12;
 var lastLoadRange = {};
 
+// Redraw maps after data changes
 function changeFlowsData(areaFile, centersFile, flowsFile) {
     vizModel
         .load([areaFile, centersFile, flowsFile])
@@ -198,6 +195,7 @@ leafletMapLeft.on("zoomend", function(event) {
     return true;
 });
 
+// Initial rendering with default zoom level
 changeFlowsData(
     'json!data/map_quarters.geojson',
     'json!data/map_quarters_centroids.geojson',

@@ -382,6 +382,10 @@ var TimeSlider = L.Control.extend({
 
     afterLoad: function(options) {
         $('.time-slider-control').appendTo('body');
+        const mapHeight = leafletMapLeft.getContainer().clientHeight;
+        const controlHeight = parseInt($('.time-slider-control').css('height'));
+        $('.time-slider-control').css('top', mapHeight - controlHeight - 10);
+
         if (options === undefined)
             options = {};
         $('#time-slider').slider({
