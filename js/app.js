@@ -33,7 +33,7 @@ var leafletMapRight = L.map('viz-container-right', {
 L.tileLayer(
 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; ' + mapLink + ' Contributors' +
-        '<br/>I. Benenson, A. Ogulenko, A. Rotem' +
+        '<br/>A. Ogulenko, A. Rotem, I. Benenson' +
         '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>',
 }).addTo(leafletMapRight);
 
