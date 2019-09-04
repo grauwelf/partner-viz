@@ -215,25 +215,16 @@ VizFlowMap.prototype.render = function (options) {
         return d.name + '</br># ' + d.sta;
     }).attr('class', 'scene-node-tooltip').style("z-index", "999");
 
-    this.container.selectAll('.scene-node').remove();
-    var nodes = this.container.selectAll('.scene-node')
-        .data(Object.values(centers))
-      .enter()
-      .append('circle')
-        .attr('class', 'scene-node')
-        .attr('cx', function (d) { return d.x; })
-        .attr('cy', function (d) { return d.y; })
-        .attr('r', 2)
-        .on('mouseover', tooltip.show)
-        .on('mouseout', tooltip.hide);
-    nodes.call(tooltip);
-
     var linestringBackwardData = [];
     var linestringForwardData = [];
     _.each(OD, function(od, key) {
         var pair = key.split('-');
         var origin = centers[pair[0]];
         var destination = centers[pair[1]];
+        const mapBounds = leafletMapLeft.getBounds();
+        if (!mapBounds.contains(origin.latlng) || !mapBounds.contains(destination.latlng)) {
+            return;
+        }
         if (!isFinite(od.backwardLoad)) {
             od.backwardLoad = 0;
         } else if (!isFinite(od.forwardLoad)) {
@@ -319,6 +310,19 @@ VizFlowMap.prototype.render = function (options) {
             })
             .attr('d', (d) => buildArc(d, -1, maxDifference));
     }
+
+    this.container.selectAll('.scene-node').remove();
+    var nodes = this.container.selectAll('.scene-node')
+        .data(Object.values(centers))
+      .enter()
+      .append('circle')
+        .attr('class', 'scene-node')
+        .attr('cx', function (d) { return d.x; })
+        .attr('cy', function (d) { return d.y; })
+        .attr('r', (d) => d.stay / 1000)
+        .on('mouseover', tooltip.show)
+        .on('mouseout', tooltip.hide);
+    nodes.call(tooltip);
 
 }
 

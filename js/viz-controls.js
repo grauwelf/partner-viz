@@ -389,7 +389,7 @@ var TimeSlider = L.Control.extend({
         if (options === undefined)
             options = {};
         $('#time-slider').slider({
-            //animate: this.duration,
+            animate: this.duration,
             range: 'min',
             min: options.min || 0,
             max: options.max || 24,
@@ -454,7 +454,9 @@ var TimeSlider = L.Control.extend({
             clearInterval(this.clock);
         }
         value = value || this.defaultStart;
+        $('#time-slider').slider('option', 'animate', 'false');
         $('#time-slider').slider('value', value);
         $('#time-display').html(String(value).padStart(2, '0') + ':00');
+        $('#time-slider').slider('option', 'animate', this.duration);
     }
 });
