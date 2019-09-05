@@ -38,8 +38,10 @@ VizControls.prototype.updateLoadFilter = function (values, slider) {
 
     loadLow = values[0];
     loadHigh = values[1];
-    lowMarkerPosition = Math.floor(100 * (loadLow - 1) / (100 - 1));
-    highMarkerPosition = Math.floor(100 * (loadHigh - 1) / (100 - 1));
+//    lowMarkerPosition = Math.floor(100 * (loadLow - 1) / (100 - 1));
+//    highMarkerPosition = Math.floor(100 * (loadHigh - 1) / (100 - 1));
+    lowMarkerPosition = loadLow;
+    highMarkerPosition = loadHigh;
     $('#load-range-high').css('left', highMarkerPosition + '%');
     $('#load-range-high').text(end);
     $('#load-range-low').css('left', lowMarkerPosition + '%');
