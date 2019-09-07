@@ -85,7 +85,7 @@
 }
 
 .scene-node, .scene-standing-particle {
-    fill: rgba(105, 105, 105, 0.2);
+    fill: rgba(105, 105, 105, 0.4);
     stroke: none;
     stroke-width: 5;
     stroke-opacity: 0.3;

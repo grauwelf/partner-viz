@@ -12,8 +12,8 @@ function VizComponent(container, width, height) {
     this.zoom = null;
     this._data = {centers: {}, map: {}};
     this.maxDifference = 0;
-    this.dashLength = 2;
-    this.dashGapLength = 10;
+    this.dashLength = 1;
+    this.dashGapLength = 25;
     this.particleSize = 10;
     this.simulationRate = 15;
     this.devicesPerParticle = 100;
@@ -104,7 +104,7 @@ VizFlowMap.prototype.runDottedEdge = function (path, pathLength, duration, direc
     path
         .attr("stroke-dashoffset", startDashOffset)
         .transition()
-        .duration(duration)
+        .duration(duration + Math.random() * duration)
         .ease(d3.easeLinear)
         .attr("stroke-dashoffset", endDashOffset)
         .on('end', (d, i, a) => {
@@ -230,25 +230,10 @@ VizFlowMap.prototype.render = function (options) {
         } else if (!isFinite(od.forwardLoad)) {
             od.forwardLoad = 0;
         }
-        if ((od.forwardLoad - options.loadRange[0]) * (od.forwardLoad - options.loadRange[1]) <= 0 ||
-           (od.backwardLoad - options.loadRange[0]) * (od.backwardLoad - options.loadRange[1]) <= 0) {
-            const k = 3 / (vizModel.range.max - vizModel.range.min);
-            const b = 1 - k * vizModel.range.min;
-            const backwardFlowCount = Math.ceil(k * od.backwardLoad + b);
+        const k = 5 / (vizModel.range.max - vizModel.range.min);
+        const b = 1 - k * vizModel.range.min;
+        if ((od.forwardLoad - options.loadRange[0]) * (od.forwardLoad - options.loadRange[1]) <= 0) {
             const forwardFlowCount = Math.ceil(k * od.forwardLoad + b);
-
-            for (var i = 0; i < backwardFlowCount; i++) {
-                linestringBackwardData.push({
-                    type: 'LineString',
-                    coordinates: [[origin.latlng.lng, origin.latlng.lat],
-                                  [destination.latlng.lng, destination.latlng.lat]],
-                    o: pair[0],
-                    d: pair[1],
-                    forwardLoad: od.forwardLoad,
-                    backwardLoad: od.backwardLoad
-                });
-            }
-
             for (var i = 0; i < forwardFlowCount; i++) {
                 linestringForwardData.push({
                     type: 'LineString',
@@ -260,6 +245,20 @@ VizFlowMap.prototype.render = function (options) {
                     backwardLoad: od.backwardLoad
                 });
             }
+        }
+        if ((od.backwardLoad - options.loadRange[0]) * (od.backwardLoad - options.loadRange[1]) <= 0) {
+                 const backwardFlowCount = Math.ceil(k * od.backwardLoad + b);
+                 for (var i = 0; i < backwardFlowCount; i++) {
+                     linestringBackwardData.push({
+                         type: 'LineString',
+                         coordinates: [[origin.latlng.lng, origin.latlng.lat],
+                                       [destination.latlng.lng, destination.latlng.lat]],
+                         o: pair[0],
+                         d: pair[1],
+                         forwardLoad: od.forwardLoad,
+                         backwardLoad: od.backwardLoad
+                     });
+                 }
         }
     });
 
@@ -279,7 +278,7 @@ VizFlowMap.prototype.render = function (options) {
                 (d) => (Math.random() * 5 + 5) + 'px')
         .style("stroke", function(d) {
             //const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
-            const color = getGradientColor('#0000dd', '#0000dd', scaleToRange(options.loadRange, d.backwardLoad));
+            const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
             return color;
         })
         .style("fill", function(d) {
