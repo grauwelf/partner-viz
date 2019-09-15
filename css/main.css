@@ -50,6 +50,7 @@
 
 .leaflet-pane > svg {
     pointer-events: auto ;
+    background-color: #000000aa;
 }
 
 .leaflet-pane > svg path, svg circle{
@@ -73,9 +74,9 @@
 }
 
 .scene-map {
-    fill: #ffffff;
-    fill-opacity: 0.3;
-    stroke: #6f6f6f;
+    fill: none;
+    fill-opacity: 0.7;
+    stroke: gray;
     stroke-width: 1;
     stroke-opacity: 1;
 }
@@ -85,7 +86,9 @@
 }
 
 .scene-node, .scene-standing-particle {
-    fill: rgba(105, 105, 105, 0.4);
+    /*fill: rgba(105, 105, 105, 0.4);*/
+    fill: #d23b29;
+    fill-opacity: 1;
     stroke: none;
     stroke-width: 5;
     stroke-opacity: 0.3;

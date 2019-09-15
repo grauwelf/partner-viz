@@ -278,11 +278,11 @@ VizFlowMap.prototype.render = function (options) {
                 (d) => (Math.random() * 5 + 5) + 'px')
         .style("stroke", function(d) {
             //const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
-            const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
+            const color = getGradientColor('#fafa00', '#fafa00', scaleToRange(options.loadRange, d.backwardLoad));
             return color;
         })
         .style("fill", function(d) {
-            const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
+            const color = getGradientColor('#fafa00', '#fafa00', scaleToRange(options.loadRange, d.backwardLoad));
             return color;
         })
         .attr('d', (d) => buildArc(d, 1, maxDifference));
@@ -300,11 +300,11 @@ VizFlowMap.prototype.render = function (options) {
             .style("stroke-offset",
                 (d) => (Math.random() * 5 + 5) + 'px')
             .style("stroke", function(d) {
-                const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.forwardLoad));
+                const color = getGradientColor('#fafa00', '#fafa00', scaleToRange(options.loadRange, d.forwardLoad));
                 return color;
             })
             .style("fill", function(d) {
-                const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.forwardLoad));
+                const color = getGradientColor('#fafa00', '#fafa00', scaleToRange(options.loadRange, d.forwardLoad));
                 return color;
             })
             .attr('d', (d) => buildArc(d, -1, maxDifference));
@@ -318,7 +318,7 @@ VizFlowMap.prototype.render = function (options) {
         .attr('class', 'scene-node')
         .attr('cx', function (d) { return d.x; })
         .attr('cy', function (d) { return d.y; })
-        .attr('r', (d) => d.stay / 1000)
+        .attr('r', (d) => d.stay / 3000)
         .on('mouseover', tooltip.show)
         .on('mouseout', tooltip.hide);
     nodes.call(tooltip);
