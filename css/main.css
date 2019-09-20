@@ -66,11 +66,11 @@
 }
 
 #load-slider {
-    background: rgba(0, 0, 0, 0) linear-gradient(to right, #ffa700, #ff3500) repeat scroll 0% 0%;   
+    /*background: rgba(0, 0, 0, 0) linear-gradient(to right, #ffa700, #ff3500) repeat scroll 0% 0%;*/   
 }
 
-#load-slider > .ui-slider-range {
-    opacity: 0;  
+#load-slider > .ui-slider-range.ui-widget-header {
+    background: rgba(0, 0, 0, 0) linear-gradient(to right, #db36a4, #f7ff00) repeat scroll 0% 0%;  
 }
 
 .scene-map {
@@ -115,7 +115,7 @@
     fill: none;
     fill-opacity: 0.1;
     stroke: none;
-    stroke-width: 1.5px;
+    stroke-width: 1px;
     stroke-linecap: round;
 }
 
