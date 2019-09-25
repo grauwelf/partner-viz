@@ -20,9 +20,13 @@ var leafletMapLeft = L.map('viz-container-left', {
 //]);
 //leafletMapLeft.fitBounds(mapBounds);
 
-L.tileLayer(
-    'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(leafletMapLeft);
+const token = 'pk.eyJ1IjoiZ3JhdXdlbGYiLCJhIjoiY2swem15enR0MDc3YjNucGk3cWoxeGVwZSJ9.rbBSqG4CqVCW0LOrGPi55A';
 
+const darkTileLayerURL = 'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{z}/{x}/{y}?access_token=' + token;
+const lightTileLayerURL = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + token;
+
+L.tileLayer(darkTileLayerURL).addTo(leafletMapLeft);
+    //'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(leafletMapLeft);
 
 var leafletMapRight = L.map('viz-container-right', {
     zoomControl: false,
@@ -31,7 +35,7 @@ var leafletMapRight = L.map('viz-container-right', {
 }).setView([32.08, 34.8], 12);
 
 L.tileLayer(
-'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    darkTileLayerURL, {
     attribution: '&copy; ' + mapLink + ' Contributors' +
         '<br/>A. Ogulenko, A. Rotem, I. Benenson' +
         '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>',
