@@ -13,9 +13,9 @@ function VizComponent(container, width, height) {
     this._data = {centers: {}, map: {}};
     this.maxDifference = 0;
     this.dashLength = 0;
-    this.dashGapLength = 25;
+    this.dashGapLength = 20;
     this.particleSize = 10;
-    this.simulationRate = 15;
+    this.simulationRate = 25;
     this.devicesPerParticle = 100;
     this.standingPerMarker = 10;
     this.directionMode = null;
@@ -233,7 +233,8 @@ VizFlowMap.prototype.render = function (options) {
         const k = 5 / (vizModel.range.max - vizModel.range.min);
         const b = 1 - k * vizModel.range.min;
         if ((od.forwardLoad - options.loadRange[0]) * (od.forwardLoad - options.loadRange[1]) <= 0) {
-            const forwardFlowCount = Math.ceil(k * od.forwardLoad + b);
+            //const forwardFlowCount = Math.ceil(k * od.forwardLoad + b);
+            const forwardFlowCount = 1;
             for (var i = 0; i < forwardFlowCount; i++) {
                 linestringForwardData.push({
                     type: 'LineString',
@@ -247,18 +248,19 @@ VizFlowMap.prototype.render = function (options) {
             }
         }
         if ((od.backwardLoad - options.loadRange[0]) * (od.backwardLoad - options.loadRange[1]) <= 0) {
-                 const backwardFlowCount = Math.ceil(k * od.backwardLoad + b);
-                 for (var i = 0; i < backwardFlowCount; i++) {
-                     linestringBackwardData.push({
-                         type: 'LineString',
-                         coordinates: [[origin.latlng.lng, origin.latlng.lat],
-                                       [destination.latlng.lng, destination.latlng.lat]],
-                         o: pair[0],
-                         d: pair[1],
-                         forwardLoad: od.forwardLoad,
-                         backwardLoad: od.backwardLoad
-                     });
-                 }
+             //const backwardFlowCount = Math.ceil(k * od.backwardLoad + b);
+             const backwardFlowCount = 1;
+             for (var i = 0; i < backwardFlowCount; i++) {
+                 linestringBackwardData.push({
+                     type: 'LineString',
+                     coordinates: [[origin.latlng.lng, origin.latlng.lat],
+                                   [destination.latlng.lng, destination.latlng.lat]],
+                     o: pair[0],
+                     d: pair[1],
+                     forwardLoad: od.forwardLoad,
+                     backwardLoad: od.backwardLoad
+                 });
+             }
         }
     });
 
@@ -278,11 +280,11 @@ VizFlowMap.prototype.render = function (options) {
                 (d) => (Math.random() * 5 + 5) + 'px')
         .style("stroke", function(d) {
             //const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
-            const color = getGradientColor('#f7ff00', '#db36a4', scaleToRange(options.loadRange, d.backwardLoad));
+            const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d.backwardLoad));
             return color;
         })
         .style("fill", function(d) {
-            const color = getGradientColor('#f7ff00', '#db36a4', scaleToRange(options.loadRange, d.backwardLoad));
+            const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d.backwardLoad));
             return color;
         })
         .attr('d', (d) => buildArc(d, 1, maxDifference));
@@ -300,11 +302,11 @@ VizFlowMap.prototype.render = function (options) {
             .style("stroke-offset",
                 (d) => (Math.random() * 5 + 5) + 'px')
             .style("stroke", function(d) {
-                const color = getGradientColor('#f7ff00', '#db36a4', scaleToRange(options.loadRange, d.forwardLoad));
+                const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d.forwardLoad));
                 return color;
             })
             .style("fill", function(d) {
-                const color = getGradientColor('#f7ff00', '#db36a4', scaleToRange(options.loadRange, d.forwardLoad));
+                const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d.forwardLoad));
                 return color;
             })
             .attr('d', (d) => buildArc(d, -1, maxDifference));
