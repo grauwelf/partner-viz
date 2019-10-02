@@ -16,7 +16,7 @@ function VizComponent(container, width, height) {
     this.dashGapLength = 20;
     this.particleSize = 10;
     this.simulationRate = 25;
-    this.devicesPerParticle = 100;
+    this.devicesPerParticle = 10;
     this.standingPerMarker = 10;
     this.directionMode = null;
 }
@@ -79,15 +79,16 @@ function buildArc(edge, direction, maxDifference) {
 }
 
 VizFlowMap.prototype.buildDashArray = function (d, dashNumber) {
-    if (dashNumber === undefined || dashNumber < 1) {
-        return '0%, 100%';
-    } else {
-        return this.dashLength + 'px, ' + this.dashGapLength + 'px';
-    }
-//    const pathLength = getSVGPathLength(leafletPath(d));
-//    const gapWidth = Math.floor(getSVGPathLength(leafletPath(d)) / dashNumber - dashWidth);
-//    const dashes = Array.apply(null, {length: dashNumber}).map(Function.call, () => dashWidth + ', ' + gapWidth).join(', ');
-//    return dashes;
+//    if (dashNumber === undefined || dashNumber < 1) {
+//        return '0%, 100%';
+//    } else {
+//        return this.dashLength + 'px, ' + this.dashGapLength + 'px';
+//    }
+    const dashWidth = 0;
+    const pathLength = getSVGPathLength(leafletPath(d));
+    const gapWidth = Math.floor(getSVGPathLength(leafletPath(d)) / dashNumber - dashWidth);
+    const dashes = Array.apply(null, {length: dashNumber}).map(Function.call, () => dashWidth + ', ' + gapWidth).join(', ');
+    return dashes;
 }
 
 VizFlowMap.prototype.dashWidth = function (d, loadRange) {
