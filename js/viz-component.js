@@ -15,8 +15,8 @@ function VizComponent(container, width, height) {
     this.dashLength = 0;
     this.dashGapLength = 20;
     this.particleSize = 10;
-    this.simulationRate = 25;
-    this.devicesPerParticle = 10;
+    this.simulationRate = 25; // needs to be in control
+    this.devicesPerParticle = 10; // needs to be in control
     this.standingPerMarker = 10;
     this.directionMode = null;
 }
@@ -114,9 +114,8 @@ VizFlowMap.prototype.runDottedEdge = function (path, pathLength, duration, direc
 }
 
 VizFlowMap.prototype.edgesInit = function (lines, simulationRate, devicesPerParticle, particleSize) {
-    d3.selectAll('.scene-flow-particle').transition();
-    d3.selectAll('.scene-flow-particle').remove();
     lines.each((line, idx, nodes) => {
+        d3.select(nodes[idx]).transition();
         const pathLength = nodes[idx].getTotalLength();
         const transitionDuration = 1000 * Math.floor(pathLength / this.simulationRate);
         const direction = (d3.select(nodes[idx]).attr('class').indexOf('-to') >= 0) ? 1 : -1;
@@ -154,18 +153,6 @@ VizFlowMap.prototype.render = function (options) {
 
     var smoothPath = d3.geoPath().projection(this.projection);
     const maxDifference = this.maxDifference;
-
-    this.container.selectAll('.scene-map').remove();
-    this.container.selectAll('.scene-map')
-        .data(map.features)
-      .enter()
-      .append('path')
-        .attr('class', 'scene-map')
-        .attr('d', smoothPath)
-        .on('click', function(event) {
-            //console.log(d3.select(this).data());
-        });
-
 
     var standingPoints = [];
     if (options.dataChanged && false) {
@@ -212,10 +199,6 @@ VizFlowMap.prototype.render = function (options) {
         .attr('cy', function (d) { return d.point[1]; })
         .attr('r', 2);
 
-    var tooltip = d3.tip().html(function(d) {
-        return d.name + '</br># ' + d.sta;
-    }).attr('class', 'scene-node-tooltip').style("z-index", "999");
-
     var linestringBackwardData = [];
     var linestringForwardData = [];
     _.each(OD, function(od, key) {
@@ -223,7 +206,7 @@ VizFlowMap.prototype.render = function (options) {
         var origin = centers[pair[0]];
         var destination = centers[pair[1]];
         const mapBounds = leafletMapLeft.getBounds();
-        if (!mapBounds.contains(origin.latlng) || !mapBounds.contains(destination.latlng)) {
+        if (!mapBounds.contains(origin.latlng) && !mapBounds.contains(destination.latlng)) {
             return;
         }
         if (!isFinite(od.backwardLoad)) {
@@ -273,6 +256,8 @@ VizFlowMap.prototype.render = function (options) {
         .data(linestringBackwardData)
       .enter().append('path')
         .attr('class', 'scene-edge-to')
+        .attr('origin', (d) => d.d)
+        .attr('destination', (d) => d.o)
         .style("stroke-dasharray",
                 (d) => this.buildDashArray(d, Math.ceil(d.backwardLoad / this.devicesPerParticle)))
         .style("stroke-width",
@@ -296,6 +281,8 @@ VizFlowMap.prototype.render = function (options) {
             .data(linestringForwardData)
           .enter().append('path')
             .attr('class', 'scene-edge-from')
+            .attr('origin', (d) => d.o)
+            .attr('destination', (d) => d.d)
             .style("stroke-dasharray",
                 (d) => this.buildDashArray(d, Math.ceil(d.forwardLoad / this.devicesPerParticle)))
             .style("stroke-width",
@@ -313,7 +300,48 @@ VizFlowMap.prototype.render = function (options) {
             .attr('d', (d) => buildArc(d, -1, maxDifference));
     }
 
+    this.container.selectAll('.scene-map,.scene-map-mouseover').remove();
+    this.container.selectAll('.scene-map')
+        .data(map.features)
+      .enter()
+      .append('path')
+        .attr('class', 'scene-map')
+        .attr('id', (d) => d.properties.STA)
+        .property('sel', false)
+        .attr('d', smoothPath)
+        .on('mouseover', function(d, idx, nodesList) {
+            if (nodesList[idx].sel === false) {
+                d3.selectAll('.scene-map[id="' + d.properties.STA + '"]')
+                    .attr('class', 'scene-map-mouseover');
+            }
+        })
+        .on('mouseout', function(d, idx, nodesList) {
+            if (nodesList[idx].sel === false) {
+                d3.selectAll('.scene-map-mouseover[id="' + d.properties.STA + '"]')
+                    .attr('class', 'scene-map');
+            }
+        })
+        .on('click', function(d, idx, nodesList) {
+            if (nodesList[idx].sel === false) {
+                d3.selectAll('.scene-edge-from:not([origin="' + d.properties.STA + '"])').style('opacity', 0);
+                d3.selectAll('.scene-edge-to:not([destination="' + d.properties.STA + '"])').style('opacity', 0);
+                d3.selectAll('.scene-edge-from[origin="' + d.properties.STA + '"]').style('opacity', 1);
+                d3.selectAll('.scene-edge-to[destination="' + d.properties.STA + '"]').style('opacity', 1);
+                d3.selectAll('.scene-edge-from[destination="' + d.properties.STA + '"]').style('opacity', 1);
+                d3.selectAll('.scene-edge-to[origin="' + d.properties.STA + '"]').style('opacity', 1);
+                nodesList[idx].sel = true;
+                d3.selectAll('.scene-map-mouseover').attr('class', 'scene-map');
+                d3.select(nodesList[idx]).attr('class', 'scene-map-mouseover');
+            } else {
+                d3.selectAll('.scene-edge-from').style('opacity', 1);
+                d3.selectAll('.scene-edge-to').style('opacity', 1);
+                d3.selectAll(nodesList[idx]).attr('class', 'scene-map');
+                nodesList[idx].sel = false;
+            }
+        });
+
     this.container.selectAll('.scene-node').remove();
+    this.container.selectAll('.scene-node-tooltip').remove();
     var nodes = this.container.selectAll('.scene-node')
         .data(Object.values(centers))
       .enter()
@@ -322,10 +350,38 @@ VizFlowMap.prototype.render = function (options) {
         .attr('cx', function (d) { return d.x; })
         .attr('cy', function (d) { return d.y; })
         .attr('r', (d) => d.stay / 3000)
-        .on('mouseover', tooltip.show)
-        .on('mouseout', tooltip.hide);
-    nodes.call(tooltip);
-
+        .attr('id', (d) => d.properties.STA)
+        .property('sel', false)
+        .on('mouseover', function(d, idx, nodesList) {
+            if (nodesList[idx].sel === false) {
+                d3.selectAll('.scene-map[id="' + d.properties.STA + '"]')
+                .attr('class', 'scene-map-mouseover');
+            }
+        })
+        .on('mouseout', function(d, idx, nodesList) {
+            if (nodesList[idx].sel === false) {
+                d3.selectAll('.scene-map-mouseover[id="' + d.properties.STA + '"]')
+                    .attr('class', 'scene-map');
+            }
+        })
+        .on('click', function(d, idx, nodesList) {
+            if (nodesList[idx].sel === false) {
+                d3.selectAll('.scene-edge-from:not([origin="' + d.properties.STA + '"])').style('opacity', 0);
+                d3.selectAll('.scene-edge-to:not([destination="' + d.properties.STA + '"])').style('opacity', 0);
+                d3.selectAll('.scene-edge-from[origin="' + d.properties.STA + '"]').style('opacity', 1);
+                d3.selectAll('.scene-edge-to[destination="' + d.properties.STA + '"]').style('opacity', 1);
+                d3.selectAll('.scene-edge-from[destination="' + d.properties.STA + '"]').style('opacity', 1);
+                d3.selectAll('.scene-edge-to[origin="' + d.properties.STA + '"]').style('opacity', 1);
+                nodesList[idx].sel = true;
+                d3.selectAll('.scene-map-mouseover').attr('class', 'scene-map');
+                d3.select(nodesList[idx]).attr('class', 'scene-map-mouseover');
+            } else {
+                d3.selectAll('.scene-edge-from').style('opacity', 1);
+                d3.selectAll('.scene-edge-to').style('opacity', 1);
+                d3.selectAll(nodesList[idx]).attr('class', 'scene-map');
+                nodesList[idx].sel = false;
+            }
+        });
 }
 
 VizFlowMap.prototype.update = function (event, leaflet, path) {
@@ -337,24 +393,13 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
     var zoomDiff = this.zoom - previousZoom;
     const maxDifference = this.maxDifference;
 
-    this.container.selectAll('.scene-map')
+    this.container.selectAll('.scene-map,.scene-map-mouseover')
         .attr('d', path);
 
-    var edgeOpacity = (this.zoom >= 14) ? 0.75 : 0.0;
-    /*g.selectAll('.scene-edge-to,.scene-edge-from')
-        .style('stroke-opacity', edgeOpacity)
-        .style('opacity', edgeOpacity);
-*/
-    this.container.selectAll('.scene-standing-particle,.scene-node').raise()
+    this.container.selectAll('.scene-standing-particle,.scene-node')
+        .raise()
         .attr('r', function(d) {
-            var currentRadius = Number.parseFloat(d3.select(this).attr('r'));
-            var radiusMultiplier = 1;
-            /*if (zoomDiff > 0) {
-                radiusMultiplier = 1.4;
-            } else if (zoomDiff < 0) {
-                radiusMultiplier = 0.7;
-            }*/
-            return Math.max(currentRadius * radiusMultiplier, 1);
+            return Number.parseFloat(d3.select(this).attr('r'));
         })
         .attr('cx', function(d){
             return leaflet.latLngToLayerPoint(d.latlng).x;

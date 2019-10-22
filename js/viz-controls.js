@@ -62,7 +62,7 @@ VizControls.prototype.initialize = function(model) {
     L.control.zoomviewer = function(opts) {
         return new ZoomViewer(opts);
     }
-    L.control.zoomviewer({ position: 'topleft' }).addTo(this.leafletMapLeft);
+    //L.control.zoomviewer({ position: 'topleft' }).addTo(this.leafletMapLeft);
 
     var zoomControls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left > .leaflet-bar');
 
@@ -83,7 +83,7 @@ VizControls.prototype.initialize = function(model) {
     timeslider.addTo(this.leafletMapLeft).afterLoad();
 
     // Time interval picker
-    var days = _.keys(model.OD);
+/*    var days = _.keys(model.OD);
     var style = '"pointer-events: auto; position: absolute; left: 75px; top: 0px; width: 100px; font-size:13px"';
     zoomControls.append('<div id="choose-day" class="leaflet-control" style=' + style + '></div>');
     $('#choose-day').append('<span>Time filter</span><br/>');
@@ -96,7 +96,7 @@ VizControls.prototype.initialize = function(model) {
 
     });
     $('[name="choose-day"][value="weekday"]').prop('checked', true);
-
+*/
     // Load range slider
     this.logSlider = new LogSlider({
         minpos: 1,
@@ -114,9 +114,7 @@ VizControls.prototype.initialize = function(model) {
     var highMarkerPosition = 100;
 
     controls.append('<div id="load-filter" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
-    $('#load-filter').append('<span>Load filter</span><br/>');
-    $('#load-filter').append('<span id="load-range-high">' + loadHigh + '</span>');
-    $('#load-range-high').css('position', 'relative').css('left', highMarkerPosition + '%');
+    $('#load-filter').append('<span>Flows intensity</span><br/>');
     $('#load-filter').append('<div id="load-slider"></div>');
 
     $('#load-slider').slider({
@@ -145,7 +143,117 @@ VizControls.prototype.initialize = function(model) {
         },
     });
     $('#load-filter').append('<span id="load-range-low">' + loadLow + '</span>');
-    $('#load-range-low').css('position', 'relative').css('left', lowMarkerPosition + '%');
+    $('#load-range-low')
+        .css('position', 'relative')
+        .css('left', lowMarkerPosition + '%');
+    $('#load-filter').append('<span id="load-range-high">' + loadHigh + '</span>');
+    $('#load-range-high')
+        .css('position', 'relative')
+        .css('left', highMarkerPosition + '%')
+        .css('margin-left', '-16px');
+
+    controls.append('<div id="dots-density-div" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
+    $('#dots-density-div').append('<span>Travellers per dot</span><br/>');
+    $("#dots-density-div").append('<div id="density-slider"></div>');
+    $("#density-slider").slider({
+        min: 1,
+        max: 100,
+        step: 1,
+        value: 10,
+        start: (event, ui) => {
+            this.leafletMapLeft.dragging.disable();
+        },
+        slide: (event, ui) => {
+            const val = Number(ui.value);
+            $('#density-value')
+                .html(val)
+                .css('left', 100 * (val / 99) + '%');
+        },
+        stop: (event, ui) => {
+            const val = Number(ui.value);
+            if (val === undefined)
+                return;
+            this.map.devicesPerParticle = val;
+            this.mapRight.devicesPerParticle = val;
+
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.map.render(vizOptions);
+            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.mapRight.render(vizOptions);
+            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
+            this.leafletMapLeft.dragging.enable();
+        },
+    });
+    $('#dots-density-div').append('<span id="density-high">100</span>');
+    $('#density-high')
+        .css('position', 'relative')
+        .css('left', '100%')
+        .css('margin-left', '-8px');
+    $('#dots-density-div').append('<span id="density-low">1</span>');
+    $('#density-low')
+        .css('position', 'relative')
+        .css('left',  '0%')
+        .css('margin-left', '-16px');
+    $('#dots-density-div').append('<span id="density-value">10</span>');
+    $('#density-value')
+        .css('position', 'relative')
+        .css('left', 100 * (10 / 99) + '%')
+        .css('margin-left', '-8px');
+
+
+    controls.append('<div id="dots-speed-div" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
+    $('#dots-speed-div').append('<span>Unit length per second</span><br/>');
+    $("#dots-speed-div").append('<div id="speed-slider"></div>');
+    $("#speed-slider").slider({
+        min: 0,
+        max: 70,
+        step: 1,
+        value: 25,
+        start: (event, ui) => {
+            this.leafletMapLeft.dragging.disable();
+        },
+        slide: (event, ui) => {
+            const val = Number(ui.value);
+            $('#speed-value')
+                .html(val)
+                .css('left', 100 * (val / 70) + '%');
+        },
+        stop: (event, ui) => {
+            const val = Number(ui.value);
+            if (val === undefined)
+                return;
+            this.map.simulationRate = val;
+            this.mapRight.simulationRate = val;
+
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.map.render(vizOptions);
+            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.mapRight.render(vizOptions);
+            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
+            this.leafletMapLeft.dragging.enable();
+        },
+    });
+    $('#dots-speed-div').append('<span id="speed-high">75</span>');
+    $('#speed-high')
+        .css('position', 'relative')
+        .css('left', '100%')
+        .css('margin-left', '-8px');
+    $('#dots-speed-div').append('<span id="speed-low">0</span>');
+    $('#speed-low')
+        .css('position', 'relative')
+        .css('left',  '0%')
+        .css('margin-left', '-8px');
+    $('#dots-speed-div').append('<span id="speed-value">25</span>');
+    $('#speed-value')
+        .css('position', 'relative')
+        .css('left', 100 * (25 / 70) + '%')
+        .css('margin-left', '-16px');
 
     /*
     L.control.directionSwitcher = function(opts) {

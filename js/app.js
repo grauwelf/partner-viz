@@ -10,15 +10,10 @@ var mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
 
 var leafletMapLeft = L.map('viz-container-left', {
         zoomControl: false,
+        zoomAnimationThreshold: 2,
         minZoom: 8,
         maxZoom: 17
     }).setView([32.08, 34.8], 12);
-
-//var mapBounds = L.latLngBounds([
-//    [32.062791783472406, 34.91180419921876],
-//    [31.96818267111348, 34.682121276855476]
-//]);
-//leafletMapLeft.fitBounds(mapBounds);
 
 const token = 'pk.eyJ1IjoiZ3JhdXdlbGYiLCJhIjoiY2swem15enR0MDc3YjNucGk3cWoxeGVwZSJ9.rbBSqG4CqVCW0LOrGPi55A';
 
@@ -26,10 +21,10 @@ const darkTileLayerURL = 'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles
 const lightTileLayerURL = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + token;
 
 L.tileLayer(darkTileLayerURL).addTo(leafletMapLeft);
-    //'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(leafletMapLeft);
 
 var leafletMapRight = L.map('viz-container-right', {
     zoomControl: false,
+    zoomAnimationThreshold: 2,
     minZoom: 8,
     maxZoom: 17
 }).setView([32.08, 34.8], 12);
@@ -105,9 +100,11 @@ var vizControls = new VizControls(vizMap, vizMapRight,
 
 // Syncronize left and right maps
 leafletMapLeft.sync(leafletMapRight);
+//leafletMapRight.sync(leafletMapLeft);
 
 // Bind Leaflet map's event handlers
 leafletMapLeft.on('moveend', function(event) {
+    d3.selectAll('.scene-node-tooltip').remove();
     vizMap.render(vizControls.getOptions());
     vizMap.update(event, leafletMapLeft, leafletPath);
     vizMapRight.render(vizControls.getOptions());
@@ -161,6 +158,7 @@ function changeFlowsData(areaFile, centersFile, flowsFile) {
 leafletMapLeft.on("zoomend", function(event) {
     const zoom = leafletMapLeft.getZoom();
     leafletMapRight.setZoom(zoom);
+    d3.selectAll('.scene-node-tooltip').remove();
     switch(zoom) {
         case 11:
             changeFlowsData(
