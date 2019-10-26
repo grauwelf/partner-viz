@@ -105,9 +105,17 @@ leafletMapLeft.sync(leafletMapRight);
 // Bind Leaflet map's event handlers
 leafletMapLeft.on('moveend', function(event) {
     d3.selectAll('.scene-node-tooltip').remove();
-    vizMap.render(vizControls.getOptions());
+
+    var options = vizControls.getOptions();
+    options.dataChanged = true;
+    options.directionMode = 'from';
+    vizMap.render(options);
     vizMap.update(event, leafletMapLeft, leafletPath);
-    vizMapRight.render(vizControls.getOptions());
+
+    options = vizControls.getOptions();
+    options.dataChanged = true;
+    options.directionMode = 'to';
+    vizMapRight.render(options);
     vizMapRight.update(event, leafletMapRight, leafletPath);
 });
 
@@ -180,7 +188,6 @@ leafletMapLeft.on("zoomend", function(event) {
             break;
         default:
             vizModel.update();
-
             vizMap.data.map = vizModel.areas;
             var options = vizControls.getOptions();
             options.directionMode = 'from';

@@ -23,9 +23,13 @@ function VizControls(map, mapRight, leafletMaps, leafletPath) {
 VizControls.prototype.getOptions = function() {
     const values = $('#load-slider').slider('values');
     const time = String($('#time-slider').slider('value') % 24).padStart(2, '0') + ':00';
+    const selectedNodes = d3.selectAll('[sel="selected"]').nodes().map(function(el) {
+        return el.attributes.id.value;
+    });
     return {
         selectedDay : $('[name="choose-day"]:checked').val(),
         selectedHour : time,
+        selectedNodes : selectedNodes,
         loadRange : [
             Math.floor(this.logSlider.value(+values[0])),
             Math.floor(this.logSlider.value(+values[1]))]

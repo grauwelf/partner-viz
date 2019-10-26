@@ -273,6 +273,17 @@ VizFlowMap.prototype.render = function (options) {
             const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d.backwardLoad));
             return color;
         })
+        .style('opacity', function(d) {
+            if (options.selectedNodes.length != 0 &&
+                    (options.selectedNodes.includes(d.o) ||
+                    options.selectedNodes.includes(d.d))) {
+                return 1;
+            } else if (options.selectedNodes.length == 0) {
+                return 1;
+            } else {
+                return 0;
+            }
+        })
         .attr('d', (d) => buildArc(d, 1, maxDifference));
     }
 
@@ -297,6 +308,17 @@ VizFlowMap.prototype.render = function (options) {
                 const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d.forwardLoad));
                 return color;
             })
+            .style('opacity', function(d) {
+                if (options.selectedNodes.length != 0 &&
+                        (options.selectedNodes.includes(d.o) ||
+                        options.selectedNodes.includes(d.d))) {
+                    return 1;
+                } else if (options.selectedNodes.length == 0) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            })
             .attr('d', (d) => buildArc(d, -1, maxDifference));
     }
 
@@ -305,44 +327,64 @@ VizFlowMap.prototype.render = function (options) {
         .data(map.features)
       .enter()
       .append('path')
-        .attr('class', 'scene-map')
         .attr('id', (d) => d.properties.STA)
-        .property('sel', false)
+        .attr('class', function(d) {
+            if (options.selectedNodes.length != 0 &&
+                    (options.selectedNodes.includes(d.properties.STA) ||
+                    options.selectedNodes.includes(d.properties.STA))) {
+                return 'scene-map-mouseover';
+            } else {
+                return 'scene-map';
+            }
+        })
+        .attr('sel', function(d) {
+            if (options.selectedNodes.length != 0 &&
+                    (options.selectedNodes.includes(d.properties.STA) ||
+                    options.selectedNodes.includes(d.properties.STA))) {
+                return 'selected';
+            } else {
+                return 'default';
+            }
+        })
         .attr('d', smoothPath)
         .on('mouseover', function(d, idx, nodesList) {
-            if (nodesList[idx].sel === false) {
+            if (nodesList[idx].attributes.sel.value === 'default') {
                 d3.selectAll('.scene-map[id="' + d.properties.STA + '"]')
                     .attr('class', 'scene-map-mouseover');
             }
         })
         .on('mouseout', function(d, idx, nodesList) {
-            if (nodesList[idx].sel === false) {
+            if (nodesList[idx].attributes.sel.value === 'default') {
                 d3.selectAll('.scene-map-mouseover[id="' + d.properties.STA + '"]')
                     .attr('class', 'scene-map');
             }
         })
         .on('click', function(d, idx, nodesList) {
-            if (nodesList[idx].sel === false) {
+            if (nodesList[idx].attributes.sel.value == 'default') {
                 d3.selectAll('.scene-edge-from:not([origin="' + d.properties.STA + '"])').style('opacity', 0);
                 d3.selectAll('.scene-edge-to:not([destination="' + d.properties.STA + '"])').style('opacity', 0);
                 d3.selectAll('.scene-edge-from[origin="' + d.properties.STA + '"]').style('opacity', 1);
                 d3.selectAll('.scene-edge-to[destination="' + d.properties.STA + '"]').style('opacity', 1);
                 d3.selectAll('.scene-edge-from[destination="' + d.properties.STA + '"]').style('opacity', 1);
                 d3.selectAll('.scene-edge-to[origin="' + d.properties.STA + '"]').style('opacity', 1);
-                nodesList[idx].sel = true;
-                d3.selectAll('.scene-map-mouseover').attr('class', 'scene-map');
-                d3.select(nodesList[idx]).attr('class', 'scene-map-mouseover');
+                d3.selectAll('.scene-map,.scene-map-mouseover')
+                    .attr('class', 'scene-map')
+                    .attr('sel', 'default');
+                nodesList[idx].attributes.sel.value = 'selected';
+                const id = nodesList[idx].attributes.id.value;
+                d3.selectAll('.scene-map[id="' + id + '"]').attr('class', 'scene-map-mouseover');
             } else {
+                d3.selectAll('.scene-map,.scene-map-mouseover')
+                    .attr('class', 'scene-map')
+                    .attr('sel', 'default');
                 d3.selectAll('.scene-edge-from').style('opacity', 1);
                 d3.selectAll('.scene-edge-to').style('opacity', 1);
-                d3.selectAll(nodesList[idx]).attr('class', 'scene-map');
-                nodesList[idx].sel = false;
             }
         });
 
     this.container.selectAll('.scene-node').remove();
     this.container.selectAll('.scene-node-tooltip').remove();
-    var nodes = this.container.selectAll('.scene-node')
+    /*var nodes = this.container.selectAll('.scene-nde')
         .data(Object.values(centers))
       .enter()
       .append('circle')
@@ -381,7 +423,7 @@ VizFlowMap.prototype.render = function (options) {
                 d3.selectAll(nodesList[idx]).attr('class', 'scene-map');
                 nodesList[idx].sel = false;
             }
-        });
+        });*/
 }
 
 VizFlowMap.prototype.update = function (event, leaflet, path) {
