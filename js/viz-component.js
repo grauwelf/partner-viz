@@ -384,7 +384,7 @@ VizFlowMap.prototype.render = function (options) {
 
     this.container.selectAll('.scene-node').remove();
     this.container.selectAll('.scene-node-tooltip').remove();
-    /*var nodes = this.container.selectAll('.scene-nde')
+    var nodes = this.container.selectAll('.scene-nde')
         .data(Object.values(centers))
       .enter()
       .append('circle')
@@ -392,9 +392,17 @@ VizFlowMap.prototype.render = function (options) {
         .attr('cx', function (d) { return d.x; })
         .attr('cy', function (d) { return d.y; })
         .attr('r', (d) => d.stay / 3000)
-        .attr('id', (d) => d.properties.STA)
-        .property('sel', false)
-        .on('mouseover', function(d, idx, nodesList) {
+        .attr('id', (d) => d.properties.STA);
+        /*.attr('sel', function(d) {
+            if (options.selectedNodes.length != 0 &&
+                    (options.selectedNodes.includes(d.properties.STA) ||
+                    options.selectedNodes.includes(d.properties.STA))) {
+                return 'selected';
+            } else {
+                return 'default';
+            }
+        });
+        /*.on('mouseover', function(d, idx, nodesList) {
             if (nodesList[idx].sel === false) {
                 d3.selectAll('.scene-map[id="' + d.properties.STA + '"]')
                 .attr('class', 'scene-map-mouseover');
@@ -407,6 +415,7 @@ VizFlowMap.prototype.render = function (options) {
             }
         })
         .on('click', function(d, idx, nodesList) {
+            console.log(d, idx, nodesList, this);
             if (nodesList[idx].sel === false) {
                 d3.selectAll('.scene-edge-from:not([origin="' + d.properties.STA + '"])').style('opacity', 0);
                 d3.selectAll('.scene-edge-to:not([destination="' + d.properties.STA + '"])').style('opacity', 0);
