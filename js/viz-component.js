@@ -370,13 +370,16 @@ VizFlowMap.prototype.render = function (options) {
                 d3.selectAll('.scene-map,.scene-map-mouseover')
                     .attr('class', 'scene-map')
                     .attr('sel', 'default');
+                d3.selectAll('.scene-node').attr('sel', 'default');
                 nodesList[idx].attributes.sel.value = 'selected';
                 const id = nodesList[idx].attributes.id.value;
                 d3.selectAll('.scene-map[id="' + id + '"]').attr('class', 'scene-map-mouseover');
+                d3.selectAll('.scene-node[id="' + id + '"]').attr('sel', 'selected');
             } else {
                 d3.selectAll('.scene-map,.scene-map-mouseover')
                     .attr('class', 'scene-map')
                     .attr('sel', 'default');
+                d3.selectAll('.scene-node').attr('sel', 'default');
                 d3.selectAll('.scene-edge-from').style('opacity', 1);
                 d3.selectAll('.scene-edge-to').style('opacity', 1);
             }
@@ -392,8 +395,8 @@ VizFlowMap.prototype.render = function (options) {
         .attr('cx', function (d) { return d.x; })
         .attr('cy', function (d) { return d.y; })
         .attr('r', (d) => d.stay / 3000)
-        .attr('id', (d) => d.properties.STA);
-        /*.attr('sel', function(d) {
+        .attr('id', (d) => d.properties.STA)
+        .attr('sel', function(d) {
             if (options.selectedNodes.length != 0 &&
                     (options.selectedNodes.includes(d.properties.STA) ||
                     options.selectedNodes.includes(d.properties.STA))) {
@@ -401,38 +404,24 @@ VizFlowMap.prototype.render = function (options) {
             } else {
                 return 'default';
             }
-        });
-        /*.on('mouseover', function(d, idx, nodesList) {
-            if (nodesList[idx].sel === false) {
+        })
+        .on('mouseover', function(d, idx, nodesList) {
+            if (nodesList[idx].attributes.sel.value === 'default') {
                 d3.selectAll('.scene-map[id="' + d.properties.STA + '"]')
-                .attr('class', 'scene-map-mouseover');
+                    .attr('class', 'scene-map-mouseover');
             }
         })
         .on('mouseout', function(d, idx, nodesList) {
-            if (nodesList[idx].sel === false) {
+            if (nodesList[idx].attributes.sel.value === 'default') {
                 d3.selectAll('.scene-map-mouseover[id="' + d.properties.STA + '"]')
                     .attr('class', 'scene-map');
             }
         })
         .on('click', function(d, idx, nodesList) {
-            console.log(d, idx, nodesList, this);
-            if (nodesList[idx].sel === false) {
-                d3.selectAll('.scene-edge-from:not([origin="' + d.properties.STA + '"])').style('opacity', 0);
-                d3.selectAll('.scene-edge-to:not([destination="' + d.properties.STA + '"])').style('opacity', 0);
-                d3.selectAll('.scene-edge-from[origin="' + d.properties.STA + '"]').style('opacity', 1);
-                d3.selectAll('.scene-edge-to[destination="' + d.properties.STA + '"]').style('opacity', 1);
-                d3.selectAll('.scene-edge-from[destination="' + d.properties.STA + '"]').style('opacity', 1);
-                d3.selectAll('.scene-edge-to[origin="' + d.properties.STA + '"]').style('opacity', 1);
-                nodesList[idx].sel = true;
-                d3.selectAll('.scene-map-mouseover').attr('class', 'scene-map');
-                d3.select(nodesList[idx]).attr('class', 'scene-map-mouseover');
-            } else {
-                d3.selectAll('.scene-edge-from').style('opacity', 1);
-                d3.selectAll('.scene-edge-to').style('opacity', 1);
-                d3.selectAll(nodesList[idx]).attr('class', 'scene-map');
-                nodesList[idx].sel = false;
-            }
-        });*/
+            const id = d.properties.STA;
+            d3.select('.scene-map[id="' + id + '"],.scene-map-mouseover[id="' + id + '"]')
+                .dispatch('click');
+        });
 }
 
 VizFlowMap.prototype.update = function (event, leaflet, path) {

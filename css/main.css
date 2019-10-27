@@ -94,8 +94,13 @@
     fill: #d23b29;
     fill-opacity: 0.65;
     stroke: none;
-    stroke-width: 5;
-    stroke-opacity: 0.3;
+    stroke-width: 1;
+    stroke-opacity: 0.8;
+    cursor: default;
+}
+
+.scene-node:hover {
+	stroke: #93281c;
 }
 
 .scene-flow-particle {
