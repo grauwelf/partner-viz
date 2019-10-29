@@ -385,9 +385,10 @@ VizFlowMap.prototype.render = function (options) {
             }
         });
 
+
     this.container.selectAll('.scene-node').remove();
     this.container.selectAll('.scene-node-tooltip').remove();
-    var nodes = this.container.selectAll('.scene-nde')
+    var nodes = this.container.selectAll('.scene-node')
         .data(Object.values(centers))
       .enter()
       .append('circle')
@@ -421,6 +422,94 @@ VizFlowMap.prototype.render = function (options) {
             const id = d.properties.STA;
             d3.select('.scene-map[id="' + id + '"],.scene-map-mouseover[id="' + id + '"]')
                 .dispatch('click');
+        })
+        .on('contextmenu', function(d, idx, nodesList) {
+            d3.event.preventDefault();
+
+            const x = d3.mouse(this)[0];
+            const y = d3.mouse(this)[1];
+            d3.select('.context-panel').remove();
+            d3.select(this.parentNode.parentNode)
+                .append('g').attr('class', 'context-panel')
+                .selectAll('tmp')
+                .data([d])
+                .enter()
+                .append('g').attr('class', 'panel-section');
+
+            d3.selectAll('.panel-section')
+                .append('rect')
+                .attr('x', function(d, i) {
+                    const xMax = d3.select('.container-left').node().clientWidth;
+                    const w = parseInt(d3.select(this).style('width'));
+                    return (x + w > xMax) ? x - w : x;
+                })
+                .attr('y', function(d, i) {
+                    const yMax = d3.select('.container-left').node().clientHeight;
+                    const h = parseInt(d3.select(this).style('height'));
+                    return (y + h > yMax) ? y - h : y;
+                })
+                .on('mouseover', function(){
+                    //d3.select(this).select('rect').style(style.rect.mouseover)
+                })
+                .on('mouseout', function(){
+                    //d3.select(this).select('rect').style(style.rect.mouseout)
+                });
+
+            d3.selectAll('.panel-section')
+                .append('text')
+                .attr('fill', 'white')
+                .attr('font-size', '14pt')
+                .attr('x', function(d, i) {
+                    const xMax = d3.select('.container-left').node().clientWidth;
+                    const w = parseInt(d3.select(this.parentNode).select('rect').style('width'));
+                    return (x + w > xMax) ? x - w : x;
+                })
+                .attr('y', function(d, i) {
+                    const yMax = d3.select('.container-left').node().clientHeight;
+                    const h = parseInt(d3.select(this.parentNode).select('rect').style('height'));
+                    return (y + h > yMax) ? y - h + 14 : y + 14;
+                })
+                .text(function(d, i) {
+                    return d.properties.SHEM_YISHU + ' : ' + d.properties.STA;
+                });
+
+            d3.select('body')
+                .on('click', function() {
+                    d3.select('.context-panel').remove();
+                });
+        });
+
+        var color = d3.scaleOrdinal().domain([0,1]).range(d3.schemeSet1);
+
+        this.container.selectAll('.node-pie-sector').remove();
+        var container = this.container;
+        d3.entries(Object.values(centers)).forEach(function(center, idx) {
+            var arcGenerator = d3.arc()
+                .innerRadius(0)
+                .outerRadius(center.value.stay / 3000);
+            var pie = d3.pie();
+            //var centerData = pie([center.value.x, center.value.y]);
+            var centerData = pie([Math.random(), Math.random()]);
+            container.selectAll('node-pie-sector' + center.value.id)
+                .data(centerData)
+              .enter()
+              .append('path')
+                .attr('class', 'node-pie-sector')
+                .attr('d', arcGenerator)
+                .attr("transform", (d) => {
+                    const x = leafletMapLeft.latLngToLayerPoint(center.value.latlng).x;
+                    const y = leafletMapLeft.latLngToLayerPoint(center.value.latlng).y;
+                    return "translate(" + x + "," + y + ")";
+                })
+                .attr('fill', function(d) {
+                    return color(d.index);
+                    //return '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6);
+                })
+                .on('click', function(d, idx, nodesList) {
+                    const id = d.properties.STA;
+                    d3.select('.scene-map[id="' + id + '"],.scene-map-mouseover[id="' + id + '"]')
+                        .dispatch('click');
+                });
         });
 }
 
