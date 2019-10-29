@@ -128,6 +128,8 @@ function VizModel() {
                     data.y = data.geometry.coordinates[1];
                     data.latlng = new L.LatLng(data.y, data.x);
                     data.stay = 0;
+                    data.totalIn = [];
+                    data.totalOut = [];
                     nodes[data.sta] = data;
                 });
                 self.centers.nodes = nodes;
@@ -155,6 +157,16 @@ function VizModel() {
 
                     var hour = row.time_end.substr(0,2) + ':00';
                     if (origin != destination) {
+                        if (self.centers.nodes[origin].totalOut[hour] === undefined) {
+                            self.centers.nodes[origin].totalOut[hour] = load;
+                        } else {
+                            self.centers.nodes[origin].totalOut[hour] += load;
+                        }
+                        if (self.centers.nodes[destination].totalIn[hour] === undefined) {
+                            self.centers.nodes[destination].totalIn[hour] = load;
+                        } else {
+                            self.centers.nodes[destination].totalIn[hour] += load;
+                        }
                         if ((self.range.min === null) || (self.range.min > load)) {
                             self.range.min = load;
                         }

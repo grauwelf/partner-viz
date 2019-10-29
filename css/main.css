@@ -239,11 +239,13 @@
 }
 
 .panel-section > rect {
-	fill: #888a85;
+	fill: gray;
+	stroke: lightgray;
+	stroke-width: 1;
 	rx: 5px;
 	ry: 5px;
-	width: 250px;
-	height: 300px;
+	width: 300px;
+	height: 200px;
 	cursor: default;
 }
 

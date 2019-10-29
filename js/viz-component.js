@@ -473,6 +473,75 @@ VizFlowMap.prototype.render = function (options) {
                     return d.properties.SHEM_YISHU + ' : ' + d.properties.STA;
                 });
 
+            var xScale = d3.scaleLinear()
+                .domain([0, 23])
+                .range([0, 220]);
+
+            d3.selectAll('.panel-section')
+                .append('g')
+                .attr('transform', function(d, i) {
+                    return 'translate(' + (x + 40) + ',' + (y + 120) + ')';
+                })
+                .call(d3.axisBottom(xScale));
+
+            const yMax = Math.max(...Object.values(d.totalIn).concat(Object.values(d.totalOut)));
+            var yScale = d3.scaleLinear()
+                .domain([0, yMax])
+                .range([120, 20]);
+
+            d3.selectAll('.panel-section')
+                .append('g')
+                .attr('transform', function(d, i) {
+                    return 'translate(' + (x + 40) + ',' + y + ')';
+                })
+                .call(d3.axisLeft(yScale));
+
+            var line = d3.line()
+                .x(function(p) {
+                    return xScale(+p.time);
+                })
+                .y(function(p) {
+                    return yScale(+p.value);
+                });
+
+            var plotG = d3.selectAll('.panel-section')
+                .append('g')
+                .attr('transform', function(d, i) {
+                    return 'translate(' + (x + 40) + ',' + (y) + ')';
+                });
+
+            plotG.append('rect')
+                .attr('fill', 'lightgray')
+                .attr('width', 220)
+                .attr('height', 120 - 20)
+                .attr('transform', 'translate(0, 20)');
+
+            plotG.selectAll('myLines')
+                .data([d.totalOut, d.totalIn])
+              .enter()
+              .append("path")
+                .attr("d", function(dt){
+                    return line(_.keys(dt)
+                            .sort()
+                            .map(function(i) {
+                                return {time: parseInt(i), value: dt[i]};
+                             }));
+                })
+                .attr('stroke', (d, idx) => color(idx))
+                .style('stroke-width', 2)
+                .style('fill', 'none');
+
+            /*plotG.selectAll('myLabels')
+                .data(['totalOut', 'totalIn'])
+              .enter()
+              .append('text')
+                 .text((d) => d)
+                 .attr('x', 50)
+                 .attr('y', 120 + 30)
+                 .style('font-size', 10)
+                 .style('fill', (d, idx) => color(idx));
+*/
+
             d3.select('body')
                 .on('click', function() {
                     d3.select('.context-panel').remove();
@@ -488,8 +557,9 @@ VizFlowMap.prototype.render = function (options) {
                 .innerRadius(0)
                 .outerRadius(center.value.stay / 3000);
             var pie = d3.pie();
-            //var centerData = pie([center.value.x, center.value.y]);
-            var centerData = pie([Math.random(), Math.random()]);
+            var centerData = pie([
+                center.value.totalOut[options.selectedHour],
+                center.value.totalIn[options.selectedHour]]);
             container.selectAll('node-pie-sector' + center.value.id)
                 .data(centerData)
               .enter()
@@ -503,7 +573,6 @@ VizFlowMap.prototype.render = function (options) {
                 })
                 .attr('fill', function(d) {
                     return color(d.index);
-                    //return '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6);
                 })
                 .on('click', function(d, idx, nodesList) {
                     const id = d.properties.STA;
