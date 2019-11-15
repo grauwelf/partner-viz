@@ -473,6 +473,7 @@ VizFlowMap.prototype.render = function (options) {
                     return d.properties.SHEM_YISHU + ' : ' + d.properties.STA;
                 });
 
+            /*
             var xScale = d3.scaleLinear()
                 .domain([0, 23])
                 .range([0, 220]);
@@ -530,18 +531,7 @@ VizFlowMap.prototype.render = function (options) {
                 .attr('stroke', (d, idx) => color(idx))
                 .style('stroke-width', 2)
                 .style('fill', 'none');
-
-            /*plotG.selectAll('myLabels')
-                .data(['totalOut', 'totalIn'])
-              .enter()
-              .append('text')
-                 .text((d) => d)
-                 .attr('x', 50)
-                 .attr('y', 120 + 30)
-                 .style('font-size', 10)
-                 .style('fill', (d, idx) => color(idx));
-*/
-
+            */
             d3.select('body')
                 .on('click', function() {
                     d3.select('.context-panel').remove();

@@ -80,9 +80,23 @@
 }
 
 .scene-map-mouseover {
-	fill: yellow;
-    fill-opacity: 0.85;
+	animation-name: map-splash;
+	animation-duration: 0.5s;
+	fill: transparent;
+    stroke: #fcaf3e;
+    stroke-width: 2;    
     cursor: default;
+}
+
+@keyframes map-splash {
+	50% {
+	   fill: yellow;
+	   fill-opacity: 1;
+	}
+	100% {
+	   fill: transparent;
+	   fill-opactiy: 1;
+	}
 }
 
 .scene-stop {
@@ -244,9 +258,13 @@
 	stroke-width: 1;
 	rx: 5px;
 	ry: 5px;
-	width: 300px;
-	height: 200px;
+	width: 200px;
+	height: 225px;
 	cursor: default;
+}
+
+.panel-section > text {
+    font-size: 12pt;   
 }
 
 .node-pie-sector {
