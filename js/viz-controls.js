@@ -429,7 +429,7 @@ var TimeSlider = L.Control.extend({
 
     clock: null,
     duration: 3000,
-    defaultStart: 6,
+    defaultStart: Math.round(Number(moment().format('H')) + Number(moment().format('m')) / 60 ),
 
     onAdd: function() {
         var container = L.DomUtil.create('div', 'time-slider-control');
