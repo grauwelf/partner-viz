@@ -156,16 +156,26 @@
 .time-slider {
     pointerEvents : auto;
     width : 90%;
+    height: 6px;
     position: relative;
     left : 60px;
-    top: 36px;
+    top: 39px;
+}
+
+.time-slider > .ui-slider-handle {
+    width: 4px;
+    height: 16px;
+    margin-left: -1px;
+    top: -6px;
+    background-color: #2e3436;
+    border: none;
 }
 
 .timeline-bar {
     height: 2px;    
     width: 90%;
     left: 61px;
-    top: 36px;
+    top: 40px;
     background: #000;
     position: relative;
 }
@@ -224,10 +234,10 @@
 }
 
 .step:nth-child(n+1) .step-border {
-    height: 20px;
+    height: 4px;
     width: 2px;
     background: #000;
-    margin-top: -10px;
+    margin-top: -5px;
 }
 
 .step-mark {
@@ -247,8 +257,8 @@
 
 .time-instant {
     position: absolute;
-    top: -30px;
-    left: -7px;
+    top: -20px;
+    left: -5px;
     font-size: 9pt;
 }
 
