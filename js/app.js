@@ -11,7 +11,7 @@ var mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
 var leafletMapLeft = L.map('viz-container-left', {
         zoomControl: false,
         zoomAnimationThreshold: 2,
-        minZoom: 8,
+        minZoom: 12,
         maxZoom: 17
     }).setView([32.08, 34.8], 12);
 
@@ -25,7 +25,7 @@ L.tileLayer(darkTileLayerURL).addTo(leafletMapLeft);
 var leafletMapRight = L.map('viz-container-right', {
     zoomControl: false,
     zoomAnimationThreshold: 2,
-    minZoom: 8,
+    minZoom: 12,
     maxZoom: 17
 }).setView([32.08, 34.8], 12);
 

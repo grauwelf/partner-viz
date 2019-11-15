@@ -59,6 +59,7 @@ VizControls.prototype.updateLoadFilter = function (values, slider) {
 
 VizControls.prototype.initialize = function(model) {
     // Main container for all controls
+    const selectedHour = $('#time-slider').slider('value') % 24;
     var controls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left')
     controls.html('');
     $('.time-slider-control').remove();
@@ -84,6 +85,7 @@ VizControls.prototype.initialize = function(model) {
         leafletPath: this.leafletPath,
         parent: this
     });
+    timeslider.setTime(selectedHour);
     timeslider.addTo(this.leafletMapLeft).afterLoad();
 
     // Time interval picker
@@ -430,6 +432,12 @@ var TimeSlider = L.Control.extend({
     clock: null,
     duration: 3000,
     defaultStart: Math.round(Number(moment().format('H')) + Number(moment().format('m')) / 60 ),
+
+    setTime: function(selectedHour) {
+        if(!isNaN(selectedHour)) {
+            this.defaultStart = selectedHour;
+        }
+    },
 
     onAdd: function() {
         var container = L.DomUtil.create('div', 'time-slider-control');
