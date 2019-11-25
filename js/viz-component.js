@@ -189,6 +189,46 @@ VizFlowMap.prototype.renderAreas = function (container, data, options, path) {
         });
 }
 
+VizFlowMap.prototype.renderEdges = function (container, data, direction, options, maxDifference) {
+    const edgeClass = 'scene-edge-' + direction;
+    const edgeLoad = direction == 1 ? 'backwardLoad' : 'forwardLoad';
+    container.selectAll('.' + edgeClass).remove();
+
+    var arcsTo =  container.selectAll('.' + edgeClass)
+        .data(data)
+      .enter().append('path')
+        .attr('class', edgeClass)
+        .attr('origin', (d) => d.d)
+        .attr('destination', (d) => d.o)
+        .style("stroke-dasharray",
+                (d) => this.buildDashArray(d, Math.ceil(d[edgeLoad] / this.devicesPerParticle)))
+        .style("stroke-width",
+                (d) => this.dashWidth(d, options.loadRange))
+        .style("stroke-offset",
+                 (d) => (Math.random() * 5 + 5) + 'px')
+        .style("stroke", function(d) {
+            const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d[edgeLoad]));
+            return color;
+        })
+        .style("fill", function(d) {
+            const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d[edgeLoad]));
+            return color;
+        })
+        .style('opacity', function(d) {
+            if (options.selectedNodes.length != 0 &&
+                    (options.selectedNodes.includes(d.o) ||
+                    options.selectedNodes.includes(d.d))) {
+                return 1;
+            } else if (options.selectedNodes.length == 0) {
+                return 1;
+            } else {
+                return 0;
+            }
+        })
+        .attr('d', (d) => buildArc(d, direction == 'to' ? 1 : -1, maxDifference));
+}
+
+
 VizFlowMap.prototype.render = function (options) {
     if (!options) {
         options = {};
@@ -218,51 +258,6 @@ VizFlowMap.prototype.render = function (options) {
 
     var smoothPath = d3.geoPath().projection(this.projection);
     const maxDifference = this.maxDifference;
-
-    var standingPoints = [];
-    if (options.dataChanged && false) {
-        d3.selectAll('.scene-standing-particle').remove();
-        const standingPerMarker = this.standingPerMarker;
-        _.each(map.features, function(area) {
-            const sta = area.properties.STA.toString().padStart(8, '0');
-            const center = centers[sta];
-            if (center !== undefined) {
-                const m = Math.round(center.stay / standingPerMarker);
-                for(var i = 0; i < m; i++) {
-                    var p = [NaN, NaN];
-                    var iter = 0;
-                    while (!d3.polygonContains(area.polygon, p) ||
-                          (leafletMapLeft.layerPointToLatLng(p).distanceTo(center.latlng) > 50) ||
-                          (leafletMapLeft.layerPointToLatLng(p).distanceTo(center.latlng) < 20)) {
-                        p = [
-                            _.random(area.xlim[0], area.xlim[1]),
-                            _.random(area.ylim[0], area.ylim[1])
-                        ];
-                        if (iter < 50) {
-                            iter++;
-                        } else {
-                            break;
-                        }
-                    }
-                    if (iter < 50) {
-                        standingPoints.push(Object({
-                            point: p,
-                            latlng: leafletMapLeft.layerPointToLatLng(p)
-                        }));
-                    }
-                }
-            }
-        });
-    }
-
-    var standingParticles = this.container.selectAll('.scene-standing-particle')
-        .data(standingPoints)
-      .enter()
-      .append('circle')
-        .attr('class', 'scene-standing-particle')
-        .attr('cx', function (d) { return d.point[0]; })
-        .attr('cy', function (d) { return d.point[1]; })
-        .attr('r', 2);
 
     var linestringBackwardData = [];
     var linestringForwardData = [];
@@ -313,78 +308,12 @@ VizFlowMap.prototype.render = function (options) {
         }
     });
 
-    this.container.selectAll('.scene-edge-to').remove();
-    this.container.selectAll('.scene-edge-from').remove();
 
     if (this.directionMode == 'both' || this.directionMode == 'to') {
-        var arcsTo =  this.container.selectAll('.scene-edge-to')
-        .data(linestringBackwardData)
-      .enter().append('path')
-        .attr('class', 'scene-edge-to')
-        .attr('origin', (d) => d.d)
-        .attr('destination', (d) => d.o)
-        .style("stroke-dasharray",
-                (d) => this.buildDashArray(d, Math.ceil(d.backwardLoad / this.devicesPerParticle)))
-        .style("stroke-width",
-                (d) => this.dashWidth(d, options.loadRange))
-        .style("stroke-offset",
-                (d) => (Math.random() * 5 + 5) + 'px')
-        .style("stroke", function(d) {
-            //const color = getGradientColor('#ffa700', '#ff3500', scaleToRange(options.loadRange, d.backwardLoad));
-            const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d.backwardLoad));
-            return color;
-        })
-        .style("fill", function(d) {
-            const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d.backwardLoad));
-            return color;
-        })
-        .style('opacity', function(d) {
-            if (options.selectedNodes.length != 0 &&
-                    (options.selectedNodes.includes(d.o) ||
-                    options.selectedNodes.includes(d.d))) {
-                return 1;
-            } else if (options.selectedNodes.length == 0) {
-                return 1;
-            } else {
-                return 0;
-            }
-        })
-        .attr('d', (d) => buildArc(d, 1, maxDifference));
+        this.renderEdges(this.container, linestringBackwardData, 'to', options, maxDifference);
     }
-
     if (this.directionMode == 'both' || this.directionMode == 'from') {
-        var arcsFrom =  this.container.selectAll('.scene-edge-from')
-            .data(linestringForwardData)
-          .enter().append('path')
-            .attr('class', 'scene-edge-from')
-            .attr('origin', (d) => d.o)
-            .attr('destination', (d) => d.d)
-            .style("stroke-dasharray",
-                (d) => this.buildDashArray(d, Math.ceil(d.forwardLoad / this.devicesPerParticle)))
-            .style("stroke-width",
-                (d) => this.dashWidth(d, options.loadRange))
-            .style("stroke-offset",
-                (d) => (Math.random() * 5 + 5) + 'px')
-            .style("stroke", function(d) {
-                const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d.forwardLoad));
-                return color;
-            })
-            .style("fill", function(d) {
-                const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d.forwardLoad));
-                return color;
-            })
-            .style('opacity', function(d) {
-                if (options.selectedNodes.length != 0 &&
-                        (options.selectedNodes.includes(d.o) ||
-                        options.selectedNodes.includes(d.d))) {
-                    return 1;
-                } else if (options.selectedNodes.length == 0) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            })
-            .attr('d', (d) => buildArc(d, -1, maxDifference));
+        this.renderEdges(this.container, linestringForwardData, 'from', options, maxDifference);
     }
 
     this.renderAreas(this.container, map.features, options, smoothPath);

@@ -131,3 +131,50 @@ function plotHistogram() {
         .style('stroke-width', 2)
         .style('fill', 'none');
 }
+
+function plotStandingPoints() {
+    var standingPoints = [];
+    if (options.dataChanged && false) {
+        d3.selectAll('.scene-standing-particle').remove();
+        const standingPerMarker = this.standingPerMarker;
+        _.each(map.features, function(area) {
+            const sta = area.properties.STA.toString().padStart(8, '0');
+            const center = centers[sta];
+            if (center !== undefined) {
+                const m = Math.round(center.stay / standingPerMarker);
+                for(var i = 0; i < m; i++) {
+                    var p = [NaN, NaN];
+                    var iter = 0;
+                    while (!d3.polygonContains(area.polygon, p) ||
+                          (leafletMapLeft.layerPointToLatLng(p).distanceTo(center.latlng) > 50) ||
+                          (leafletMapLeft.layerPointToLatLng(p).distanceTo(center.latlng) < 20)) {
+                        p = [
+                            _.random(area.xlim[0], area.xlim[1]),
+                            _.random(area.ylim[0], area.ylim[1])
+                        ];
+                        if (iter < 50) {
+                            iter++;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (iter < 50) {
+                        standingPoints.push(Object({
+                            point: p,
+                            latlng: leafletMapLeft.layerPointToLatLng(p)
+                        }));
+                    }
+                }
+            }
+        });
+    }
+
+    var standingParticles = this.container.selectAll('.scene-standing-particle')
+        .data(standingPoints)
+      .enter()
+      .append('circle')
+        .attr('class', 'scene-standing-particle')
+        .attr('cx', function (d) { return d.point[0]; })
+        .attr('cy', function (d) { return d.point[1]; })
+        .attr('r', 2);
+}
