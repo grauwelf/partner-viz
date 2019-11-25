@@ -207,12 +207,10 @@ VizFlowMap.prototype.renderEdges = function (container, data, direction, options
         .style("stroke-offset",
                  (d) => (Math.random() * 5 + 5) + 'px')
         .style("stroke", function(d) {
-            const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d[edgeLoad]));
-            return color;
+            return edgesColor(scaleToRange(options.loadRange, d[edgeLoad]));
         })
         .style("fill", function(d) {
-            const color = getGradientColor('#db36a4', '#f7ff00', scaleToRange(options.loadRange, d[edgeLoad]));
-            return color;
+            return edgesColor(scaleToRange(options.loadRange, d[edgeLoad]));
         })
         .style('opacity', function(d) {
             if (options.selectedNodes.length != 0 &&
