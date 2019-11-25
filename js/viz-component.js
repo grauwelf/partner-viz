@@ -124,6 +124,71 @@ VizFlowMap.prototype.edgesInit = function (lines, simulationRate, devicesPerPart
     });
 }
 
+VizFlowMap.prototype.renderAreas = function (container, data, options, path) {
+    container.selectAll('.scene-map,.scene-map-mouseover').remove();
+    container.selectAll('.scene-map')
+        .data(data)
+      .enter()
+      .append('path')
+        .attr('id', (d) => d.properties.STA)
+        .attr('class', function(d) {
+            if (options.selectedNodes.length != 0 &&
+                    (options.selectedNodes.includes(d.properties.STA) ||
+                    options.selectedNodes.includes(d.properties.STA))) {
+                return 'scene-map-mouseover';
+            } else {
+                return 'scene-map';
+            }
+        })
+        .attr('sel', function(d) {
+            if (options.selectedNodes.length != 0 &&
+                    (options.selectedNodes.includes(d.properties.STA) ||
+                    options.selectedNodes.includes(d.properties.STA))) {
+                return 'selected';
+            } else {
+                return 'default';
+            }
+        })
+        .attr('d', path)
+        .on('mouseover', function(d, idx, nodesList) {
+            if (nodesList[idx].attributes.sel.value === 'default') {
+                d3.selectAll('.scene-map[id="' + d.properties.STA + '"]')
+                    .attr('class', 'scene-map-mouseover');
+            }
+        })
+        .on('mouseout', function(d, idx, nodesList) {
+            if (nodesList[idx].attributes.sel.value === 'default') {
+                d3.selectAll('.scene-map-mouseover[id="' + d.properties.STA + '"]')
+                    .attr('class', 'scene-map');
+            }
+        })
+        .on('click', function(d, idx, nodesList) {
+            if (nodesList[idx].attributes.sel.value == 'default') {
+                d3.selectAll('.scene-edge-from:not([origin="' + d.properties.STA + '"])').style('opacity', 0);
+                d3.selectAll('.scene-edge-to:not([destination="' + d.properties.STA + '"])').style('opacity', 0);
+                d3.selectAll('.scene-edge-from[origin="' + d.properties.STA + '"]').style('opacity', 1);
+                d3.selectAll('.scene-edge-to[destination="' + d.properties.STA + '"]').style('opacity', 1);
+                d3.selectAll('.scene-edge-from[destination="' + d.properties.STA + '"]').style('opacity', 1);
+                d3.selectAll('.scene-edge-to[origin="' + d.properties.STA + '"]').style('opacity', 1);
+                d3.selectAll('.scene-map,.scene-map-mouseover')
+                    .attr('class', 'scene-map')
+                    .attr('sel', 'default');
+                d3.selectAll('.scene-node').attr('sel', 'default');
+                nodesList[idx].attributes.sel.value = 'selected';
+                const id = nodesList[idx].attributes.id.value;
+                d3.selectAll('.scene-map[id="' + id + '"]').attr('class', 'scene-map-mouseover');
+                d3.selectAll('.scene-node[id="' + id + '"]').attr('sel', 'selected');
+            } else {
+                d3.selectAll('.scene-map,.scene-map-mouseover')
+                    .attr('class', 'scene-map')
+                    .attr('sel', 'default');
+                d3.selectAll('.scene-node').attr('sel', 'default');
+                d3.selectAll('.scene-edge-from').style('opacity', 1);
+                d3.selectAll('.scene-edge-to').style('opacity', 1);
+            }
+        });
+}
+
 VizFlowMap.prototype.render = function (options) {
     if (!options) {
         options = {};
@@ -322,69 +387,7 @@ VizFlowMap.prototype.render = function (options) {
             .attr('d', (d) => buildArc(d, -1, maxDifference));
     }
 
-    this.container.selectAll('.scene-map,.scene-map-mouseover').remove();
-    this.container.selectAll('.scene-map')
-        .data(map.features)
-      .enter()
-      .append('path')
-        .attr('id', (d) => d.properties.STA)
-        .attr('class', function(d) {
-            if (options.selectedNodes.length != 0 &&
-                    (options.selectedNodes.includes(d.properties.STA) ||
-                    options.selectedNodes.includes(d.properties.STA))) {
-                return 'scene-map-mouseover';
-            } else {
-                return 'scene-map';
-            }
-        })
-        .attr('sel', function(d) {
-            if (options.selectedNodes.length != 0 &&
-                    (options.selectedNodes.includes(d.properties.STA) ||
-                    options.selectedNodes.includes(d.properties.STA))) {
-                return 'selected';
-            } else {
-                return 'default';
-            }
-        })
-        .attr('d', smoothPath)
-        .on('mouseover', function(d, idx, nodesList) {
-            if (nodesList[idx].attributes.sel.value === 'default') {
-                d3.selectAll('.scene-map[id="' + d.properties.STA + '"]')
-                    .attr('class', 'scene-map-mouseover');
-            }
-        })
-        .on('mouseout', function(d, idx, nodesList) {
-            if (nodesList[idx].attributes.sel.value === 'default') {
-                d3.selectAll('.scene-map-mouseover[id="' + d.properties.STA + '"]')
-                    .attr('class', 'scene-map');
-            }
-        })
-        .on('click', function(d, idx, nodesList) {
-            if (nodesList[idx].attributes.sel.value == 'default') {
-                d3.selectAll('.scene-edge-from:not([origin="' + d.properties.STA + '"])').style('opacity', 0);
-                d3.selectAll('.scene-edge-to:not([destination="' + d.properties.STA + '"])').style('opacity', 0);
-                d3.selectAll('.scene-edge-from[origin="' + d.properties.STA + '"]').style('opacity', 1);
-                d3.selectAll('.scene-edge-to[destination="' + d.properties.STA + '"]').style('opacity', 1);
-                d3.selectAll('.scene-edge-from[destination="' + d.properties.STA + '"]').style('opacity', 1);
-                d3.selectAll('.scene-edge-to[origin="' + d.properties.STA + '"]').style('opacity', 1);
-                d3.selectAll('.scene-map,.scene-map-mouseover')
-                    .attr('class', 'scene-map')
-                    .attr('sel', 'default');
-                d3.selectAll('.scene-node').attr('sel', 'default');
-                nodesList[idx].attributes.sel.value = 'selected';
-                const id = nodesList[idx].attributes.id.value;
-                d3.selectAll('.scene-map[id="' + id + '"]').attr('class', 'scene-map-mouseover');
-                d3.selectAll('.scene-node[id="' + id + '"]').attr('sel', 'selected');
-            } else {
-                d3.selectAll('.scene-map,.scene-map-mouseover')
-                    .attr('class', 'scene-map')
-                    .attr('sel', 'default');
-                d3.selectAll('.scene-node').attr('sel', 'default');
-                d3.selectAll('.scene-edge-from').style('opacity', 1);
-                d3.selectAll('.scene-edge-to').style('opacity', 1);
-            }
-        });
-
+    this.renderAreas(this.container, map.features, options, smoothPath);
 
     this.container.selectAll('.scene-node').remove();
     this.container.selectAll('.scene-node-tooltip').remove();
@@ -473,103 +476,47 @@ VizFlowMap.prototype.render = function (options) {
                     return d.properties.SHEM_YISHU + ' : ' + d.properties.STA;
                 });
 
-            /*
-            var xScale = d3.scaleLinear()
-                .domain([0, 23])
-                .range([0, 220]);
+
+            var arcGenerator = d3.arc()
+                .innerRadius(0)
+                .outerRadius(24);
+
+            var pie = d3.pie();
+            var centerData = pie([
+                d.totalOut[options.selectedHour],
+                d.totalIn[options.selectedHour]]);
 
             d3.selectAll('.panel-section')
-                .append('g')
-                .attr('transform', function(d, i) {
-                    return 'translate(' + (x + 40) + ',' + (y + 120) + ')';
-                })
-                .call(d3.axisBottom(xScale));
-
-            const yMax = Math.max(...Object.values(d.totalIn).concat(Object.values(d.totalOut)));
-            var yScale = d3.scaleLinear()
-                .domain([0, yMax])
-                .range([120, 20]);
-
-            d3.selectAll('.panel-section')
-                .append('g')
-                .attr('transform', function(d, i) {
-                    return 'translate(' + (x + 40) + ',' + y + ')';
-                })
-                .call(d3.axisLeft(yScale));
-
-            var line = d3.line()
-                .x(function(p) {
-                    return xScale(+p.time);
-                })
-                .y(function(p) {
-                    return yScale(+p.value);
-                });
-
-            var plotG = d3.selectAll('.panel-section')
-                .append('g')
-                .attr('transform', function(d, i) {
-                    return 'translate(' + (x + 40) + ',' + (y) + ')';
-                });
-
-            plotG.append('rect')
-                .attr('fill', 'lightgray')
-                .attr('width', 220)
-                .attr('height', 120 - 20)
-                .attr('transform', 'translate(0, 20)');
-
-            plotG.selectAll('myLines')
-                .data([d.totalOut, d.totalIn])
+              .append('g').selectAll('pie-chart' + d.id)
+                .data(centerData)
               .enter()
-              .append("path")
-                .attr("d", function(dt){
-                    return line(_.keys(dt)
-                            .sort()
-                            .map(function(i) {
-                                return {time: parseInt(i), value: dt[i]};
-                             }));
-                })
-                .attr('stroke', (d, idx) => color(idx))
-                .style('stroke-width', 2)
-                .style('fill', 'none');
-            */
+                 .append('path')
+                 .attr('class', 'pie-chart')
+                 .attr('d', arcGenerator)
+                 .attr('transform', function(d, i) {
+                     const xMax = d3.select('.container-left').node().clientWidth;
+                     const w = parseInt(d3.select(this).style('width'));
+                     const xPie = (x + w > xMax) ? x - w : x;
+                     const yMax = d3.select('.container-left').node().clientHeight;
+                     const h = parseInt(d3.select(this).style('height'));
+                     const yPie = (y + h > yMax) ? y - h : y;
+                     return 'translate(' + (xPie + 40) + ',' + (yPie + 40) + ')';
+                 })
+                 .attr('fill', function(d) {
+                     return color(d.index);
+                 })
+                 .on('click', function(d, idx, nodesList) {
+                     const id = d.properties.STA;
+                     d3.select('.scene-map[id="' + id + '"],.scene-map-mouseover[id="' + id + '"]')
+                         .dispatch('click');
+                 });
+
             d3.select('body')
                 .on('click', function() {
                     d3.select('.context-panel').remove();
                 });
         });
 
-        var color = d3.scaleOrdinal().domain([0,1]).range(d3.schemeSet1);
-
-        this.container.selectAll('.node-pie-sector').remove();
-        var container = this.container;
-        d3.entries(Object.values(centers)).forEach(function(center, idx) {
-            var arcGenerator = d3.arc()
-                .innerRadius(0)
-                .outerRadius(center.value.stay / 3000);
-            var pie = d3.pie();
-            var centerData = pie([
-                center.value.totalOut[options.selectedHour],
-                center.value.totalIn[options.selectedHour]]);
-            container.selectAll('node-pie-sector' + center.value.id)
-                .data(centerData)
-              .enter()
-              .append('path')
-                .attr('class', 'node-pie-sector')
-                .attr('d', arcGenerator)
-                .attr("transform", (d) => {
-                    const x = leafletMapLeft.latLngToLayerPoint(center.value.latlng).x;
-                    const y = leafletMapLeft.latLngToLayerPoint(center.value.latlng).y;
-                    return "translate(" + x + "," + y + ")";
-                })
-                .attr('fill', function(d) {
-                    return color(d.index);
-                })
-                .on('click', function(d, idx, nodesList) {
-                    const id = d.properties.STA;
-                    d3.select('.scene-map[id="' + id + '"],.scene-map-mouseover[id="' + id + '"]')
-                        .dispatch('click');
-                });
-        });
 }
 
 VizFlowMap.prototype.update = function (event, leaflet, path) {

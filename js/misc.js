@@ -71,3 +71,63 @@ function pointAtLengthOnCubicCurve(C, t) {
         q1 * C[1] + q2 * C[3] + q3 * C[5] + q4 * C[7]
     ];
 }
+
+function plotHistogram() {
+    var xScale = d3.scaleLinear()
+        .domain([0, 23])
+        .range([0, 220]);
+
+    d3.selectAll('.panel-section')
+        .append('g')
+        .attr('transform', function(d, i) {
+            return 'translate(' + (x + 40) + ',' + (y + 120) + ')';
+        })
+        .call(d3.axisBottom(xScale));
+
+    const yMax = Math.max(...Object.values(d.totalIn).concat(Object.values(d.totalOut)));
+    var yScale = d3.scaleLinear()
+        .domain([0, yMax])
+        .range([120, 20]);
+
+    d3.selectAll('.panel-section')
+        .append('g')
+        .attr('transform', function(d, i) {
+            return 'translate(' + (x + 40) + ',' + y + ')';
+        })
+        .call(d3.axisLeft(yScale));
+
+    var line = d3.line()
+        .x(function(p) {
+            return xScale(+p.time);
+        })
+        .y(function(p) {
+            return yScale(+p.value);
+        });
+
+    var plotG = d3.selectAll('.panel-section')
+        .append('g')
+        .attr('transform', function(d, i) {
+            return 'translate(' + (x + 40) + ',' + (y) + ')';
+        });
+
+    plotG.append('rect')
+        .attr('fill', 'lightgray')
+        .attr('width', 220)
+        .attr('height', 120 - 20)
+        .attr('transform', 'translate(0, 20)');
+
+    plotG.selectAll('myLines')
+        .data([d.totalOut, d.totalIn])
+      .enter()
+      .append("path")
+        .attr("d", function(dt){
+            return line(_.keys(dt)
+                    .sort()
+                    .map(function(i) {
+                        return {time: parseInt(i), value: dt[i]};
+                     }));
+        })
+        .attr('stroke', (d, idx) => color(idx))
+        .style('stroke-width', 2)
+        .style('fill', 'none');
+}

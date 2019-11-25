@@ -68,6 +68,8 @@ const leafletPath = d3.geoPath().projection(d3.geoTransform({point: projectPoint
 
 const arcGenerator = d3.line().curve(d3.curveNatural);
 
+var color = d3.scaleOrdinal().domain([0,1]).range(d3.schemeSet1);
+
 // Create D3 Mercator projection
 var projection = d3.geoMercator();
 
