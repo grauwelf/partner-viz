@@ -64,11 +64,6 @@ VizControls.prototype.initialize = function(model) {
     controls.html('');
     $('.time-slider-control').remove();
 
-    L.control.zoomviewer = function(opts) {
-        return new ZoomViewer(opts);
-    }
-    //L.control.zoomviewer({ position: 'topleft' }).addTo(this.leafletMapLeft);
-
     var zoomControls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left > .leaflet-bar');
 
     L.control
@@ -77,6 +72,29 @@ VizControls.prototype.initialize = function(model) {
             position: 'topleft'
         })
         .addTo(this.leafletMapLeft);
+
+    controls.append('<div id="controlset-zoom" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
+        ' class="leaflet-control controlset-zoom" style="pointer-events: auto; width: 100%"></div>');
+    $('#controlset-zoom').append(
+        '<legend>Zoom level</legend>' +
+        '<input type="radio" name="radio-zoom" id="radio-zoom-11" value="11">' +
+        '<label for="radio-zoom-11">City</label>' +
+        '<input type="radio" name="radio-zoom" id="radio-zoom-12" value="12">' +
+        '<label for="radio-zoom-12">Quarter</label>' +
+        '<input type="radio" name="radio-zoom" id="radio-zoom-13" value="13">' +
+        '<label for="radio-zoom-13">Subquarter</label>' +
+        '<input type="radio" name="radio-zoom" id="radio-zoom-14" value="14">' +
+        '<label for="radio-zoom-14">StatArea</label>');
+
+    $('#radio-zoom-' + zoomLevel).prop('checked', true).trigger('change');
+
+    $('#controlset-zoom').controlgroup()
+        .on('change', (e) => {
+            if (this.leafletMapLeft.getZoom() != parseInt(e.target.value)) {
+                this.leafletMapLeft.setZoom(e.target.value);
+            }
+        });
+
 
     var timeslider = new TimeSlider({
         position: 'bottomleft',
@@ -211,7 +229,7 @@ VizControls.prototype.initialize = function(model) {
 
 
     controls.append('<div id="dots-speed-div" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
-    $('#dots-speed-div').append('<span>Unit length per second</span><br/>');
+    $('#dots-speed-div').append('<span>Speed</span><br/>');
     $("#dots-speed-div").append('<div id="speed-slider"></div>');
     $("#speed-slider").slider({
         min: 0,
@@ -261,12 +279,54 @@ VizControls.prototype.initialize = function(model) {
         .css('left', 100 * (25 / 70) + '%')
         .css('margin-left', '-16px');
 
-    /*
-    L.control.directionSwitcher = function(opts) {
-        return new DirectionSwitch(opts);
-    }
-    L.control.directionSwitcher({ position: 'topleft' }).addTo(this.leafletMapLeft);
-    */
+    controls.append('<div id="controlset-density" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
+        ' class="leaflet-control controlset-radio" style="pointer-events: auto; width: 90%"></div>');
+    $('#controlset-density').append(
+        '<legend>Travellers per dot</legend>' +
+        '<input type="radio" name="radio-density" id="radio-density-1">' +
+        '<label for="radio-density-1">20</label>' +
+        '<input type="radio" name="radio-density" id="radio-density-2">' +
+        '<label for="radio-density-2">40</label>' +
+        '<input type="radio" name="radio-density" id="radio-density-3">' +
+        '<label for="radio-density-3">60</label>' +
+        '<input type="radio" name="radio-density" id="radio-density-4">' +
+        '<label for="radio-density-4">80</label>' +
+        '<input type="radio" name="radio-density" id="radio-density-5">' +
+        '<label for="radio-density-5">100</label>');
+    $('#controlset-density').controlgroup();
+
+    controls.append('<div id="controlset-speed" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
+        ' class="leaflet-control controlset-radio" style="pointer-events: auto; width: 90%"></div>');
+    $('#controlset-speed').append(
+        '<legend>Speed</legend>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-1">' +
+        '<label for="radio-speed-1">12</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-2">' +
+        '<label for="radio-speed-2">24</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-3">' +
+        '<label for="radio-speed-3">36</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-4">' +
+        '<label for="radio-speed-4">48</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-5">' +
+        '<label for="radio-speed-5">60</label>');
+    $('#controlset-speed').controlgroup();
+
+/*
+    controls.append('<div id="controlset-div1" data-role="controlgroup" data-type="horizontal" data-mini="true" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
+    $('#controlset-div1').append(
+            '<legend>Select</legend>' +
+            '<input type="checkbox" name="checkbox-1" id="checkbox-1">' +
+            '<label for="checkbox-1">One</label>' +
+            '<input type="checkbox" name="checkbox-2" id="checkbox-2">' +
+            '<label for="checkbox-2">Two</label>' +
+            '<input type="checkbox" name="checkbox-3" id="checkbox-3">' +
+            '<label for="checkbox-3">Two</label>' +
+            '<input type="checkbox" name="checkbox-4" id="checkbox-4">' +
+            '<label for="checkbox-4">Two</label>' +
+            '<input type="checkbox" name="checkbox-5" id="checkbox-5">' +
+            '<label for="checkbox-5">Three</label>');
+    $('#controlset-div1').controlgroup();
+*/
 
     $('[name="choose-day"]').on('change', (event) => {
         var selectedDay = $('[name="choose-day"]:checked').val();
@@ -322,59 +382,6 @@ LinearSlider.prototype = {
          return this.minpos + (value - this.minlval) / this.scale;
      }
  };
-
-var DirectionSwitch = L.Control.extend({
-    onAdd: function() {
-
-        var directionControl = L.DomUtil.create('div', 'leaflet-control');
-
-        directionControl.id = 'choose-direction';
-        directionControl.style.pointerEvents = 'auto';
-        directionControl.style.fontSize = '13px';
-
-        var content = '<span>Flows direction</span><br/>';
-        content += '<input type="radio" name="choose-direction[]" value="from" checked="true">Bat Yam => Tel Aviv</br>';
-        content += '<input type="radio" name="choose-direction[]" value="to">Tel Aviv => Bat Yam</br>';
-        //content += '<input type="radio" name="choose-direction[]" value="both" checked="true">Tel Aviv <=> Bat Yam</br>';
-        directionControl.innerHTML = content;
-
-        const stop = L.DomEvent.stopPropagation;
-
-        L.DomEvent
-            .on(directionControl, 'click', stop)
-            .on(directionControl, 'mousedown', stop)
-            .on(directionControl, 'dblclick', stop)
-            .on(directionControl, 'click', L.DomEvent.preventDefault)
-            .on(directionControl, 'click', this._onDirectionChange, this);
-
-        return directionControl;
-    },
-
-    _onDirectionChange: function(event){
-        $(event.target).prop('checked', true).trigger('click');
-        vizMap.directionMode = event.target.value;
-        if (vizMap.directionMode == 'both') {
-            vizMap.maxDifference = 4;
-        } else {
-            vizMap.maxDifference = 0;
-        }
-        vizMap.render(vizControls.getOptions());
-        vizMap.update(false, leafletMapLeft, leafletPath);
-        if (vizMap.directionMode == 'both') {
-            vizMapRight.directionMode = 'both';
-            vizMapRight.maxDifference = 4;
-        } else if (vizMap.directionMode == 'to') {
-            vizMapRight.directionMode = 'from';
-            vizMapRight.maxDifference = 0;
-        } else if (vizMap.directionMode == 'from') {
-            vizMapRight.directionMode = 'to';
-            vizMapRight.maxDifference = 0;
-        }
-        vizMapRight.render(vizControls.getOptions());
-        vizMapRight.update(false, leafletMapRight, leafletPath);
-    }
-});
-
 
 var ZoomViewer = L.Control.extend({
     onAdd: function() {

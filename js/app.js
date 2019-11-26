@@ -11,8 +11,8 @@ var mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
 var leafletMapLeft = L.map('viz-container-left', {
         zoomControl: false,
         zoomAnimationThreshold: 2,
-        minZoom: 12,
-        maxZoom: 17
+        minZoom: 11,
+        maxZoom: 14
     }).setView([32.08, 34.8], 12);
 
 const token = 'pk.eyJ1IjoiZ3JhdXdlbGYiLCJhIjoiY2swem15enR0MDc3YjNucGk3cWoxeGVwZSJ9.rbBSqG4CqVCW0LOrGPi55A';
@@ -25,8 +25,8 @@ L.tileLayer(darkTileLayerURL).addTo(leafletMapLeft);
 var leafletMapRight = L.map('viz-container-right', {
     zoomControl: false,
     zoomAnimationThreshold: 2,
-    minZoom: 12,
-    maxZoom: 17
+    minZoom: 11,
+    maxZoom: 14
 }).setView([32.08, 34.8], 12);
 
 L.tileLayer(
@@ -71,6 +71,10 @@ const arcGenerator = d3.line().curve(d3.curveNatural);
 var edgesColor = d3.scaleThreshold()
     .domain([0.25, 0.5, 0.75])
     .range(['#84ca50', '#f07d02', '#e60000', '#9e1313']);
+
+var color = d3.scaleOrdinal()
+    .domain([0,1])
+    .range(d3.schemeSet1);
 
 // Create D3 Mercator projection
 var projection = d3.geoMercator();
