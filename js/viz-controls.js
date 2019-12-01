@@ -296,37 +296,40 @@ VizControls.prototype.initialize = function(model) {
     $('#controlset-density').controlgroup();
 
     controls.append('<div id="controlset-speed" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
-        ' class="leaflet-control controlset-radio" style="pointer-events: auto; width: 90%"></div>');
+        ' class="leaflet-control controlset-speed" style="pointer-events: auto; width: 100%"></div>');
     $('#controlset-speed').append(
         '<legend>Speed</legend>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-1">' +
-        '<label for="radio-speed-1">12</label>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-2">' +
-        '<label for="radio-speed-2">24</label>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-3">' +
-        '<label for="radio-speed-3">36</label>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-4">' +
-        '<label for="radio-speed-4">48</label>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-5">' +
-        '<label for="radio-speed-5">60</label>');
-    $('#controlset-speed').controlgroup();
+        '<input type="radio" name="radio-speed" id="radio-speed-1" value="0.0">' +
+        '<label for="radio-speed-1">x0</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-2" value="0.5">' +
+        '<label for="radio-speed-2">x0.5</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-3" value="1">' +
+        '<label for="radio-speed-3">x1</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-4" value="1.5">' +
+        '<label for="radio-speed-4">x1.5</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-5" value="2.0">' +
+        '<label for="radio-speed-5">x2</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-6" value="2.5">' +
+        '<label for="radio-speed-6">x2.5</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-7" value="3">' +
+        '<label for="radio-speed-7">x3</label>');
+    $('#controlset-speed').controlgroup()
+        .on('change', (e) => {
+            const val = Number(e.target.value) * 20;
+            if (val === undefined)
+                return;
+            this.map.simulationRate = val;
+            this.mapRight.simulationRate = val;
 
-/*
-    controls.append('<div id="controlset-div1" data-role="controlgroup" data-type="horizontal" data-mini="true" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
-    $('#controlset-div1').append(
-            '<legend>Select</legend>' +
-            '<input type="checkbox" name="checkbox-1" id="checkbox-1">' +
-            '<label for="checkbox-1">One</label>' +
-            '<input type="checkbox" name="checkbox-2" id="checkbox-2">' +
-            '<label for="checkbox-2">Two</label>' +
-            '<input type="checkbox" name="checkbox-3" id="checkbox-3">' +
-            '<label for="checkbox-3">Two</label>' +
-            '<input type="checkbox" name="checkbox-4" id="checkbox-4">' +
-            '<label for="checkbox-4">Two</label>' +
-            '<input type="checkbox" name="checkbox-5" id="checkbox-5">' +
-            '<label for="checkbox-5">Three</label>');
-    $('#controlset-div1').controlgroup();
-*/
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.map.render(vizOptions);
+            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.mapRight.render(vizOptions);
+            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
+        });
 
     $('[name="choose-day"]').on('change', (event) => {
         var selectedDay = $('[name="choose-day"]:checked').val();
