@@ -191,7 +191,7 @@ VizFlowMap.prototype.renderAreas = function (container, data, options, path) {
 
 VizFlowMap.prototype.renderEdges = function (container, data, direction, options, maxDifference) {
     const edgeClass = 'scene-edge-' + direction;
-    const edgeLoad = direction == 1 ? 'backwardLoad' : 'forwardLoad';
+    const edgeLoad = direction == 'to' ? 'backwardLoad' : 'forwardLoad';
     container.selectAll('.' + edgeClass).remove();
 
     var arcsTo =  container.selectAll('.' + edgeClass)
@@ -207,10 +207,10 @@ VizFlowMap.prototype.renderEdges = function (container, data, direction, options
         .style("stroke-offset",
                  (d) => (Math.random() * 5 + 5) + 'px')
         .style("stroke", function(d) {
-            return edgesColor(scaleToRange(options.loadRange, d[edgeLoad]));
+            return edgesColor(scaleToRange([vizModel.range.min, vizModel.range.max], d[edgeLoad]));
         })
         .style("fill", function(d) {
-            return edgesColor(scaleToRange(options.loadRange, d[edgeLoad]));
+            return edgesColor(scaleToRange([vizModel.range.min, vizModel.range.max], d[edgeLoad]));
         })
         .style('opacity', function(d) {
             if (options.selectedNodes.length != 0 &&
@@ -274,7 +274,10 @@ VizFlowMap.prototype.render = function (options) {
         }
         const k = 5 / (vizModel.range.max - vizModel.range.min);
         const b = 1 - k * vizModel.range.min;
-        if ((od.forwardLoad - options.loadRange[0]) * (od.forwardLoad - options.loadRange[1]) <= 0) {
+        if (_.reduce(_.map(options.loadRange,
+                (range) => (range[0] <= od.forwardLoad) && (range[1] >= od.forwardLoad)),
+                function(a, b) {return a || b}, false)) {
+        //if ((od.forwardLoad - options.loadRange[0]) * (od.forwardLoad - options.loadRange[1]) <= 0) {
             //const forwardFlowCount = Math.ceil(k * od.forwardLoad + b);
             const forwardFlowCount = 1;
             for (var i = 0; i < forwardFlowCount; i++) {
@@ -289,7 +292,10 @@ VizFlowMap.prototype.render = function (options) {
                 });
             }
         }
-        if ((od.backwardLoad - options.loadRange[0]) * (od.backwardLoad - options.loadRange[1]) <= 0) {
+        if (_.reduce(_.map(options.loadRange,
+                (range) => (range[0] <= od.backwardLoad) && (range[1] >= od.backwardLoad)),
+                function(a, b) {return a || b}, false)) {
+        //if ((od.backwardLoad - options.loadRange[0]) * (od.backwardLoad - options.loadRange[1]) <= 0) {
              //const backwardFlowCount = Math.ceil(k * od.backwardLoad + b);
              const backwardFlowCount = 1;
              for (var i = 0; i < backwardFlowCount; i++) {
@@ -305,7 +311,6 @@ VizFlowMap.prototype.render = function (options) {
              }
         }
     });
-
 
     if (this.directionMode == 'both' || this.directionMode == 'to') {
         this.renderEdges(this.container, linestringBackwardData, 'to', options, maxDifference);

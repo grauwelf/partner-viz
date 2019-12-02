@@ -135,6 +135,7 @@ function VizModel() {
                 self.centers.nodes = nodes;
 
                 self.OD = {'weekday': [], 'friday': [], 'saturday': []};
+                self.flowValues = [];
                 flowsData.forEach(function(row) {
                     var flow = {};
 //                    var origin = row.origin_code.padStart(4, '0') +
@@ -157,6 +158,8 @@ function VizModel() {
 
                     var hour = row.time_end.substr(0,2) + ':00';
                     if (origin != destination) {
+                        self.flowValues = self.flowValues.concat(load);
+
                         if (self.centers.nodes[origin].totalOut[hour] === undefined) {
                             self.centers.nodes[origin].totalOut[hour] = load;
                         } else {
@@ -189,6 +192,9 @@ function VizModel() {
                         }
                     }
                 });
+
+
+
             });
 
     };

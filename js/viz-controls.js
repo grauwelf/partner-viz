@@ -21,7 +21,17 @@ function VizControls(map, mapRight, leafletMaps, leafletPath) {
 }
 
 VizControls.prototype.getOptions = function() {
-    const values = $('#load-slider').slider('values');
+    //const values = $('#load-slider').slider('values');
+    var rangeList = [];
+    $('#controlset-flow').find('input:checked').each(function(idx, el) {
+        const k = vizModel.range.max - vizModel.range.min;
+        const b = vizModel.range.min;
+        rangeList.push([
+            (el.value / 100 - 0.25) * k + b,
+            (el.value / 100) * k + b,
+        ]);
+    });
+
     const time = String($('#time-slider').slider('value') % 24).padStart(2, '0') + ':00';
     const selectedNodes = d3.selectAll('[sel="selected"]').nodes().map(function(el) {
         return el.attributes.id.value;
@@ -30,9 +40,7 @@ VizControls.prototype.getOptions = function() {
         selectedDay : $('[name="choose-day"]:checked').val(),
         selectedHour : time,
         selectedNodes : selectedNodes,
-        loadRange : [
-            Math.floor(this.logSlider.value(+values[0])),
-            Math.floor(this.logSlider.value(+values[1]))]
+        loadRange : rangeList
     };
 }
 
@@ -54,8 +62,6 @@ VizControls.prototype.updateLoadFilter = function (values, slider) {
     $('#load-slider').slider('values', 1, highMarkerPosition);
     lastLoadRange[leafletMapLeft.getZoom()] = [start, end];
 }
-
-
 
 VizControls.prototype.initialize = function(model) {
     // Main container for all controls
@@ -91,11 +97,49 @@ VizControls.prototype.initialize = function(model) {
     $('#controlset-zoom').controlgroup()
         .on('change', (e) => {
             if (this.leafletMapLeft.getZoom() != parseInt(e.target.value)) {
-                this.leafletMapLeft.setZoom(e.target.value);
+                const zoom = Number(e.target.value);
+                this.leafletMapLeft.setZoom(zoom);
+                leafletMapRight.setZoom(zoom);
+                d3.selectAll('.scene-node-tooltip').remove();
+                switch(zoom) {
+                    case 11:
+                        changeFlowsData(
+                                'json!data/map_cities.geojson',
+                                'json!data/map_cities_centroids.geojson',
+                                'csv!data/cities_flows.csv');
+                        break;
+                    case 12:
+                        changeFlowsData(
+                                'json!data/map_quarters.geojson',
+                                'json!data/map_quarters_centroids.geojson',
+                                'csv!data/quarters_flows.csv');
+                        break;
+                    case 13:
+                        changeFlowsData(
+                                'json!data/map_subquarters.geojson',
+                                'json!data/map_subquarters_centroids.geojson',
+                                'csv!data/subquarters_flows.csv');
+                        break;
+                    default:
+                        vizModel.update();
+                        vizMap.data.map = vizModel.areas;
+                        var options = vizControls.getOptions();
+                        options.directionMode = 'from';
+                        vizMap.render(options);
+                        vizMap.update(event, leafletMapLeft, leafletPath);
+
+                        vizMapRight.data.map = vizModel.areas;
+                        var options = vizControls.getOptions();
+                        options.directionMode = 'to';
+                        vizMapRight.render(options);
+                        vizMapRight.update(event, leafletMapRight, leafletPath);
+                }
+                zoomLevel = zoom;
+                return true;
             }
         });
 
-
+    // Time slider in the bottom panel
     var timeslider = new TimeSlider({
         position: 'bottomleft',
         map: this.map,
@@ -106,23 +150,150 @@ VizControls.prototype.initialize = function(model) {
     timeslider.setTime(selectedHour);
     timeslider.addTo(this.leafletMapLeft).afterLoad();
 
-    // Time interval picker
-/*    var days = _.keys(model.OD);
-    var style = '"pointer-events: auto; position: absolute; left: 75px; top: 0px; width: 100px; font-size:13px"';
-    zoomControls.append('<div id="choose-day" class="leaflet-control" style=' + style + '></div>');
-    $('#choose-day').append('<span>Time filter</span><br/>');
-    days.forEach(function(day) {
-        if (model.OD[day].length > 0) {
-            $('#choose-day').append('<input type="radio" name="choose-day" value="' + day + '">' + day + '</br>');
-        } else {
-            $('#choose-day').append('<input type="radio" name="choose-day" value="' + day + '" disabled>' + day + '</br>');
-        }
+    controls.append('<div id="load-histogram" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
+    $('#load-histogram').append('<span>Flows intensity</span><br/>');
 
-    });
-    $('[name="choose-day"][value="weekday"]').prop('checked', true);
-*/
+    var margin = {top: 0, right: 0, bottom: 20, left: 0},
+    width = d3.select("#load-histogram").node().clientWidth - margin.left - margin.right,
+    height = 70 - margin.top - margin.bottom;
+
+    var svg = d3.select("#load-histogram")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    var x = d3.scaleLinear()
+        .domain([_.min(vizModel.flowValues), _.max(vizModel.flowValues)])
+        .range([0, width]);
+
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x).ticks(5));
+
+    var histogram = d3.histogram()
+        .domain(x.domain())
+        .thresholds(10);
+
+    var bins = histogram(vizModel.flowValues);
+
+    var y = d3.scaleLinear()
+        .range([height, 0]);
+    y.domain([0, d3.max(bins, function(d) { return d.length; })]);
+    // svg.append("g").call(d3.axisLeft(y));
+
+    // Draw histogram
+    svg.selectAll("rect")
+        .data(bins)
+        .enter()
+        .append("rect")
+          .attr("x", 1)
+          .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(d.length) + ")"; })
+          .attr("width", function(d) { return x(d.x1) - x(d.x0) ; })
+          .attr("height", function(d) { return height - y(d.length); })
+          .style("fill", function(d, idx) {
+             return edgesColor(idx / 9);
+          });
+
+    controls.append('<div id="controlset-flow" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
+        ' class="leaflet-control controlset-flow" style="pointer-events: auto; width: 95%"></div>');
+    $('#controlset-flow').append(
+        '<input type="checkbox" name="checkbox-flow-25" id="checkbox-flow-1" value="25">' +
+        '<label for="checkbox-flow-1"><span class="ui-flow-label">Weak</span></label>' +
+        '<input type="checkbox" name="checkbox-flow-50" id="checkbox-flow-2" value="50" checked="true">' +
+        '<label for="checkbox-flow-2"><span class="ui-flow-label">Modest</span></label>' +
+        '<input type="checkbox" name="checkbox-flow-75" id="checkbox-flow-3" value="75" checked="true">' +
+        '<label for="checkbox-flow-3"><span class="ui-flow-label">Intense</span></label>' +
+        '<input type="checkbox" name="checkbox-flow-100" id="checkbox-flow-4" value="100">' +
+        '<label for="checkbox-flow-4"><span class="ui-flow-label">Huge</span></label>');
+    $('#controlset-flow').controlgroup()
+        .on('change', (e) => {
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.map.render(vizOptions);
+            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.mapRight.render(vizOptions);
+            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
+        });
+    $('#controlset-flow').append('<hr class="flow-bottom-bar"/>');
+
+    controls.append('<div id="controlset-density" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
+        ' class="leaflet-control controlset-radio" style="pointer-events: auto; width: 90%"></div>');
+    $('#controlset-density').append(
+        '<legend>Travellers per dot</legend>' +
+        '<input type="radio" name="radio-density" id="radio-density-1" value="20" checked="true">' +
+        '<label for="radio-density-1">20</label>' +
+        '<input type="radio" name="radio-density" id="radio-density-2" value="40">' +
+        '<label for="radio-density-2">40</label>' +
+        '<input type="radio" name="radio-density" id="radio-density-3" value="60">' +
+        '<label for="radio-density-3">60</label>' +
+        '<input type="radio" name="radio-density" id="radio-density-4" value="80">' +
+        '<label for="radio-density-4">80</label>' +
+        '<input type="radio" name="radio-density" id="radio-density-5" value="100">' +
+        '<label for="radio-density-5">100</label>');
+    $('#controlset-density').controlgroup()
+        .on('change', (e) => {
+            const val = Number(e.target.value);
+            if (val === undefined)
+                return;
+            this.map.devicesPerParticle = val;
+            this.mapRight.devicesPerParticle = val;
+
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.map.render(vizOptions);
+            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.mapRight.render(vizOptions);
+            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
+            this.leafletMapLeft.dragging.enable();
+        });
+
+
+    controls.append('<div id="controlset-speed" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
+        ' class="leaflet-control controlset-speed" style="pointer-events: auto; width: 100%"></div>');
+    $('#controlset-speed').append(
+        '<legend>Speed</legend>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-1" value="0.0">' +
+        '<label for="radio-speed-1">x0</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-2" value="0.5">' +
+        '<label for="radio-speed-2">x0.5</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-3" value="1" checked="true">' +
+        '<label for="radio-speed-3">x1</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-4" value="1.5">' +
+        '<label for="radio-speed-4">x1.5</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-5" value="2.0">' +
+        '<label for="radio-speed-5">x2</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-6" value="2.5">' +
+        '<label for="radio-speed-6">x2.5</label>' +
+        '<input type="radio" name="radio-speed" id="radio-speed-7" value="3">' +
+        '<label for="radio-speed-7">x3</label>');
+    $('#controlset-speed').controlgroup()
+        .on('change', (e) => {
+            const val = Number(e.target.value) * 20;
+            if (val === undefined)
+                return;
+            this.map.simulationRate = val;
+            this.mapRight.simulationRate = val;
+
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.map.render(vizOptions);
+            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.mapRight.render(vizOptions);
+            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
+        });
+
+/*
     // Load range slider
-    this.logSlider = new LogSlider({
+    this.logSlider = new LinearSlider({
         minpos: 1,
         maxpos: 100,
         minval: Math.ceil(model.range.min),
@@ -140,7 +311,6 @@ VizControls.prototype.initialize = function(model) {
     controls.append('<div id="load-filter" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
     $('#load-filter').append('<span>Flows intensity</span><br/>');
     $('#load-filter').append('<div id="load-slider"></div>');
-
     $('#load-slider').slider({
         range: true,
         min: minLoad,
@@ -175,6 +345,7 @@ VizControls.prototype.initialize = function(model) {
         .css('position', 'relative')
         .css('left', highMarkerPosition + '%')
         .css('margin-left', '-16px');
+
 
     controls.append('<div id="dots-density-div" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
     $('#dots-density-div').append('<span>Travellers per dot</span><br/>');
@@ -279,57 +450,7 @@ VizControls.prototype.initialize = function(model) {
         .css('left', 100 * (25 / 70) + '%')
         .css('margin-left', '-16px');
 
-    controls.append('<div id="controlset-density" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
-        ' class="leaflet-control controlset-radio" style="pointer-events: auto; width: 90%"></div>');
-    $('#controlset-density').append(
-        '<legend>Travellers per dot</legend>' +
-        '<input type="radio" name="radio-density" id="radio-density-1">' +
-        '<label for="radio-density-1">20</label>' +
-        '<input type="radio" name="radio-density" id="radio-density-2">' +
-        '<label for="radio-density-2">40</label>' +
-        '<input type="radio" name="radio-density" id="radio-density-3">' +
-        '<label for="radio-density-3">60</label>' +
-        '<input type="radio" name="radio-density" id="radio-density-4">' +
-        '<label for="radio-density-4">80</label>' +
-        '<input type="radio" name="radio-density" id="radio-density-5">' +
-        '<label for="radio-density-5">100</label>');
-    $('#controlset-density').controlgroup();
-
-    controls.append('<div id="controlset-speed" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
-        ' class="leaflet-control controlset-speed" style="pointer-events: auto; width: 100%"></div>');
-    $('#controlset-speed').append(
-        '<legend>Speed</legend>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-1" value="0.0">' +
-        '<label for="radio-speed-1">x0</label>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-2" value="0.5">' +
-        '<label for="radio-speed-2">x0.5</label>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-3" value="1">' +
-        '<label for="radio-speed-3">x1</label>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-4" value="1.5">' +
-        '<label for="radio-speed-4">x1.5</label>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-5" value="2.0">' +
-        '<label for="radio-speed-5">x2</label>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-6" value="2.5">' +
-        '<label for="radio-speed-6">x2.5</label>' +
-        '<input type="radio" name="radio-speed" id="radio-speed-7" value="3">' +
-        '<label for="radio-speed-7">x3</label>');
-    $('#controlset-speed').controlgroup()
-        .on('change', (e) => {
-            const val = Number(e.target.value) * 20;
-            if (val === undefined)
-                return;
-            this.map.simulationRate = val;
-            this.mapRight.simulationRate = val;
-
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = false;
-            this.map.render(vizOptions);
-            this.map.update(false, this.leafletMapLeft, this.leafletPath);
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = false;
-            this.mapRight.render(vizOptions);
-            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
-        });
+*/
 
     $('[name="choose-day"]').on('change', (event) => {
         var selectedDay = $('[name="choose-day"]:checked').val();
@@ -359,7 +480,7 @@ var LogSlider = function(options) {
     this.scale = (this.maxval - this.minval) / (this.maxpos - this.minpos);
  }
 
- LogSlider.prototype = {
+LogSlider.prototype = {
     value: function(position) {
         return Math.pow(10, (position - this.minpos) * this.scale + this.minval);
     },

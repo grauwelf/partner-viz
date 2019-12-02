@@ -64,12 +64,10 @@
     width: 220px;
 }
 
-#load-slider {
-    /*background: rgba(0, 0, 0, 0) linear-gradient(to right, #ffa700, #ff3500) repeat scroll 0% 0%;*/   
-}
-
-#load-slider > .ui-slider-range.ui-widget-header {
-    background: rgba(0, 0, 0, 0) linear-gradient(to right, #db36a4, #f7ff00) repeat scroll 0% 0%;  
+#load-slider > .ui-slider-range.ui-widget-header {  
+    background: rgba(0, 0, 0, 0) linear-gradient(to right, 
+        #84ca50 25%, #f07d02 25% 50%, #e60000 50% 75%, #9e1313 75%) 
+        repeat scroll 0% 0%;
 }
 
 .scene-map {
@@ -285,6 +283,57 @@
 
 span.ui-checkboxradio-icon { 
 	display: none; 
+}
+
+.controlset-flow .ui-button {
+    padding-top: 0.4em;
+    padding-bottom: 0.4em;
+    padding-left: 0px;
+    padding-right: 0px;
+    border-width: 0px 0px;
+    color: white;
+    width: 24%;
+}
+
+.controlset-flow .ui-button.ui-state-active {
+    transform: translate(0, -3px);
+}
+
+.controlset-flow .ui-button.ui-state-active:hover {
+	border: none;
+}
+
+.controlset-flow .ui-button .ui-flow-label {
+	background: inherit;
+	background-clip: inherit;
+	background-clip: text;
+	color: transparent;
+    filter: invert(1) grayscale(1) contrast(9);
+}
+
+.controlset-flow .ui-button:nth-child(2) {
+    background-color: #84ca50;
+}
+
+.controlset-flow .ui-button:nth-child(4) {
+    background-color: #f07d02;
+}
+
+.controlset-flow .ui-button:nth-child(6) {
+    background-color: #e60000;
+}
+
+.controlset-flow .ui-button:nth-child(8) {
+    background-color: #9e1313;
+}
+
+.controlset-flow .flow-bottom-bar {
+	transform: translate(-100%, 20px);
+	width: 95%;
+    border: solid 1px;
+    border-image: linear-gradient(to right, 
+        #84ca50 25%, #f07d02 25% 50%, #e60000 50% 75%, #9e1313 75%);
+    border-image-slice: 1;
 }
 
 .controlset-radio .ui-button {

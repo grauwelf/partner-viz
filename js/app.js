@@ -175,7 +175,7 @@ leafletMapLeft.on("zoomend", function(event) {
     const zoom = leafletMapLeft.getZoom();
     leafletMapRight.setZoom(zoom);
     d3.selectAll('.scene-node-tooltip').remove();
-    switch(zoom) {
+    /*switch(zoom) {
         case 11:
             changeFlowsData(
                     'json!data/map_cities.geojson',
@@ -207,7 +207,7 @@ leafletMapLeft.on("zoomend", function(event) {
             options.directionMode = 'to';
             vizMapRight.render(options);
             vizMapRight.update(event, leafletMapRight, leafletPath);
-    }
+    }*/
     zoomLevel = zoom;
     return true;
 });
