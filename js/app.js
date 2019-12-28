@@ -217,3 +217,31 @@ changeFlowsData(
     'json!data/map_quarters.geojson',
     'json!data/map_quarters_centroids.geojson',
     'csv!data/quarters_flows.csv');
+
+$('#time-control').roundSlider({
+    radius: 70,
+    width: 8,
+    handleSize: "8,8",
+    sliderType: "range",
+    showTooltip: false,
+    startAngle: 90,
+    min: 0,
+    max: 24,
+    step: 1,
+    value: "6, 11"
+});
+
+$('.rs-inner').html('\
+        <div class="tick"><div class="rs-label">00</div></div>\
+        <div class="tick"><div class="rs-label">03</div></div>\
+        <div class="tick"><div class="rs-label">06</div></div>\
+        <div class="tick"><div class="rs-label">09</div></div>\
+        <div class="tick"><div class="rs-label">12</div></div>\
+        <div class="tick"><div class="rs-label">15</div></div>\
+        <div class="tick"><div class="rs-label">18</div></div>\
+        <div class="tick"><div class="rs-label">21</div></div>');
+
+/*$('.rs-second').after('\
+        <div class="rs-bar rs-transition rs-hand">\
+            <div class="rs-handle rs-move"></div>\
+        </div>');*/

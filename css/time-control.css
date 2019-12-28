@@ -1,0 +1,120 @@
+#time-control {
+  position: absolute;
+  top: 50px;
+  left: 750px;
+  z-index: 1000;
+}
+
+#time-control .rs-range-color  {
+  background-color: #00BB00;
+}
+
+#time-control .rs-path-color  {
+  background-color: #bbb;
+  border-radius: 0;
+}
+
+#time-control .rs-handle  {
+  background-color: #002200;
+}
+
+#time-control .rs-border  {
+  border: none;
+}
+
+.time-control {
+  width: 200px;
+  height: 200px;
+  background: pink;
+  border-radius: 50%;
+}
+
+.time-control .tick {
+  width: 6px;
+  height: 6px;
+  background: #f00;
+  position: absolute;
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  margin-left: -3px;
+  margin-top: -3px;
+}
+
+.time-control .rs-label {
+  font-size: 8pt;
+}
+
+.time-control .tick:nth-child(1) {
+  transform: rotate(-90deg) translate(55px);
+}
+.time-control .tick:nth-child(2) {
+  transform: rotate(-45deg) translate(55px);
+}
+.time-control .tick:nth-child(3) {
+  transform: rotate(0deg) translate(55px);
+}
+.time-control .tick:nth-child(4) {
+  transform: rotate(45deg) translate(55px);
+}
+.time-control .tick:nth-child(5) {
+  transform: rotate(90deg) translate(55px);
+}
+.time-control .tick:nth-child(6) {
+  transform: rotate(135deg) translate(55px);
+}
+.time-control .tick:nth-child(7) {
+  transform: rotate(180deg) translate(55px);
+}
+.time-control .tick:nth-child(8) {
+  transform: rotate(225deg) translate(55px);
+}
+
+.time-control .tick:nth-child(1) .rs-label {
+  transform: rotate(90deg) translate(-8px,8px);
+}
+.time-control .tick:nth-child(2) .rs-label {
+  transform: rotate(45deg) translate(-16px,8px);
+}
+.time-control .tick:nth-child(3) .rs-label {
+  transform: rotate(0deg) translate(-16px,-4px);
+}
+.time-control .tick:nth-child(4) .rs-label {
+  transform: rotate(-45deg) translate(-10px,-10px);
+}
+.time-control .tick:nth-child(5) .rs-label {
+  transform: rotate(-90deg) translate(0px,-10px);
+}
+.time-control .tick:nth-child(6) .rs-label {
+  transform: rotate(-135deg) translate(8px,-4px);
+}
+.time-control .tick:nth-child(7) .rs-label {
+  transform: rotate(-180deg) translate(8px,4px);
+}
+.time-control .tick:nth-child(8) .rs-label {
+  transform: rotate(-225deg) translate(4px,13px);
+}
+
+.time-control .rs-hand {
+	transform: rotate(180deg);
+}
+
+.time-control .rs-hand .rs-handle {	
+  background-color: transparent !important;
+  border: 8px solid transparent;
+  border-right-color: black;
+  margin: -4px 0px 0px 14px !important;
+  border-width: 4px 65px 4px 2px;
+}
+.time-control .rs-hand .rs-handle:before  {
+  display: block;
+  content: " ";
+  position: absolute;
+  height: 10px;
+  width: 10px;
+  background: white;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 100px;
+  border: 1px solid black;
+}
