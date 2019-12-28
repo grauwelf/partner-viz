@@ -175,39 +175,6 @@ leafletMapLeft.on("zoomend", function(event) {
     const zoom = leafletMapLeft.getZoom();
     leafletMapRight.setZoom(zoom);
     d3.selectAll('.scene-node-tooltip').remove();
-    /*switch(zoom) {
-        case 11:
-            changeFlowsData(
-                    'json!data/map_cities.geojson',
-                    'json!data/map_cities_centroids.geojson',
-                    'csv!data/cities_flows.csv');
-            break;
-        case 12:
-            changeFlowsData(
-                    'json!data/map_quarters.geojson',
-                    'json!data/map_quarters_centroids.geojson',
-                    'csv!data/quarters_flows.csv');
-            break;
-        case 13:
-            changeFlowsData(
-                    'json!data/map_subquarters.geojson',
-                    'json!data/map_subquarters_centroids.geojson',
-                    'csv!data/subquarters_flows.csv');
-            break;
-        default:
-            vizModel.update();
-            vizMap.data.map = vizModel.areas;
-            var options = vizControls.getOptions();
-            options.directionMode = 'from';
-            vizMap.render(options);
-            vizMap.update(event, leafletMapLeft, leafletPath);
-
-            vizMapRight.data.map = vizModel.areas;
-            var options = vizControls.getOptions();
-            options.directionMode = 'to';
-            vizMapRight.render(options);
-            vizMapRight.update(event, leafletMapRight, leafletPath);
-    }*/
     zoomLevel = zoom;
     return true;
 });
@@ -217,31 +184,3 @@ changeFlowsData(
     'json!data/map_quarters.geojson',
     'json!data/map_quarters_centroids.geojson',
     'csv!data/quarters_flows.csv');
-
-$('#time-control').roundSlider({
-    radius: 70,
-    width: 8,
-    handleSize: "8,8",
-    sliderType: "range",
-    showTooltip: false,
-    startAngle: 90,
-    min: 0,
-    max: 24,
-    step: 1,
-    value: "6, 11"
-});
-
-$('.rs-inner').html('\
-        <div class="tick"><div class="rs-label">00</div></div>\
-        <div class="tick"><div class="rs-label">03</div></div>\
-        <div class="tick"><div class="rs-label">06</div></div>\
-        <div class="tick"><div class="rs-label">09</div></div>\
-        <div class="tick"><div class="rs-label">12</div></div>\
-        <div class="tick"><div class="rs-label">15</div></div>\
-        <div class="tick"><div class="rs-label">18</div></div>\
-        <div class="tick"><div class="rs-label">21</div></div>');
-
-/*$('.rs-second').after('\
-        <div class="rs-bar rs-transition rs-hand">\
-            <div class="rs-handle rs-move"></div>\
-        </div>');*/

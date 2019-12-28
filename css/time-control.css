@@ -1,8 +1,16 @@
 #time-control {
-  position: absolute;
+  /*position: absolute;
   top: 50px;
-  left: 750px;
+  left: 750px;*/
   z-index: 1000;
+}
+
+.leaflet-top.leaflet-left.time-control {
+    background-color: white;
+    border-radius: 5px;
+    margin: 8px;
+    padding: 18px 4px 18px 4px;
+    width: 248px;
 }
 
 #time-control .rs-range-color  {
@@ -95,10 +103,6 @@
   transform: rotate(-225deg) translate(4px,13px);
 }
 
-.time-control .rs-hand {
-	transform: rotate(180deg);
-}
-
 .time-control .rs-hand .rs-handle {	
   background-color: transparent !important;
   border: 8px solid transparent;
@@ -117,4 +121,15 @@
   bottom: -5px;
   border-radius: 100px;
   border: 1px solid black;
+}
+
+#time-histogram {
+	position: absolute;
+	top: -50px;
+	left: -50px;
+	pointer-events: none;
+}
+
+.rs-range-color.rs-range-over {
+	background-color: #4e9a06!important;
 }

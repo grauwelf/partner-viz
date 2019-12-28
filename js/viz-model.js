@@ -136,6 +136,7 @@ function VizModel() {
 
                 self.OD = {'weekday': [], 'friday': [], 'saturday': []};
                 self.flowValues = [];
+                self.flowValuesByHour = [];
                 flowsData.forEach(function(row) {
                     var flow = {};
 //                    var origin = row.origin_code.padStart(4, '0') +
@@ -156,9 +157,16 @@ function VizModel() {
                         self.centers.nodes[origin].stay = load;
                     }
 
+                    var hourNum = Number(row.time_end.substr(0,2));
                     var hour = row.time_end.substr(0,2) + ':00';
                     if (origin != destination) {
                         self.flowValues = self.flowValues.concat(load);
+
+                        if (self.flowValuesByHour[hourNum] === undefined) {
+                            self.flowValuesByHour[hourNum] = [load];
+                        } else {
+                            self.flowValuesByHour[hourNum] = self.flowValuesByHour[hourNum].concat(load);
+                        }
 
                         if (self.centers.nodes[origin].totalOut[hour] === undefined) {
                             self.centers.nodes[origin].totalOut[hour] = load;

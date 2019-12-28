@@ -150,6 +150,16 @@ VizControls.prototype.initialize = function(model) {
     timeslider.setTime(selectedHour);
     timeslider.addTo(this.leafletMapLeft).afterLoad();
 
+    /*var timeslider = new CircularTimeSlider({
+        position: 'topleft',
+        map: this.mapRight,
+        leafletMapLeft: this.leafletMapLeft,
+        leafletPath: this.leafletPath,
+        parent: this
+    });
+    timeslider.setTime(selectedHour);
+    timeslider.addTo(this.leafletMapRight).afterLoad();*/
+
     controls.append('<div id="load-histogram" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
     $('#load-histogram').append('<span>Flows intensity</span><br/>');
 
@@ -290,167 +300,6 @@ VizControls.prototype.initialize = function(model) {
             this.mapRight.render(vizOptions);
             this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
         });
-
-/*
-    // Load range slider
-    this.logSlider = new LinearSlider({
-        minpos: 1,
-        maxpos: 100,
-        minval: Math.ceil(model.range.min),
-        maxval: Math.floor(model.range.max)
-    });
-
-    var minLoad = 1;
-    var maxLoad = 100;
-    var step = 1;
-    var loadLow = Math.ceil(model.range.min);
-    var loadHigh = Math.ceil(model.range.max);
-    var lowMarkerPosition = 1;
-    var highMarkerPosition = 100;
-
-    controls.append('<div id="load-filter" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
-    $('#load-filter').append('<span>Flows intensity</span><br/>');
-    $('#load-filter').append('<div id="load-slider"></div>');
-    $('#load-slider').slider({
-        range: true,
-        min: minLoad,
-        max: maxLoad,
-        step: step,
-        values: [lowMarkerPosition, highMarkerPosition],
-        start: (event, ui) => {
-            this.leafletMapLeft.dragging.disable();
-        },
-        slide: (event, ui) => {
-            this.updateLoadFilter(ui.values, this.logSlider);
-        },
-        stop: (event, ui) => {
-            this.leafletMapLeft.dragging.enable();
-            var selectedDay = $('[name="choose-day"]:checked').val();
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = false;
-            this.map.render(vizOptions);
-            this.map.update(false, this.leafletMapLeft, this.leafletPath);
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = false;
-            this.mapRight.render(vizOptions);
-            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
-        },
-    });
-    $('#load-filter').append('<span id="load-range-low">' + loadLow + '</span>');
-    $('#load-range-low')
-        .css('position', 'relative')
-        .css('left', lowMarkerPosition + '%');
-    $('#load-filter').append('<span id="load-range-high">' + loadHigh + '</span>');
-    $('#load-range-high')
-        .css('position', 'relative')
-        .css('left', highMarkerPosition + '%')
-        .css('margin-left', '-16px');
-
-
-    controls.append('<div id="dots-density-div" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
-    $('#dots-density-div').append('<span>Travellers per dot</span><br/>');
-    $("#dots-density-div").append('<div id="density-slider"></div>');
-    $("#density-slider").slider({
-        min: 1,
-        max: 100,
-        step: 1,
-        value: 10,
-        start: (event, ui) => {
-            this.leafletMapLeft.dragging.disable();
-        },
-        slide: (event, ui) => {
-            const val = Number(ui.value);
-            $('#density-value')
-                .html(val)
-                .css('left', 100 * (val / 99) + '%');
-        },
-        stop: (event, ui) => {
-            const val = Number(ui.value);
-            if (val === undefined)
-                return;
-            this.map.devicesPerParticle = val;
-            this.mapRight.devicesPerParticle = val;
-
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = false;
-            this.map.render(vizOptions);
-            this.map.update(false, this.leafletMapLeft, this.leafletPath);
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = false;
-            this.mapRight.render(vizOptions);
-            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
-            this.leafletMapLeft.dragging.enable();
-        },
-    });
-    $('#dots-density-div').append('<span id="density-high">100</span>');
-    $('#density-high')
-        .css('position', 'relative')
-        .css('left', '100%')
-        .css('margin-left', '-8px');
-    $('#dots-density-div').append('<span id="density-low">1</span>');
-    $('#density-low')
-        .css('position', 'relative')
-        .css('left',  '0%')
-        .css('margin-left', '-16px');
-    $('#dots-density-div').append('<span id="density-value">10</span>');
-    $('#density-value')
-        .css('position', 'relative')
-        .css('left', 100 * (10 / 99) + '%')
-        .css('margin-left', '-8px');
-
-
-    controls.append('<div id="dots-speed-div" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
-    $('#dots-speed-div').append('<span>Speed</span><br/>');
-    $("#dots-speed-div").append('<div id="speed-slider"></div>');
-    $("#speed-slider").slider({
-        min: 0,
-        max: 70,
-        step: 1,
-        value: 25,
-        start: (event, ui) => {
-            this.leafletMapLeft.dragging.disable();
-        },
-        slide: (event, ui) => {
-            const val = Number(ui.value);
-            $('#speed-value')
-                .html(val)
-                .css('left', 100 * (val / 70) + '%');
-        },
-        stop: (event, ui) => {
-            const val = Number(ui.value);
-            if (val === undefined)
-                return;
-            this.map.simulationRate = val;
-            this.mapRight.simulationRate = val;
-
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = false;
-            this.map.render(vizOptions);
-            this.map.update(false, this.leafletMapLeft, this.leafletPath);
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = false;
-            this.mapRight.render(vizOptions);
-            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
-            this.leafletMapLeft.dragging.enable();
-        },
-    });
-    $('#dots-speed-div').append('<span id="speed-high">75</span>');
-    $('#speed-high')
-        .css('position', 'relative')
-        .css('left', '100%')
-        .css('margin-left', '-8px');
-    $('#dots-speed-div').append('<span id="speed-low">0</span>');
-    $('#speed-low')
-        .css('position', 'relative')
-        .css('left',  '0%')
-        .css('margin-left', '-8px');
-    $('#dots-speed-div').append('<span id="speed-value">25</span>');
-    $('#speed-value')
-        .css('position', 'relative')
-        .css('left', 100 * (25 / 70) + '%')
-        .css('margin-left', '-16px');
-
-*/
 
     $('[name="choose-day"]').on('change', (event) => {
         var selectedDay = $('[name="choose-day"]:checked').val();
@@ -668,6 +517,205 @@ var TimeSlider = L.Control.extend({
                 $('#time-display').html(String(sliderValue % 24).padStart(2, '0') + ':00');
             },
         });
+    },
+
+    step: function(context, start) {
+        var slider = $('#time-slider');
+        var display = $('#time-display');
+        start = start || slider.slider('value');
+        const sliderValue = slider.slider('value');
+
+        slider.slider('value', (sliderValue + 1) % 24);
+        vizOptions = context.options.parent.getOptions();
+        vizOptions.dataChanged = true;
+        context.options.map.render(vizOptions);
+        context.options.map.update(true, context.options.leafletMapLeft, context.options.leafletPath);
+        vizOptions = context.options.parent.getOptions();
+        vizOptions.dataChanged = true;
+        vizMapRight.render(vizOptions);
+        vizMapRight.update(true, leafletMapRight, leafletPath);
+        display.html(String(sliderValue).padStart(2, '0') + ':00');
+    },
+
+    play: function(start) {
+        if (this.clock !== null) {
+            clearInterval(this.clock);
+        }
+        this.step(this, start);
+        return setInterval(this.step, this.duration, this);
+    },
+
+    pause: function() {
+        if (this.clock !== null) {
+            clearInterval(this.clock);
+        }
+    },
+
+    reset: function(value) {
+        if (this.clock !== null) {
+            clearInterval(this.clock);
+        }
+        value = value || this.defaultStart;
+        $('#time-slider').slider('option', 'animate', 'false');
+        $('#time-slider').slider('value', value);
+        $('#time-display').html(String(value).padStart(2, '0') + ':00');
+        $('#time-slider').slider('option', 'animate', this.duration);
+    }
+});
+
+
+var CircularTimeSlider = L.Control.extend({
+
+    clock: null,
+    duration: 3000,
+    defaultStart: Math.round(Number(moment().format('H')) + Number(moment().format('m')) / 60 ),
+
+    setTime: function(selectedHour) {
+        if(!isNaN(selectedHour)) {
+            this.defaultStart = selectedHour;
+        }
+    },
+
+    onAdd: function() {
+        var container = L.DomUtil.create('div', 'time-control');
+        container.id = 'time-control';
+        const stop = L.DomEvent.stopPropagation;
+        const prevent = L.DomEvent.preventDefault;
+
+        /*
+        var display = L.DomUtil.create('div', 'time-slider-display', container);
+        display.id = 'time-display';
+        display.innerHTML = String(this.defaultStart).padStart(2, '0') + ':00';
+
+        var playButton = L.DomUtil.create('a', 'time-slider-play', container);
+        playButton.pauseHTML = '<i class="material-icons">pause</i>';
+        playButton.playHTML = '<i class="material-icons">play_arrow</i>';
+        playButton.innerHTML = playButton.playHTML;
+
+        L.DomEvent
+            .on(playButton, 'click mousedown dblclick', stop)
+            .on(playButton, 'click', prevent)
+            .on(playButton, 'click', function(event) {
+                var button = event.currentTarget;
+                switch (button.innerHTML) {
+                    case button.playHTML:
+                        button.innerHTML = button.pauseHTML;
+                        this.clock = this.play();
+                        break;
+                    case button.pauseHTML:
+                        button.innerHTML = button.playHTML;
+                        this.pause();
+                        break;
+                    default :
+                        break;
+                }
+            }, this);
+
+        var resetButton = L.DomUtil.create('a', 'time-slider-reset', container);
+        resetButton.innerHTML = '<i class="material-icons">stop</i>';
+        L.DomEvent
+            .on(resetButton, 'click mousedown dblclick', stop)
+            .on(resetButton, 'click', prevent)
+            .on(resetButton, 'click', function(event) {
+                this.reset();
+                playButton.innerHTML = playButton.playHTML;
+            }, this);
+
+        var slider = L.DomUtil.create('a', 'leaflet-control time-slider', container);
+        slider.id = 'time-slider';
+
+        var scale = L.DomUtil.create('div', 'timeline-bar', container);
+        var content = '<div class="steps-bar clearfix">';
+        for (var i = 0; i <= 24; i++) {
+            if (i % 3 != 0) {
+                //continue;
+            }
+            content += '\
+            <div class="step" data-time="' + i + '">\
+                <span class="step-border"></span>\
+                <span class="time-instant">' + (i % 24).toString().padStart(2, '0') + '</span>\
+            </div>';
+        }
+        scale.innerHTML += content + '</div>';
+        */
+        return container;
+    },
+
+    afterLoad: function(options) {
+        /*$('.time-control').appendTo('body');
+        const mapHeight = leafletMapLeft.getContainer().clientHeight;
+        const controlHeight = parseInt($('.time-control').css('height'));
+        $('.time-control').css('top', mapHeight - controlHeight - 10);*/
+
+        if (options === undefined)
+            options = {};
+        $('#time-control').roundSlider({
+            radius: 70,
+            width: 8,
+            handleSize: "8,8",
+            sliderType: "range",
+            showTooltip: false,
+            startAngle: 90,
+            min: 0,
+            max: 24,
+            step: 1,
+            value: "6, 11"
+        });
+
+        $('.rs-inner').html('\
+                <div class="tick"><div class="rs-label">00</div></div>\
+                <div class="tick"><div class="rs-label">03</div></div>\
+                <div class="tick"><div class="rs-label">06</div></div>\
+                <div class="tick"><div class="rs-label">09</div></div>\
+                <div class="tick"><div class="rs-label">12</div></div>\
+                <div class="tick"><div class="rs-label">15</div></div>\
+                <div class="tick"><div class="rs-label">18</div></div>\
+                <div class="tick"><div class="rs-label">21</div></div>');
+
+        $('#time-histogram').remove();
+        $('#time-control').append('<div id="time-histogram"></div>');
+
+        var margin = {top: 0, right: 0, bottom: 0, left: 0},
+            width = 240 - margin.left - margin.right,
+            height = 240 - margin.top - margin.bottom,
+            innerRadius = 70,
+            outerRadius = Math.min(width, height) / 2;
+
+        var timeHistogramSVG = d3.select("#time-histogram")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")");
+
+        var data = vizModel.flowValuesByHour.map(
+                function(hourFlows) {
+                    return hourFlows.reduce((a, b) => a + b, 0) / hourFlows.length;
+                });
+
+        var x = d3.scaleBand()
+            .range([0, 2 * Math.PI])
+            .align(0)
+            .domain(data.map(function(d, index) { return index; }) );
+
+        var y = d3.scaleRadial()
+            .range([innerRadius, outerRadius])
+            .domain([0, _.max(data) * 1.5]);
+
+        timeHistogramSVG.append("g")
+            .selectAll("path")
+            .data(data)
+            .enter()
+            .append("path")
+                .attr("fill", "#ffbf00")
+                .attr("d", d3.arc()
+                        .innerRadius(innerRadius)
+                        .outerRadius(function(d) { return y(d); })
+                        .startAngle(function(d, index) { return x(index); })
+                        .endAngle(function(d, index) { return x(index) + x.bandwidth(); })
+                        .padAngle(0.01)
+                        .padRadius(innerRadius));
+
     },
 
     step: function(context, start) {
