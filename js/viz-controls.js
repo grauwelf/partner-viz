@@ -32,7 +32,8 @@ VizControls.prototype.getOptions = function() {
         ]);
     });
 
-    const time = String($('#time-slider').slider('value') % 24).padStart(2, '0') + ':00';
+    //const time = String($('#time-slider').slider('value') % 24).padStart(2, '0') + ':00';
+    const time = String($('#time-control').roundSlider('option', 'currentValue') % 24).padStart(2, '0') + ':00';
     const selectedNodes = d3.selectAll('[sel="selected"]').nodes().map(function(el) {
         return el.attributes.id.value;
     });
@@ -139,7 +140,7 @@ VizControls.prototype.initialize = function(model) {
             }
         });
 
-    // Time slider in the bottom panel
+/*    // Time slider in the bottom panel
     var timeslider = new TimeSlider({
         position: 'bottomleft',
         map: this.map,
@@ -148,17 +149,17 @@ VizControls.prototype.initialize = function(model) {
         parent: this
     });
     timeslider.setTime(selectedHour);
-    timeslider.addTo(this.leafletMapLeft).afterLoad();
+    timeslider.addTo(this.leafletMapLeft).afterLoad();*/
 
-    /*var timeslider = new CircularTimeSlider({
+    var timeslider = new CircularTimeSlider({
         position: 'topleft',
-        map: this.mapRight,
+        map: this.map,
         leafletMapLeft: this.leafletMapLeft,
         leafletPath: this.leafletPath,
         parent: this
     });
     timeslider.setTime(selectedHour);
-    timeslider.addTo(this.leafletMapRight).afterLoad();*/
+    timeslider.addTo(this.leafletMapRight).afterLoad();
 
     controls.append('<div id="load-histogram" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
     $('#load-histogram').append('<span>Flows intensity</span><br/>');
@@ -569,83 +570,25 @@ var CircularTimeSlider = L.Control.extend({
     clock: null,
     duration: 3000,
     defaultStart: Math.round(Number(moment().format('H')) + Number(moment().format('m')) / 60 ),
+    currentValue: null,
 
     setTime: function(selectedHour) {
         if(!isNaN(selectedHour)) {
             this.defaultStart = selectedHour;
+            this.currentValue = selectedHour;
         }
     },
 
     onAdd: function() {
         var container = L.DomUtil.create('div', 'time-control');
         container.id = 'time-control';
-        const stop = L.DomEvent.stopPropagation;
-        const prevent = L.DomEvent.preventDefault;
-
-        /*
-        var display = L.DomUtil.create('div', 'time-slider-display', container);
-        display.id = 'time-display';
-        display.innerHTML = String(this.defaultStart).padStart(2, '0') + ':00';
-
-        var playButton = L.DomUtil.create('a', 'time-slider-play', container);
-        playButton.pauseHTML = '<i class="material-icons">pause</i>';
-        playButton.playHTML = '<i class="material-icons">play_arrow</i>';
-        playButton.innerHTML = playButton.playHTML;
-
-        L.DomEvent
-            .on(playButton, 'click mousedown dblclick', stop)
-            .on(playButton, 'click', prevent)
-            .on(playButton, 'click', function(event) {
-                var button = event.currentTarget;
-                switch (button.innerHTML) {
-                    case button.playHTML:
-                        button.innerHTML = button.pauseHTML;
-                        this.clock = this.play();
-                        break;
-                    case button.pauseHTML:
-                        button.innerHTML = button.playHTML;
-                        this.pause();
-                        break;
-                    default :
-                        break;
-                }
-            }, this);
-
-        var resetButton = L.DomUtil.create('a', 'time-slider-reset', container);
-        resetButton.innerHTML = '<i class="material-icons">stop</i>';
-        L.DomEvent
-            .on(resetButton, 'click mousedown dblclick', stop)
-            .on(resetButton, 'click', prevent)
-            .on(resetButton, 'click', function(event) {
-                this.reset();
-                playButton.innerHTML = playButton.playHTML;
-            }, this);
-
-        var slider = L.DomUtil.create('a', 'leaflet-control time-slider', container);
-        slider.id = 'time-slider';
-
-        var scale = L.DomUtil.create('div', 'timeline-bar', container);
-        var content = '<div class="steps-bar clearfix">';
-        for (var i = 0; i <= 24; i++) {
-            if (i % 3 != 0) {
-                //continue;
-            }
-            content += '\
-            <div class="step" data-time="' + i + '">\
-                <span class="step-border"></span>\
-                <span class="time-instant">' + (i % 24).toString().padStart(2, '0') + '</span>\
-            </div>';
-        }
-        scale.innerHTML += content + '</div>';
-        */
         return container;
     },
 
     afterLoad: function(options) {
-        /*$('.time-control').appendTo('body');
-        const mapHeight = leafletMapLeft.getContainer().clientHeight;
-        const controlHeight = parseInt($('.time-control').css('height'));
-        $('.time-control').css('top', mapHeight - controlHeight - 10);*/
+        const stop = L.DomEvent.stopPropagation;
+        const prevent = L.DomEvent.preventDefault;
+        this.currentValue = this.defaultStart;
 
         if (options === undefined)
             options = {};
@@ -659,7 +602,13 @@ var CircularTimeSlider = L.Control.extend({
             min: 0,
             max: 24,
             step: 1,
-            value: "6, 11"
+            value: this.defaultStart + ',' + (this.defaultStart + 8),
+            currentValue: this.currentValue,
+            change: (e) => {
+                var range = e.options.value.split(',');
+                $('#time-control').roundSlider('option', 'currentValue', parseInt(range[0]));
+                this.currentValue = parseInt(range[0]);
+            }
         });
 
         $('.rs-inner').html('\
@@ -700,7 +649,7 @@ var CircularTimeSlider = L.Control.extend({
 
         var y = d3.scaleRadial()
             .range([innerRadius, outerRadius])
-            .domain([0, _.max(data) * 1.5]);
+            .domain([0, _.max(data) * 2.5]);
 
         timeHistogramSVG.append("g")
             .selectAll("path")
@@ -716,15 +665,58 @@ var CircularTimeSlider = L.Control.extend({
                         .padAngle(0.01)
                         .padRadius(innerRadius));
 
+        L.DomEvent.addListener(L.DomUtil.get('time-control'), 'mousedown',
+                (event) => {
+                    this._map.dragging.disable();
+                });
+        L.DomEvent.addListener(L.DomUtil.get('time-control'), 'mouseup',
+                (event) => {
+                    this._map.dragging.enable();
+                });
+
+        var playButton = L.DomUtil.create('a', 'time-slider-play',  L.DomUtil.get('time-control'));
+        playButton.pauseHTML = '<i class="material-icons">pause</i>';
+        playButton.playHTML = '<i class="material-icons">play_arrow</i>';
+        playButton.innerHTML = playButton.playHTML;
+
+        L.DomEvent
+            .on(playButton, 'click mousedown dblclick', stop)
+            .on(playButton, 'click', prevent)
+            .on(playButton, 'click', function(event) {
+                var button = event.currentTarget;
+                switch (button.innerHTML) {
+                    case button.playHTML:
+                        button.innerHTML = button.pauseHTML;
+                        this.clock = this.play();
+                        break;
+                    case button.pauseHTML:
+                        button.innerHTML = button.playHTML;
+                        this.pause();
+                        break;
+                    default :
+                        break;
+                }
+            }, this);
     },
 
     step: function(context, start) {
-        var slider = $('#time-slider');
-        var display = $('#time-display');
-        start = start || slider.slider('value');
-        const sliderValue = slider.slider('value');
+        console.log(context.currentValue);
+        var range = $('#time-control').roundSlider('option', 'value').split(',');
+        range[0] = parseInt(range[0]);
+        range[1] = parseInt(range[1]);
 
-        slider.slider('value', (sliderValue + 1) % 24);
+        var stepAngle = (360 / 24) * (context.currentValue - range[0]);
+        var startAngle = (360 / 24) * range[0] + 90;
+
+        context.currentValue = context.currentValue + 1;
+        if (context.currentValue > range[1]) {
+            context.currentValue = range[0];
+        }
+        $('#time-control').roundSlider('option', 'currentValue', context.currentValue);
+
+        $($('.rs-path.rs-transition.rs-range-color.rs-range-over')[0]).rsRotate(stepAngle + startAngle);
+        $($('.rs-path.rs-transition.rs-path-color.rs-range-over')[1]).rsRotate(stepAngle + startAngle - 180);
+
         vizOptions = context.options.parent.getOptions();
         vizOptions.dataChanged = true;
         context.options.map.render(vizOptions);
@@ -733,7 +725,6 @@ var CircularTimeSlider = L.Control.extend({
         vizOptions.dataChanged = true;
         vizMapRight.render(vizOptions);
         vizMapRight.update(true, leafletMapRight, leafletPath);
-        display.html(String(sliderValue).padStart(2, '0') + ':00');
     },
 
     play: function(start) {

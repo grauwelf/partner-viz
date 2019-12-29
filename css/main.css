@@ -9,7 +9,7 @@
   font-family: 'Material Icons';
   font-weight: normal;
   font-style: normal;
-  font-size: 24px;
+  font-size: 32px;
   line-height: 1;
   letter-spacing: normal;
   text-transform: none;
@@ -189,11 +189,11 @@
 
 .time-slider-play {
 	cursor : default;
-    font-size: 14px;
     color: black !important;
     position : absolute;
-	left: 0px;
-	top: 30px;
+	left: 55px;
+	top: 55px;
+	z-index: 3000;
 }
 
 .time-slider-display {
