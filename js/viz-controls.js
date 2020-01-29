@@ -71,7 +71,24 @@ VizControls.prototype.initialize = function(model) {
     controls.html('');
     $('.time-slider-control').remove();
 
-    var zoomControls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left > .leaflet-bar');
+    const screenType = 0;
+    controls.append('<div id="controlset-screen" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
+        ' class="leaflet-control controlset-screen"></div>');
+    $('#controlset-screen').append(
+        '<legend>Screen options</legend>' +
+        '<input type="radio" name="radio-screen" id="radio-screen-0" value="0">' +
+        '<label for="radio-screen-0"><span class="icon-split"></span></label>' +
+        '<input type="radio" name="radio-screen" id="radio-screen-1" value="1">' +
+        '<label for="radio-screen-1"><span class="icon-all-from"></span></label>' +
+        '<input type="radio" name="radio-screen" id="radio-screen-2" value="2">' +
+        '<label for="radio-screen-2"><span class="icon-all-to"></span></label>');
+
+    $('#radio-screen-' + screenType).prop('checked', true).trigger('change');
+
+    $('#controlset-screen').controlgroup()
+        .on('change', (e) => {
+            console.log(e);
+        });
 
     L.control
         .scale({
@@ -81,7 +98,7 @@ VizControls.prototype.initialize = function(model) {
         .addTo(this.leafletMapLeft);
 
     controls.append('<div id="controlset-zoom" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
-        ' class="leaflet-control controlset-zoom" style="pointer-events: auto; width: 100%"></div>');
+        ' class="leaflet-control controlset-zoom"></div>');
     $('#controlset-zoom').append(
         '<legend>Zoom level</legend>' +
         '<input type="radio" name="radio-zoom" id="radio-zoom-11" value="11">' +
@@ -92,6 +109,8 @@ VizControls.prototype.initialize = function(model) {
         '<label for="radio-zoom-13">Subquarter</label>' +
         '<input type="radio" name="radio-zoom" id="radio-zoom-14" value="14">' +
         '<label for="radio-zoom-14">StatArea</label>');
+    $('div.leaflet-control-scale-line').appendTo($('#controlset-zoom'));
+    $('div.leaflet-control-scale.leaflet-control').remove();
 
     $('#radio-zoom-' + zoomLevel).prop('checked', true).trigger('change');
 
@@ -161,8 +180,8 @@ VizControls.prototype.initialize = function(model) {
     timeslider.setTime(selectedHour);
     timeslider.addTo(this.leafletMapRight).afterLoad();
 
-    controls.append('<div id="load-histogram" class="leaflet-control" style="pointer-events: auto; width: 90%"></div>');
-    $('#load-histogram').append('<span>Flows intensity</span><br/>');
+    controls.append('<div id="load-histogram" class="leaflet-control"></div>');
+    $('#load-histogram').append('<legend>Flows intensity</legend><br/>');
 
     var margin = {top: 0, right: 0, bottom: 20, left: 0},
     width = d3.select("#load-histogram").node().clientWidth - margin.left - margin.right,
@@ -182,7 +201,9 @@ VizControls.prototype.initialize = function(model) {
 
     svg.append("g")
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x).ticks(5));
+        .call(d3.axisBottom(x).ticks(5))
+        .call(g => g.selectAll(".tick text").attr("fill", "white"))
+        .call(g => g.selectAll(".tick line").attr("stroke", "white"));
 
     var histogram = d3.histogram()
         .domain(x.domain())
@@ -190,8 +211,7 @@ VizControls.prototype.initialize = function(model) {
 
     var bins = histogram(vizModel.flowValues);
 
-    var y = d3.scaleLinear()
-        .range([height, 0]);
+    var y = d3.scaleLinear().range([height, 0]);
     y.domain([0, d3.max(bins, function(d) { return d.length; })]);
     // svg.append("g").call(d3.axisLeft(y));
 
@@ -208,8 +228,8 @@ VizControls.prototype.initialize = function(model) {
              return edgesColor(idx / 9);
           });
 
-    controls.append('<div id="controlset-flow" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
-        ' class="leaflet-control controlset-flow" style="pointer-events: auto; width: 95%"></div>');
+    $('#load-histogram').append('<div id="controlset-flow" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
+        ' class="leaflet-control controlset-flow"></div>');
     $('#controlset-flow').append(
         '<input type="checkbox" name="checkbox-flow-25" id="checkbox-flow-1" value="25">' +
         '<label for="checkbox-flow-1"><span class="ui-flow-label">Weak</span></label>' +
@@ -233,7 +253,7 @@ VizControls.prototype.initialize = function(model) {
     $('#controlset-flow').append('<hr class="flow-bottom-bar"/>');
 
     controls.append('<div id="controlset-density" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
-        ' class="leaflet-control controlset-radio" style="pointer-events: auto; width: 90%"></div>');
+        ' class="leaflet-control controlset-radio"></div>');
     $('#controlset-density').append(
         '<legend>Travellers per dot</legend>' +
         '<input type="radio" name="radio-density" id="radio-density-1" value="20" checked="true">' +
@@ -267,7 +287,7 @@ VizControls.prototype.initialize = function(model) {
 
 
     controls.append('<div id="controlset-speed" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
-        ' class="leaflet-control controlset-speed" style="pointer-events: auto; width: 100%"></div>');
+        ' class="leaflet-control controlset-speed"></div>');
     $('#controlset-speed').append(
         '<legend>Speed</legend>' +
         '<input type="radio" name="radio-speed" id="radio-speed-1" value="0.0">' +

@@ -19,8 +19,10 @@ const token = 'pk.eyJ1IjoiZ3JhdXdlbGYiLCJhIjoiY2swem15enR0MDc3YjNucGk3cWoxeGVwZS
 
 const darkTileLayerURL = 'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{z}/{x}/{y}?access_token=' + token;
 const lightTileLayerURL = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + token;
+const customDarkLayerURL = 'https://api.mapbox.com/styles/v1/grauwelf/ck5wauof50m0y1iogrdjoavsn/tiles/256/{z}/{x}/{y}?access_token=' + token;
 
-L.tileLayer(darkTileLayerURL).addTo(leafletMapLeft);
+
+L.tileLayer(customDarkLayerURL).addTo(leafletMapLeft);
 
 var leafletMapRight = L.map('viz-container-right', {
     zoomControl: false,
@@ -30,7 +32,7 @@ var leafletMapRight = L.map('viz-container-right', {
 }).setView([32.08, 34.8], 12);
 
 L.tileLayer(
-    darkTileLayerURL, {
+    customDarkLayerURL, {
     attribution: '&copy; ' + mapLink + ' Contributors' +
         '<br/>A. Ogulenko, A. Rotem, I. Benenson' +
         '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>',
