@@ -6,14 +6,15 @@
  * Initialize Leaflet maps
  * Add tile layer and controls
  */
-var mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
+const mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
+const defaultView = {point: [32.08, 34.8], zoom: 12};
 
 var leafletMapLeft = L.map('viz-container-left', {
         zoomControl: false,
         zoomAnimationThreshold: 2,
         minZoom: 11,
         maxZoom: 14
-    }).setView([32.08, 34.8], 12);
+    }).setView(defaultView.point, defaultView.zoom);
 
 const token = 'pk.eyJ1IjoiZ3JhdXdlbGYiLCJhIjoiY2swem15enR0MDc3YjNucGk3cWoxeGVwZSJ9.rbBSqG4CqVCW0LOrGPi55A';
 
@@ -29,7 +30,7 @@ var leafletMapRight = L.map('viz-container-right', {
     zoomAnimationThreshold: 2,
     minZoom: 11,
     maxZoom: 14
-}).setView([32.08, 34.8], 12);
+}).setView(defaultView.point, defaultView.zoom);
 
 L.tileLayer(
     customDarkLayerURL, {
@@ -115,7 +116,7 @@ vizModel.projection = projection;
 // Create controls
 var vizControls = new VizControls(vizMap, vizMapRight,
         {left: leafletMapLeft, right: leafletMapRight},
-        leafletPath);
+        leafletPath, leafletPathRight);
 
 // Syncronize left and right maps
 leafletMapLeft.sync(leafletMapRight);

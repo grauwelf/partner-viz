@@ -3,7 +3,7 @@
  *
  */
 
-function VizControls(map, mapRight, leafletMaps, leafletPath) {
+function VizControls(map, mapRight, leafletMaps, leftPath, rightPath) {
     if (arguments.length < 2) {
         width = container.attr('width');
         height = container.attr('height');
@@ -12,7 +12,8 @@ function VizControls(map, mapRight, leafletMaps, leafletPath) {
     this.mapRight = mapRight;
     this.leafletMapLeft = leafletMaps.left;
     this.leafletMapRight = leafletMaps.right;
-    this.leafletPath = leafletPath;
+    this.leftPath = leftPath;
+    this.rightPath = rightPath;
     this.logSlider = new LogSlider({
         maxpos: 100,
         minval: 1,
@@ -77,28 +78,44 @@ VizControls.prototype.initialize = function(model) {
     $('#controlset-screen').append(
         '<legend>Screen options</legend>' +
         '<input type="radio" name="radio-screen" id="radio-screen-0" value="both">' +
-        '<label for="radio-screen-0"><span class="icon-split"></span></label>' +
+        '<label for="radio-screen-0"><span class="icon-split">Split</span></label>' +
         '<input type="radio" name="radio-screen" id="radio-screen-1" value="from">' +
-        '<label for="radio-screen-1"><span class="icon-all-from"></span></label>' +
+        '<label for="radio-screen-1"><span class="icon-all-from">From</span></label>' +
         '<input type="radio" name="radio-screen" id="radio-screen-2" value="to">' +
-        '<label for="radio-screen-2"><span class="icon-all-to"></span></label>');
+        '<label for="radio-screen-2"><span class="icon-all-to">To</span></label>');
 
     $('#radio-screen-' + screenType).prop('checked', true).trigger('change');
 
     $('#controlset-screen').controlgroup()
         .on('change', (e) => {
+            const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
             switch (e.target.value) {
                 case 'both':
-                    //$('#viz-container-left > .leaflet-control-container').css('left', '100%');
-                    //$('#viz-container-right').css('width', '100%');
-                    //$('#viz-container-right').css('left', '0px');
+                    $('#viz-container-left > .leaflet-pane.leaflet-map-pane').css('display', 'block');
+                    $('#viz-container-left').css('width', '49.8%');
+                    $('#viz-container-left').css('left', '0%');
+                    this.leafletMapLeft.setView(defaultView.point, defaultView.zoom);
+                    this.leafletMapLeft.invalidateSize();
+                    $('#viz-container-right > .leaflet-pane.leaflet-map-pane').css('display', 'block');
+                    $('#viz-container-right').css('width', '49.8%');
+                    $('#viz-container-right').css('left', '50%');
+                    this.leafletMapRight.setView(defaultView.point, defaultView.zoom);
+                    this.leafletMapRight.invalidateSize();
                     break;
                 case 'from':
-                    $('#viz-container-left > .leaflet-control-container').css('left', '-100%');
-                    $('#viz-container-right').css('width', '100%');
-                    $('#viz-container-right').css('left', '0px');
+                    $('#viz-container-right > .leaflet-pane.leaflet-map-pane').css('display', 'none');
+                    $('#viz-container-left > .leaflet-pane.leaflet-map-pane').css('display', 'block');
+                    $('#viz-container-left').css('width', '100%');
+                    this.leafletMapLeft.setView(defaultView.point, defaultView.zoom);
+                    this.leafletMapLeft.invalidateSize();
                     break;
                 case 'to':
+                    $('#viz-container-left > .leaflet-pane.leaflet-map-pane').css('display', 'none');
+                    $('#viz-container-right > .leaflet-pane.leaflet-map-pane').css('display', 'block');
+                    $('#viz-container-right').css('width', '100%');
+                    $('#viz-container-right').css('left', '0px');
+                    this.leafletMapRight.setView(defaultView.point, defaultView.zoom);
+                    this.leafletMapRight.invalidateSize();
                     break;
             }
         });
@@ -187,7 +204,7 @@ VizControls.prototype.initialize = function(model) {
         position: 'topright',
         map: this.map,
         leafletMapLeft: this.leafletMapLeft,
-        leafletPath: this.leafletPath,
+        leafletPath: this.rightPath,
         parent: this
     });
     timeslider.setTime(selectedHour);
