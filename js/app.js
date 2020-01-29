@@ -66,7 +66,14 @@ function projectPoint(x, y) {
     this.stream.point(point.x, point.y);
 }
 
+function projectPointRight(x, y) {
+    var point = leafletMapRight.latLngToLayerPoint(new L.LatLng(y, x));
+    this.stream.point(point.x, point.y);
+}
+
+
 const leafletPath = d3.geoPath().projection(d3.geoTransform({point: projectPoint}));
+const leafletPathRight = d3.geoPath().projection(d3.geoTransform({point: projectPointRight}));
 
 const arcGenerator = d3.line().curve(d3.curveNatural);
 
@@ -96,9 +103,11 @@ var projection = d3.geoMercator();
 
 var vizMap = new VizFlowMap(gLeft, svgLeft.attr('width'), svgLeft.attr('height'));
 vizMap.projection = projection;
+vizMap.leafletPath = leafletPath;
 
 var vizMapRight = new VizFlowMap(gRight, svgRight.attr('width'), svgRight.attr('height'));
 vizMapRight.projection = projection;
+vizMapRight.leafletPath = leafletPathRight;
 
 var vizModel = new VizModel();
 vizModel.projection = projection;
@@ -126,7 +135,23 @@ leafletMapLeft.on('moveend', function(event) {
     options.dataChanged = true;
     options.directionMode = 'to';
     vizMapRight.render(options);
-    vizMapRight.update(event, leafletMapRight, leafletPath);
+    vizMapRight.update(event, leafletMapRight, leafletPathRight);
+});
+
+leafletMapRight.on('moveend', function(event) {
+    d3.selectAll('.scene-node-tooltip').remove();
+
+    var options = vizControls.getOptions();
+    options.dataChanged = true;
+    options.directionMode = 'from';
+    vizMap.render(options);
+    vizMap.update(event, leafletMapLeft, leafletPath);
+
+    options = vizControls.getOptions();
+    options.dataChanged = true;
+    options.directionMode = 'to';
+    vizMapRight.render(options);
+    vizMapRight.update(event, leafletMapRight, leafletPathRight);
 });
 
 var zoomLevel = 12;
@@ -169,7 +194,7 @@ function changeFlowsData(areaFile, centersFile, flowsFile) {
             options.dataChanged = true;
             options.directionMode = 'to';
             vizMapRight.render(options);
-            vizMapRight.update(false, leafletMapRight, leafletPath);
+            vizMapRight.update(false, leafletMapRight, leafletPathRight);
        });
 }
 

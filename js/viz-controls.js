@@ -76,18 +76,31 @@ VizControls.prototype.initialize = function(model) {
         ' class="leaflet-control controlset-screen"></div>');
     $('#controlset-screen').append(
         '<legend>Screen options</legend>' +
-        '<input type="radio" name="radio-screen" id="radio-screen-0" value="0">' +
+        '<input type="radio" name="radio-screen" id="radio-screen-0" value="both">' +
         '<label for="radio-screen-0"><span class="icon-split"></span></label>' +
-        '<input type="radio" name="radio-screen" id="radio-screen-1" value="1">' +
+        '<input type="radio" name="radio-screen" id="radio-screen-1" value="from">' +
         '<label for="radio-screen-1"><span class="icon-all-from"></span></label>' +
-        '<input type="radio" name="radio-screen" id="radio-screen-2" value="2">' +
+        '<input type="radio" name="radio-screen" id="radio-screen-2" value="to">' +
         '<label for="radio-screen-2"><span class="icon-all-to"></span></label>');
 
     $('#radio-screen-' + screenType).prop('checked', true).trigger('change');
 
     $('#controlset-screen').controlgroup()
         .on('change', (e) => {
-            console.log(e);
+            switch (e.target.value) {
+                case 'both':
+                    //$('#viz-container-left > .leaflet-control-container').css('left', '100%');
+                    //$('#viz-container-right').css('width', '100%');
+                    //$('#viz-container-right').css('left', '0px');
+                    break;
+                case 'from':
+                    $('#viz-container-left > .leaflet-control-container').css('left', '-100%');
+                    $('#viz-container-right').css('width', '100%');
+                    $('#viz-container-right').css('left', '0px');
+                    break;
+                case 'to':
+                    break;
+            }
         });
 
     L.control
@@ -119,7 +132,7 @@ VizControls.prototype.initialize = function(model) {
             if (this.leafletMapLeft.getZoom() != parseInt(e.target.value)) {
                 const zoom = Number(e.target.value);
                 this.leafletMapLeft.setZoom(zoom);
-                leafletMapRight.setZoom(zoom);
+                this.leafletMapRight.setZoom(zoom);
                 d3.selectAll('.scene-node-tooltip').remove();
                 switch(zoom) {
                     case 11:
@@ -146,13 +159,13 @@ VizControls.prototype.initialize = function(model) {
                         var options = vizControls.getOptions();
                         options.directionMode = 'from';
                         vizMap.render(options);
-                        vizMap.update(event, leafletMapLeft, leafletPath);
+                        vizMap.update(event, leafletMapLeft);
 
                         vizMapRight.data.map = vizModel.areas;
                         var options = vizControls.getOptions();
                         options.directionMode = 'to';
                         vizMapRight.render(options);
-                        vizMapRight.update(event, leafletMapRight, leafletPath);
+                        vizMapRight.update(event, leafletMapRight);
                 }
                 zoomLevel = zoom;
                 return true;
@@ -171,7 +184,7 @@ VizControls.prototype.initialize = function(model) {
     timeslider.addTo(this.leafletMapLeft).afterLoad();*/
 
     var timeslider = new CircularTimeSlider({
-        position: 'topleft',
+        position: 'topright',
         map: this.map,
         leafletMapLeft: this.leafletMapLeft,
         leafletPath: this.leafletPath,
@@ -244,11 +257,11 @@ VizControls.prototype.initialize = function(model) {
             vizOptions = this.getOptions();
             vizOptions.dataChanged = false;
             this.map.render(vizOptions);
-            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            this.map.update(false, this.leafletMapLeft);
             vizOptions = this.getOptions();
             vizOptions.dataChanged = false;
             this.mapRight.render(vizOptions);
-            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
+            this.mapRight.update(false, this.leafletMapRight);
         });
     $('#controlset-flow').append('<hr class="flow-bottom-bar"/>');
 
@@ -277,11 +290,11 @@ VizControls.prototype.initialize = function(model) {
             vizOptions = this.getOptions();
             vizOptions.dataChanged = false;
             this.map.render(vizOptions);
-            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            this.map.update(false, this.leafletMapLeft);
             vizOptions = this.getOptions();
             vizOptions.dataChanged = false;
             this.mapRight.render(vizOptions);
-            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
+            this.mapRight.update(false, this.leafletMapRight);
             this.leafletMapLeft.dragging.enable();
         });
 
@@ -315,11 +328,11 @@ VizControls.prototype.initialize = function(model) {
             vizOptions = this.getOptions();
             vizOptions.dataChanged = false;
             this.map.render(vizOptions);
-            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            this.map.update(false, this.leafletMapLeft);
             vizOptions = this.getOptions();
             vizOptions.dataChanged = false;
             this.mapRight.render(vizOptions);
-            this.mapRight.update(false, this.leafletMapRight, this.leafletPath);
+            this.mapRight.update(false, this.leafletMapRight);
         });
 
     $('[name="choose-day"]').on('change', (event) => {
@@ -328,9 +341,9 @@ VizControls.prototype.initialize = function(model) {
             vizOptions = this.getOptions();
             vizOptions.dataChanged = true;
             this.map.render(vizOptions);
-            this.map.update(false, this.leafletMapLeft, this.leafletPath);
+            this.map.update(false, this.leafletMapLeft);
             this.mapRight.render(vizOptions);
-            this.mapRight.update(false, this.leafletMapRight, leafletPath);
+            this.mapRight.update(false, this.leafletMapRight);
         }
     });
 
@@ -529,11 +542,11 @@ var TimeSlider = L.Control.extend({
                 vizOptions = vizControls.getOptions();
                 vizOptions.dataChanged = true;
                 vizMap.render(vizOptions);
-                vizMap.update(true, leafletMapLeft, leafletPath);
+                vizMap.update(true, leafletMapLeft);
                 vizOptions = vizControls.getOptions();
                 vizOptions.dataChanged = true;
                 vizMapRight.render(vizOptions);
-                vizMapRight.update(true, leafletMapRight, leafletPath);
+                vizMapRight.update(true, leafletMapRight);
                 const sliderValue = $('#time-slider').slider('value');
                 $('#time-display').html(String(sliderValue % 24).padStart(2, '0') + ':00');
             },
@@ -550,11 +563,11 @@ var TimeSlider = L.Control.extend({
         vizOptions = context.options.parent.getOptions();
         vizOptions.dataChanged = true;
         context.options.map.render(vizOptions);
-        context.options.map.update(true, context.options.leafletMapLeft, context.options.leafletPath);
+        context.options.map.update(true, context.options.leafletMapLeft);
         vizOptions = context.options.parent.getOptions();
         vizOptions.dataChanged = true;
         vizMapRight.render(vizOptions);
-        vizMapRight.update(true, leafletMapRight, leafletPath);
+        vizMapRight.update(true, leafletMapRight);
         display.html(String(sliderValue).padStart(2, '0') + ':00');
     },
 
@@ -740,11 +753,11 @@ var CircularTimeSlider = L.Control.extend({
         vizOptions = context.options.parent.getOptions();
         vizOptions.dataChanged = true;
         context.options.map.render(vizOptions);
-        context.options.map.update(true, context.options.leafletMapLeft, context.options.leafletPath);
+        context.options.map.update(true, context.options.leafletMapLeft);
         vizOptions = context.options.parent.getOptions();
         vizOptions.dataChanged = true;
         vizMapRight.render(vizOptions);
-        vizMapRight.update(true, leafletMapRight, leafletPath);
+        vizMapRight.update(true, leafletMapRight);
     },
 
     play: function(start) {

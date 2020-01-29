@@ -19,6 +19,7 @@ function VizComponent(container, width, height) {
     this.devicesPerParticle = 10; // needs to be in control
     this.standingPerMarker = 10;
     this.directionMode = null;
+    this.leafletPath = null;
 }
 
 VizComponent.prototype.render = function() {
@@ -55,8 +56,8 @@ function VizFlowMap(container, width, height) {
 
 VizFlowMap.prototype = Object.create(VizComponent.prototype);
 
-function buildArc(edge, direction, maxDifference) {
-    const leafletLineString = leafletPath(edge);
+function buildArc(edge, direction, maxDifference, path) {
+    const leafletLineString = path(edge);
     var coords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
 
     const rnd1 = (2 * Math.random() - 1) * 4;
@@ -85,8 +86,8 @@ VizFlowMap.prototype.buildDashArray = function (d, dashNumber) {
 //        return this.dashLength + 'px, ' + this.dashGapLength + 'px';
 //    }
     const dashWidth = 0;
-    const pathLength = getSVGPathLength(leafletPath(d));
-    const gapWidth = Math.floor(getSVGPathLength(leafletPath(d)) / dashNumber - dashWidth);
+    const pathLength = getSVGPathLength(this.leafletPath(d));
+    const gapWidth = Math.floor(getSVGPathLength(this.leafletPath(d)) / dashNumber - dashWidth);
     const dashes = Array.apply(null, {length: dashNumber}).map(Function.call, () => dashWidth + ', ' + gapWidth).join(', ');
     return dashes;
 }
@@ -223,7 +224,7 @@ VizFlowMap.prototype.renderEdges = function (container, data, direction, options
                 return 0;
             }
         })
-        .attr('d', (d) => buildArc(d, direction == 'to' ? 1 : -1, maxDifference));
+        .attr('d', (d) => buildArc(d, direction == 'to' ? 1 : -1, maxDifference, this.leafletPath));
 }
 
 
@@ -451,7 +452,7 @@ VizFlowMap.prototype.render = function (options) {
 
 }
 
-VizFlowMap.prototype.update = function (event, leaflet, path) {
+VizFlowMap.prototype.update = function (event, leaflet) {
     var previousZoom = this.zoom;
     if (event == false) {
         previousZoom = leaflet.getZoom();
@@ -461,7 +462,7 @@ VizFlowMap.prototype.update = function (event, leaflet, path) {
     const maxDifference = this.maxDifference;
 
     this.container.selectAll('.scene-map,.scene-map-mouseover')
-        .attr('d', path);
+        .attr('d', this.leafletPath);
 
     this.container.selectAll('.scene-standing-particle,.scene-node')
         .raise()
