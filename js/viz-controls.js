@@ -70,7 +70,7 @@ VizControls.prototype.initialize = function(model) {
     const selectedHour = $('#time-slider').slider('value') % 24;
     var controls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left')
     controls.html('');
-    $('.time-slider-control').remove();
+    $('#time-control').remove();
 
     const screenType = 0;
     controls.append('<div id="controlset-screen" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
@@ -630,6 +630,7 @@ var CircularTimeSlider = L.Control.extend({
     },
 
     onAdd: function() {
+        $('.time-control').remove();
         var container = L.DomUtil.create('div', 'time-control');
         container.id = 'time-control';
         return container;
