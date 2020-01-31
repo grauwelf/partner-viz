@@ -13,12 +13,13 @@ function VizComponent(container, width, height) {
     this._data = {centers: {}, map: {}};
     this.maxDifference = 0;
     this.dashLength = 0;
-    this.dashGapLength = 20;
+    this.dashGapLength = 10;
     this.particleSize = 10;
     this.simulationRate = 25; // needs to be in control
     this.devicesPerParticle = 10; // needs to be in control
     this.standingPerMarker = 10;
     this.directionMode = null;
+    this.flowType = 'dots';
     this.leafletPath = null;
 }
 
@@ -79,25 +80,49 @@ function buildArc(edge, direction, maxDifference, path) {
     return arcGenerator([coords[0], midpointL, coords[1]]);
 }
 
-VizFlowMap.prototype.buildDashArray = function (d, dashNumber) {
-//    if (dashNumber === undefined || dashNumber < 1) {
-//        return '0%, 100%';
-//    } else {
-//        return this.dashLength + 'px, ' + this.dashGapLength + 'px';
-//    }
-    const dashWidth = 0;
-    const pathLength = getSVGPathLength(this.leafletPath(d));
-    const gapWidth = Math.floor(getSVGPathLength(this.leafletPath(d)) / dashNumber - dashWidth);
-    const dashes = Array.apply(null, {length: dashNumber}).map(Function.call, () => dashWidth + ', ' + gapWidth).join(', ');
-    return dashes;
+function buildArrow(edge, direction, maxDifference, path) {
+    const leafletLineString = path(edge);
+    var coords = leafletLineString.replace(/M|Z/, '').split('L').map((edge) => edge.split(','));
+
+    const rnd1 = (2 * Math.random() - 1) * 4;
+    const rnd2 = (2 * Math.random() - 1) * 4;
+    coords[0][0] = +coords[0][0] + rnd1;
+    coords[0][1] = +coords[0][1] + rnd2;
+    coords[1][0] = +coords[1][0] + rnd1;
+    coords[1][1] = +coords[1][1] + rnd2;
+
+    var angleTo = Math.atan(
+            (Number(coords[1][1]) - Number(coords[0][1])) /
+            (Number(coords[1][0]) - Number(coords[0][0]))) + Math.PI / 2;
+    const deltaX = maxDifference * Math.cos(angleTo);
+    const deltaY = maxDifference * Math.sin(angleTo);
+    const midpointL = [
+        Math.round((Number(coords[0][0]) + Number(coords[1][0]))/2) + deltaX * direction,
+        Math.round((Number(coords[0][1]) + Number(coords[1][1]))/2) + deltaY * direction
+    ];
+    return 'translate(' + midpointL[0] + ', ' + midpointL[1] + ') rotate(' + (angleTo * 180 / Math.PI) + ')';
+}
+
+VizFlowMap.prototype.buildDashArray = function (d, dashNumber, flowType) {
+    if (flowType == 'color') {
+        return this.dashLength + 'px, ' + this.dashGapLength + 'px';
+    } else if (flowType == 'lines') {
+        return '';
+    } else {
+        const dashWidth = 0;
+        const pathLength = getSVGPathLength(this.leafletPath(d));
+        const gapWidth = Math.floor(getSVGPathLength(this.leafletPath(d)) / dashNumber - dashWidth);
+        const dashes = Array.apply(null, {length: dashNumber}).map(Function.call, () => dashWidth + ', ' + gapWidth).join(', ');
+        return dashes;
+    }
 }
 
 VizFlowMap.prototype.dashWidth = function (d, loadRange) {
     //return Math.ceil(3 * Math.log10(d.backwardLoad / this.devicesPerParticle)) + 'px';
-    const k = 5 / (vizModel.range.max - vizModel.range.min);
-    const b = 1 - k * vizModel.range.min;
-    return '3px';
+    //const k = 5 / (vizModel.range.max - vizModel.range.min);
+    //const b = 1 - k * vizModel.range.min;
     //return Math.ceil(k * d.backwardLoad + b) + 'px';
+    return '3px';
 }
 
 VizFlowMap.prototype.runDottedEdge = function (path, pathLength, duration, direction) {
@@ -195,24 +220,20 @@ VizFlowMap.prototype.renderEdges = function (container, data, direction, options
     const edgeLoad = direction == 'to' ? 'backwardLoad' : 'forwardLoad';
     container.selectAll('.' + edgeClass).remove();
 
-    var arcsTo =  container.selectAll('.' + edgeClass)
+    const dashArrayBuilder = (d) => this.buildDashArray(d, Math.ceil(d[edgeLoad] / this.devicesPerParticle), options.flowType);
+    const strokeColorer = (options.flowType == 'dots') ? 'white' :
+            (d) => edgesColor(scaleToRange([vizModel.range.min, vizModel.range.max], d[edgeLoad]));
+
+    var arcsTo = container.selectAll('.' + edgeClass)
         .data(data)
       .enter().append('path')
         .attr('class', edgeClass)
         .attr('origin', (d) => d.d)
         .attr('destination', (d) => d.o)
-        .style("stroke-dasharray",
-                (d) => this.buildDashArray(d, Math.ceil(d[edgeLoad] / this.devicesPerParticle)))
-        .style("stroke-width",
-                (d) => this.dashWidth(d, options.loadRange))
-        .style("stroke-offset",
-                 (d) => (Math.random() * 5 + 5) + 'px')
-        .style("stroke", function(d) {
-            return edgesColor(scaleToRange([vizModel.range.min, vizModel.range.max], d[edgeLoad]));
-        })
-        .style("fill", function(d) {
-            return edgesColor(scaleToRange([vizModel.range.min, vizModel.range.max], d[edgeLoad]));
-        })
+        .style("stroke-dasharray", dashArrayBuilder)
+        .style("stroke-width", (d) => this.dashWidth(d, options.loadRange))
+        .style("stroke-offset", (d) => (Math.random() * 5 + 5) + 'px')
+        .style("stroke", strokeColorer)
         .style('opacity', function(d) {
             if (options.selectedNodes.length != 0 &&
                     (options.selectedNodes.includes(d.o) ||
@@ -225,105 +246,21 @@ VizFlowMap.prototype.renderEdges = function (container, data, direction, options
             }
         })
         .attr('d', (d) => buildArc(d, direction == 'to' ? 1 : -1, maxDifference, this.leafletPath));
+
+    /*var arrowsTo = container.selectAll('.triangles')
+        .data(data)
+      .enter().append('path')
+        .attr('class', 'triangles')
+        .attr('fill', strokeColorer)
+        .attr('stroke', strokeColorer)
+        .attr('d', d3.symbol().type(d3.symbolTriangle).size(24))
+        .attr('transform', (d) => buildArrow(d, direction == 'to' ? 1 : -1, maxDifference, this.leafletPath));
+     */
 }
 
-
-VizFlowMap.prototype.render = function (options) {
-    if (!options) {
-        options = {};
-    }
-    if (!options.selectedDay) {
-        options.selectedDay = 'weekday';
-    }
-    if (!options.selectedHour) {
-        var time = (moment().hour() + 1) % 24;
-        time = String(time).padStart(2, '0') + ':00';
-        options.selectedHour = time;
-
-    }
-    if (!options.loadRange) {
-        options.loadRange = [10, 100];
-    }
-    if (!options.dataChanged) {
-        options.dataChanged = false;
-    }
-    if(options.directionMode) {
-        this.directionMode = options.directionMode;
-    }
-
-    var centers = this.data().centers.nodes;
-    var map = this.data().map;
-    var OD = this.data().OD[options.selectedDay][options.selectedHour];
-
-    var smoothPath = d3.geoPath().projection(this.projection);
-    const maxDifference = this.maxDifference;
-
-    var linestringBackwardData = [];
-    var linestringForwardData = [];
-    _.each(OD, function(od, key) {
-        var pair = key.split('-');
-        var origin = centers[pair[0]];
-        var destination = centers[pair[1]];
-        const mapBounds = leafletMapLeft.getBounds();
-        if (!mapBounds.contains(origin.latlng) && !mapBounds.contains(destination.latlng)) {
-            return;
-        }
-        if (!isFinite(od.backwardLoad)) {
-            od.backwardLoad = 0;
-        } else if (!isFinite(od.forwardLoad)) {
-            od.forwardLoad = 0;
-        }
-        const k = 5 / (vizModel.range.max - vizModel.range.min);
-        const b = 1 - k * vizModel.range.min;
-        if (_.reduce(_.map(options.loadRange,
-                (range) => (range[0] <= od.forwardLoad) && (range[1] >= od.forwardLoad)),
-                function(a, b) {return a || b}, false)) {
-        //if ((od.forwardLoad - options.loadRange[0]) * (od.forwardLoad - options.loadRange[1]) <= 0) {
-            //const forwardFlowCount = Math.ceil(k * od.forwardLoad + b);
-            const forwardFlowCount = 1;
-            for (var i = 0; i < forwardFlowCount; i++) {
-                linestringForwardData.push({
-                    type: 'LineString',
-                    coordinates: [[origin.latlng.lng, origin.latlng.lat],
-                                  [destination.latlng.lng, destination.latlng.lat]],
-                    o: pair[0],
-                    d: pair[1],
-                    forwardLoad: od.forwardLoad,
-                    backwardLoad: od.backwardLoad
-                });
-            }
-        }
-        if (_.reduce(_.map(options.loadRange,
-                (range) => (range[0] <= od.backwardLoad) && (range[1] >= od.backwardLoad)),
-                function(a, b) {return a || b}, false)) {
-        //if ((od.backwardLoad - options.loadRange[0]) * (od.backwardLoad - options.loadRange[1]) <= 0) {
-             //const backwardFlowCount = Math.ceil(k * od.backwardLoad + b);
-             const backwardFlowCount = 1;
-             for (var i = 0; i < backwardFlowCount; i++) {
-                 linestringBackwardData.push({
-                     type: 'LineString',
-                     coordinates: [[origin.latlng.lng, origin.latlng.lat],
-                                   [destination.latlng.lng, destination.latlng.lat]],
-                     o: pair[0],
-                     d: pair[1],
-                     forwardLoad: od.forwardLoad,
-                     backwardLoad: od.backwardLoad
-                 });
-             }
-        }
-    });
-
-    if (this.directionMode == 'both' || this.directionMode == 'to') {
-        this.renderEdges(this.container, linestringBackwardData, 'to', options, maxDifference);
-    }
-    if (this.directionMode == 'both' || this.directionMode == 'from') {
-        this.renderEdges(this.container, linestringForwardData, 'from', options, maxDifference);
-    }
-
-    this.renderAreas(this.container, map.features, options, smoothPath);
-
-    this.container.selectAll('.scene-node').remove();
-    this.container.selectAll('.scene-node-tooltip').remove();
+VizFlowMap.prototype.renderCenters = function (container, centers, options) {
+    container.selectAll('.scene-node').remove();
+    container.selectAll('.scene-node-tooltip').remove();
     var nodes = this.container.selectAll('.scene-node')
         .data(Object.values(centers))
       .enter()
@@ -449,6 +386,106 @@ VizFlowMap.prototype.render = function (options) {
                     d3.select('.context-panel').remove();
                 });
         });
+}
+
+
+VizFlowMap.prototype.render = function (options) {
+    if (!options) {
+        options = {};
+    }
+    if (!options.selectedDay) {
+        options.selectedDay = 'weekday';
+    }
+    if (!options.selectedHour) {
+        var time = (moment().hour() + 1) % 24;
+        time = String(time).padStart(2, '0') + ':00';
+        options.selectedHour = time;
+
+    }
+    if (!options.loadRange) {
+        options.loadRange = [10, 100];
+    }
+    if (!options.dataChanged) {
+        options.dataChanged = false;
+    }
+    if(options.directionMode) {
+        this.directionMode = options.directionMode;
+    }
+
+    if(options.flowType) {
+        this.flowType = options.flowType;
+    }
+
+    var centers = this.data().centers.nodes;
+    var map = this.data().map;
+    var OD = this.data().OD[options.selectedDay][options.selectedHour];
+
+    var smoothPath = d3.geoPath().projection(this.projection);
+    const maxDifference = this.maxDifference;
+
+    var linestringBackwardData = [];
+    var linestringForwardData = [];
+    _.each(OD, function(od, key) {
+        var pair = key.split('-');
+        var origin = centers[pair[0]];
+        var destination = centers[pair[1]];
+        const mapBounds = leafletMapLeft.getBounds();
+        if (!mapBounds.contains(origin.latlng) && !mapBounds.contains(destination.latlng)) {
+            return;
+        }
+        if (!isFinite(od.backwardLoad)) {
+            od.backwardLoad = 0;
+        } else if (!isFinite(od.forwardLoad)) {
+            od.forwardLoad = 0;
+        }
+        const k = 5 / (vizModel.range.max - vizModel.range.min);
+        const b = 1 - k * vizModel.range.min;
+        if (_.reduce(_.map(options.loadRange,
+                (range) => (range[0] <= od.forwardLoad) && (range[1] >= od.forwardLoad)),
+                function(a, b) {return a || b}, false)) {
+        //if ((od.forwardLoad - options.loadRange[0]) * (od.forwardLoad - options.loadRange[1]) <= 0) {
+            //const forwardFlowCount = Math.ceil(k * od.forwardLoad + b);
+            const forwardFlowCount = 1;
+            for (var i = 0; i < forwardFlowCount; i++) {
+                linestringForwardData.push({
+                    type: 'LineString',
+                    coordinates: [[origin.latlng.lng, origin.latlng.lat],
+                                  [destination.latlng.lng, destination.latlng.lat]],
+                    o: pair[0],
+                    d: pair[1],
+                    forwardLoad: od.forwardLoad,
+                    backwardLoad: od.backwardLoad
+                });
+            }
+        }
+        if (_.reduce(_.map(options.loadRange,
+                (range) => (range[0] <= od.backwardLoad) && (range[1] >= od.backwardLoad)),
+                function(a, b) {return a || b}, false)) {
+        //if ((od.backwardLoad - options.loadRange[0]) * (od.backwardLoad - options.loadRange[1]) <= 0) {
+             //const backwardFlowCount = Math.ceil(k * od.backwardLoad + b);
+             const backwardFlowCount = 1;
+             for (var i = 0; i < backwardFlowCount; i++) {
+                 linestringBackwardData.push({
+                     type: 'LineString',
+                     coordinates: [[origin.latlng.lng, origin.latlng.lat],
+                                   [destination.latlng.lng, destination.latlng.lat]],
+                     o: pair[0],
+                     d: pair[1],
+                     forwardLoad: od.forwardLoad,
+                     backwardLoad: od.backwardLoad
+                 });
+             }
+        }
+    });
+
+    if (this.directionMode == 'both' || this.directionMode == 'to') {
+        this.renderEdges(this.container, linestringBackwardData, 'to', options, maxDifference);
+    }
+    if (this.directionMode == 'both' || this.directionMode == 'from') {
+        this.renderEdges(this.container, linestringForwardData, 'from', options, maxDifference);
+    }
+    this.renderAreas(this.container, map.features, options, smoothPath);
+    this.renderCenters(this.container, centers, options);
 
 }
 

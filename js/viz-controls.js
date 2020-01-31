@@ -38,11 +38,17 @@ VizControls.prototype.getOptions = function() {
     const selectedNodes = d3.selectAll('[sel="selected"]').nodes().map(function(el) {
         return el.attributes.id.value;
     });
+
+    var flowType = 'dots';
+    $('#controlset-flowtype').find('input:checked').each(function(idx, el) {
+        flowType = el.value;
+    });
     return {
         selectedDay : $('[name="choose-day"]:checked').val(),
         selectedHour : time,
         selectedNodes : selectedNodes,
-        loadRange : rangeList
+        loadRange : rangeList,
+        flowType: flowType
     };
 }
 
@@ -281,6 +287,33 @@ VizControls.prototype.initialize = function(model) {
             this.mapRight.update(false, this.leafletMapRight);
         });
     $('#controlset-flow').append('<hr class="flow-bottom-bar"/>');
+
+    const flowType = 0;
+    controls.append('<div id="controlset-flowtype" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
+        ' class="leaflet-control controlset-screen"></div>');
+    $('#controlset-flowtype').append(
+        '<legend>Flow options</legend>' +
+        '<input type="radio" name="radio-flow" id="radio-flow-0" value="dots">' +
+        '<label for="radio-flow-0"><span class="icon-split">Dots</span></label>' +
+        '<input type="radio" name="radio-flow" id="radio-flow-1" value="color">' +
+        '<label for="radio-flow-1"><span class="icon-all-from">Color</span></label>' +
+        '<input type="radio" name="radio-flow" id="radio-flow-2" value="lines">' +
+        '<label for="radio-flow-2"><span class="icon-all-to">Lines</span></label>');
+
+    $('#radio-flow-' + flowType).prop('checked', true).trigger('change');
+
+    $('#controlset-flowtype').controlgroup()
+        .on('change', (e) => {
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.map.render(vizOptions);
+            this.map.update(false, this.leafletMapLeft);
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.mapRight.render(vizOptions);
+            this.mapRight.update(false, this.leafletMapRight);
+        });
+
 
     controls.append('<div id="controlset-density" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
         ' class="leaflet-control controlset-radio"></div>');
