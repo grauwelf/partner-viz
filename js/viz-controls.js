@@ -33,8 +33,8 @@ VizControls.prototype.getOptions = function() {
         ]);
     });
 
-    //const time = String($('#time-slider').slider('value') % 24).padStart(2, '0') + ':00';
-    const time = String($('#time-control').roundSlider('option', 'currentValue') % 24).padStart(2, '0') + ':00';
+    const time = String($('#time-slider').slider('value') % 24).padStart(2, '0') + ':00';
+    //const time = String($('#time-control').roundSlider('option', 'currentValue') % 24).padStart(2, '0') + ':00';
     const selectedNodes = d3.selectAll('[sel="selected"]').nodes().map(function(el) {
         return el.attributes.id.value;
     });
@@ -77,6 +77,8 @@ VizControls.prototype.initialize = function(model) {
     var controls = $('.container-left > .leaflet-control-container > .leaflet-top.leaflet-left')
     controls.html('');
     $('#time-control').remove();
+
+    controls.html('<div class="leaflet-control control-attribution">' + vizAttributions + '</div>');
 
     const screenType = 0;
     controls.append('<div id="controlset-screen" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
@@ -194,8 +196,8 @@ VizControls.prototype.initialize = function(model) {
                 return true;
             }
         });
-
-/*    // Time slider in the bottom panel
+///*
+    // Time slider in the bottom panel
     var timeslider = new TimeSlider({
         position: 'bottomleft',
         map: this.map,
@@ -204,8 +206,11 @@ VizControls.prototype.initialize = function(model) {
         parent: this
     });
     timeslider.setTime(selectedHour);
-    timeslider.addTo(this.leafletMapLeft).afterLoad();*/
+    timeslider.addTo(this.leafletMapLeft).afterLoad();
+//*/
 
+/*
+    // Time control in the form of clock
     var timeslider = new CircularTimeSlider({
         position: 'topright',
         map: this.map,
@@ -215,6 +220,7 @@ VizControls.prototype.initialize = function(model) {
     });
     timeslider.setTime(selectedHour);
     timeslider.addTo(this.leafletMapRight).afterLoad();
+*/
 
     controls.append('<div id="load-histogram" class="leaflet-control"></div>');
     $('#load-histogram').append('<legend>Flows intensity</legend><br/>');
