@@ -25,90 +25,90 @@
     width: 32px;
     height: 32px;
     display: block;
-    background-image: url('/img/icon-screen-split.svg');
+    background-image: url('img/icon-screen-split.svg');
 }
 
 .controlset-screen .icon-split:hover {
-    background-image: url('/img/icon-screen-split.svg');
+    background-image: url('img/icon-screen-split.svg');
 }
 
 .controlset-screen .icon-split.ui-state-active {
-    background-image: url('/img/icon-screen-split-active.svg');
+    background-image: url('img/icon-screen-split-active.svg');
 }
 
 .controlset-screen .icon-all-from {
     width: 32px;
     height: 32px;
     display: block;
-    background-image: url('/img/icon-flows-from.svg');
+    background-image: url('img/icon-flows-from.svg');
 }
 
 .controlset-screen .icon-all-from:hover {
-    background-image: url('/img/icon-flows-from.svg');
+    background-image: url('img/icon-flows-from.svg');
 }
 
 .controlset-screen .icon-all-from.ui-state-active {
-    background-image: url('/img/icon-flows-from-active.svg');
+    background-image: url('img/icon-flows-from-active.svg');
 }
 
 .controlset-screen .icon-all-to {
     width: 32px;
     height: 32px;
     display: block;
-    background-image: url('/img/icon-flows-to.svg');
+    background-image: url('img/icon-flows-to.svg');
 }
 
 .controlset-screen .icon-all-to:hover {
-    background-image: url('/img/icon-flows-to.svg');
+    background-image: url('img/icon-flows-to.svg');
 }
 
 .controlset-screen .icon-all-to.ui-state-active {
-    background-image: url('/img/icon-flows-to-active.svg');
+    background-image: url('img/icon-flows-to-active.svg');
 }
 
 .controlset-flowtype .icon-type-dots {
     width: 32px;
     height: 32px;
     display: block;
-    background-image: url('/img/icon-type-dots.svg');
+    background-image: url('img/icon-type-dots.svg');
 }
 
 .controlset-flowtype .icon-type-dots:hover {
-    background-image: url('/img/icon-type-dots.svg');
+    background-image: url('img/icon-type-dots.svg');
 }
 
 .controlset-flowtype .icon-type-dots.ui-state-active {
-    background-image: url('/img/icon-type-dots-active.svg');
+    background-image: url('img/icon-type-dots-active.svg');
 }
 
 .controlset-flowtype .icon-type-colors {
     width: 32px;
     height: 32px;
     display: block;
-    background-image: url('/img/icon-type-colors.svg');
+    background-image: url('img/icon-type-colors.svg');
 }
 
 .controlset-flowtype .icon-type-colors:hover {
-    background-image: url('/img/icon-type-colors.svg');
+    background-image: url('img/icon-type-colors.svg');
 }
 
 .controlset-flowtype .icon-type-colors.ui-state-active {
-    background-image: url('/img/icon-type-colors-active.svg');
+    background-image: url('img/icon-type-colors-active.svg');
 }
 
 .controlset-flowtype .icon-type-lines {
     width: 32px;
     height: 32px;
     display: block;
-    background-image: url('/img/icon-type-lines.svg');
+    background-image: url('img/icon-type-lines.svg');
 }
 
 .controlset-flowtype .icon-type-lines:hover {
-    background-image: url('/img/icon-type-lines.svg');
+    background-image: url('img/icon-type-lines.svg');
 }
 
 .controlset-flowtype .icon-type-lines.ui-state-active {
-    background-image: url('/img/icon-type-lines-active.svg');
+    background-image: url('img/icon-type-lines-active.svg');
 }
 
 .control-attribution {
