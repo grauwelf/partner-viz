@@ -77,8 +77,8 @@ const leafletPathRight = d3.geoPath().projection(d3.geoTransform({point: project
 const arcGenerator = d3.line().curve(d3.curveNatural);
 
 var edgesColor = d3.scaleThreshold()
-    .domain([0.25, 0.5, 0.75])
-    .range(['#84ca50', '#f07d02', '#e60000', '#9e1313']);
+    .domain([0.2, 0.4, 0.6, 0.8])
+    .range(['#85cb51', '#f1d200', '#f17d02', '#fa0000', '#682fc4']);
 
 var color = d3.scaleOrdinal()
     .domain([0,1])

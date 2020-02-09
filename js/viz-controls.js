@@ -22,14 +22,23 @@ function VizControls(map, mapRight, leafletMaps, leftPath, rightPath) {
 }
 
 VizControls.prototype.getOptions = function() {
-    //const values = $('#load-slider').slider('values');
     var rangeList = [];
+/*
     $('#controlset-flow').find('input:checked').each(function(idx, el) {
         const k = vizModel.range.max - vizModel.range.min;
         const b = vizModel.range.min;
         rangeList.push([
             (el.value / 100 - 0.25) * k + b,
             (el.value / 100) * k + b,
+        ]);
+    });
+*/
+    [25, 50, 75, 100].forEach(function(value, idx) {
+        const k = vizModel.range.max - vizModel.range.min;
+        const b = vizModel.range.min;
+        rangeList.push([
+            (value / 100 - 0.25) * k + b,
+            (value / 100) * k + b,
         ]);
     });
 
@@ -86,11 +95,11 @@ VizControls.prototype.initialize = function(model) {
     $('#controlset-screen').append(
         '<legend>Screen options</legend>' +
         '<input type="radio" name="radio-screen" id="radio-screen-0" value="both">' +
-        '<label for="radio-screen-0"><span class="icon-split">Split</span></label>' +
+        '<label for="radio-screen-0" class="icon-split"></label>' +
         '<input type="radio" name="radio-screen" id="radio-screen-1" value="from">' +
-        '<label for="radio-screen-1"><span class="icon-all-from">From</span></label>' +
+        '<label for="radio-screen-1" class="icon-all-from"></label>' +
         '<input type="radio" name="radio-screen" id="radio-screen-2" value="to">' +
-        '<label for="radio-screen-2"><span class="icon-all-to">To</span></label>');
+        '<label for="radio-screen-2" class="icon-all-to"></label>');
 
     $('#radio-screen-' + screenType).prop('checked', true).trigger('change');
 
@@ -196,7 +205,7 @@ VizControls.prototype.initialize = function(model) {
                 return true;
             }
         });
-///*
+
     // Time slider in the bottom panel
     var timeslider = new TimeSlider({
         position: 'bottomleft',
@@ -207,24 +216,38 @@ VizControls.prototype.initialize = function(model) {
     });
     timeslider.setTime(selectedHour);
     timeslider.addTo(this.leafletMapLeft).afterLoad();
-//*/
+
+    const flowType = 0;
+    controls.append('<div id="controlset-flowtype" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
+        ' class="leaflet-control controlset-flowtype"></div>');
+    $('#controlset-flowtype').append(
+        '<legend>Flow options</legend>' +
+        '<input type="radio" name="radio-flow" id="radio-flow-0" value="dots">' +
+        '<label for="radio-flow-0" class="icon-type-dots"></label>' +
+        '<input type="radio" name="radio-flow" id="radio-flow-1" value="color">' +
+        '<label for="radio-flow-1" class="icon-type-colors"></label>' +
+        '<input type="radio" name="radio-flow" id="radio-flow-2" value="lines">' +
+        '<label for="radio-flow-2" class="icon-type-lines"></label>');
+
+    $('#radio-flow-' + flowType).prop('checked', true).trigger('change');
+
+    $('#controlset-flowtype').controlgroup()
+        .on('change', (e) => {
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.map.render(vizOptions);
+            this.map.update(false, this.leafletMapLeft);
+            vizOptions = this.getOptions();
+            vizOptions.dataChanged = false;
+            this.mapRight.render(vizOptions);
+            this.mapRight.update(false, this.leafletMapRight);
+        });
+
+///*
+    controls.append('<div id="load-histogram" class="leaflet-control"></div>');
+    $('#load-histogram').append('<legend>Flows intensity</legend>');
 
 /*
-    // Time control in the form of clock
-    var timeslider = new CircularTimeSlider({
-        position: 'topright',
-        map: this.map,
-        leafletMapLeft: this.leafletMapLeft,
-        leafletPath: this.rightPath,
-        parent: this
-    });
-    timeslider.setTime(selectedHour);
-    timeslider.addTo(this.leafletMapRight).afterLoad();
-*/
-
-    controls.append('<div id="load-histogram" class="leaflet-control"></div>');
-    $('#load-histogram').append('<legend>Flows intensity</legend><br/>');
-
     var margin = {top: 0, right: 0, bottom: 20, left: 0},
     width = d3.select("#load-histogram").node().clientWidth - margin.left - margin.right,
     height = 70 - margin.top - margin.bottom;
@@ -255,9 +278,7 @@ VizControls.prototype.initialize = function(model) {
 
     var y = d3.scaleLinear().range([height, 0]);
     y.domain([0, d3.max(bins, function(d) { return d.length; })]);
-    // svg.append("g").call(d3.axisLeft(y));
 
-    // Draw histogram
     svg.selectAll("rect")
         .data(bins)
         .enter()
@@ -269,18 +290,22 @@ VizControls.prototype.initialize = function(model) {
           .style("fill", function(d, idx) {
              return edgesColor(idx / 9);
           });
-
+*/
     $('#load-histogram').append('<div id="controlset-flow" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
         ' class="leaflet-control controlset-flow"></div>');
     $('#controlset-flow').append(
-        '<input type="checkbox" name="checkbox-flow-25" id="checkbox-flow-1" value="25">' +
-        '<label for="checkbox-flow-1"><span class="ui-flow-label">Weak</span></label>' +
-        '<input type="checkbox" name="checkbox-flow-50" id="checkbox-flow-2" value="50" checked="true">' +
-        '<label for="checkbox-flow-2"><span class="ui-flow-label">Modest</span></label>' +
-        '<input type="checkbox" name="checkbox-flow-75" id="checkbox-flow-3" value="75" checked="true">' +
-        '<label for="checkbox-flow-3"><span class="ui-flow-label">Intense</span></label>' +
-        '<input type="checkbox" name="checkbox-flow-100" id="checkbox-flow-4" value="100">' +
-        '<label for="checkbox-flow-4"><span class="ui-flow-label">Huge</span></label>');
+        '<span class="ui-flow-label flow-label-low">Low</span>' +
+        '<input type="checkbox" name="checkbox-flow-20" id="checkbox-flow-1" value="20">' +
+        '<label for="checkbox-flow-1"></label>' +
+        '<input type="checkbox" name="checkbox-flow-40" id="checkbox-flow-2" value="40" checked="true">' +
+        '<label for="checkbox-flow-2"></label>' +
+        '<input type="checkbox" name="checkbox-flow-60" id="checkbox-flow-3" value="60" checked="true">' +
+        '<label for="checkbox-flow-3"></label>' +
+        '<input type="checkbox" name="checkbox-flow-80" id="checkbox-flow-4" value="80" checked="true">' +
+        '<label for="checkbox-flow-4"></label>' +
+        '<input type="checkbox" name="checkbox-flow-100" id="checkbox-flow-5" value="100">' +
+        '<label for="checkbox-flow-5"></label>' +
+        '<span class="ui-flow-label flow-label-high">High</span>');
     $('#controlset-flow').controlgroup()
         .on('change', (e) => {
             vizOptions = this.getOptions();
@@ -292,35 +317,10 @@ VizControls.prototype.initialize = function(model) {
             this.mapRight.render(vizOptions);
             this.mapRight.update(false, this.leafletMapRight);
         });
-    $('#controlset-flow').append('<hr class="flow-bottom-bar"/>');
-
-    const flowType = 0;
-    controls.append('<div id="controlset-flowtype" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
-        ' class="leaflet-control controlset-screen"></div>');
-    $('#controlset-flowtype').append(
-        '<legend>Flow options</legend>' +
-        '<input type="radio" name="radio-flow" id="radio-flow-0" value="dots">' +
-        '<label for="radio-flow-0"><span class="icon-split">Dots</span></label>' +
-        '<input type="radio" name="radio-flow" id="radio-flow-1" value="color">' +
-        '<label for="radio-flow-1"><span class="icon-all-from">Color</span></label>' +
-        '<input type="radio" name="radio-flow" id="radio-flow-2" value="lines">' +
-        '<label for="radio-flow-2"><span class="icon-all-to">Lines</span></label>');
-
-    $('#radio-flow-' + flowType).prop('checked', true).trigger('change');
-
-    $('#controlset-flowtype').controlgroup()
-        .on('change', (e) => {
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = false;
-            this.map.render(vizOptions);
-            this.map.update(false, this.leafletMapLeft);
-            vizOptions = this.getOptions();
-            vizOptions.dataChanged = false;
-            this.mapRight.render(vizOptions);
-            this.mapRight.update(false, this.leafletMapRight);
-        });
+//*/
 
 
+/*
     controls.append('<div id="controlset-density" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
         ' class="leaflet-control controlset-radio"></div>');
     $('#controlset-density').append(
@@ -353,8 +353,9 @@ VizControls.prototype.initialize = function(model) {
             this.mapRight.update(false, this.leafletMapRight);
             this.leafletMapLeft.dragging.enable();
         });
+*/
 
-
+/*
     controls.append('<div id="controlset-speed" data-role="controlgroup" data-type="horizontal" data-mini="true" ' +
         ' class="leaflet-control controlset-speed"></div>');
     $('#controlset-speed').append(
@@ -390,7 +391,7 @@ VizControls.prototype.initialize = function(model) {
             this.mapRight.render(vizOptions);
             this.mapRight.update(false, this.leafletMapRight);
         });
-
+*/
     $('[name="choose-day"]').on('change', (event) => {
         var selectedDay = $('[name="choose-day"]:checked').val();
         if (selectedDay !== undefined) {
@@ -541,7 +542,7 @@ var TimeSlider = L.Control.extend({
                         break;
                 }
             }, this);
-
+/*
         var resetButton = L.DomUtil.create('a', 'time-slider-reset', container);
         resetButton.innerHTML = '<i class="material-icons">stop</i>';
         L.DomEvent
@@ -551,7 +552,7 @@ var TimeSlider = L.Control.extend({
                 this.reset();
                 playButton.innerHTML = playButton.playHTML;
             }, this);
-
+*/
         var slider = L.DomUtil.create('a', 'leaflet-control time-slider', container);
         slider.id = 'time-slider';
 
