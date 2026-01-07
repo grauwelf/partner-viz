@@ -12,7 +12,7 @@ const vizAttributions = '&copy; A. Ogulenko, A. Rotem, I. Benenson' +
     '<br/><a href="https://www.geosimlab.org/">Geosimulation and Spatial Analysis Lab<a/>';
 
 // Mapbox themes
-const token = 'pk.eyJ1IjoiZ3JhdXdlbGYiLCJhIjoiY2swem15enR0MDc3YjNucGk3cWoxeGVwZSJ9.rbBSqG4CqVCW0LOrGPi55A';
+const token = 'pk.eyJ1IjoiZ3JhdXdlbGYiLCJhIjoiY2swem13cDV2MDRqODNtbzRjNHZ1ZnFzcyJ9.NfEs3GesvTdxL3_Wycw6QQ';
 const darkTileLayerURL = 'https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{z}/{x}/{y}?access_token=' + token;
 const lightTileLayerURL = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + token;
 const customDarkLayerURL = 'https://api.mapbox.com/styles/v1/grauwelf/ck5wauof50m0y1iogrdjoavsn/tiles/256/{z}/{x}/{y}?access_token=' + token;
