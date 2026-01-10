@@ -6,7 +6,7 @@
   "author": "grauwelf <grauwelf@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "d3": "^5.9.2",
+    "d3": "^7.6.1",
     "d3-tip": "^0.9.1",
     "jquery": "^3.4.1",
     "jquery-ui-dist": "^1.12.1",
